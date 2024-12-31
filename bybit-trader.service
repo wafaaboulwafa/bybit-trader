@@ -1,0 +1,17 @@
+[Unit]
+Description=Bybit Trading Bot
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /home/user/bybit-trader/index.js
+WorkingDirectory=/home/user/bybit-trader
+Restart=always
+RestartSec=10
+User=user
+Environment=NODE_ENV=production
+StandardOutput=append:/var/log/bybit-trader.log
+StandardError=append:/var/log/bybit-trader.log
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
