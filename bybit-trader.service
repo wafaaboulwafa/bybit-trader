@@ -3,7 +3,7 @@ Description=Bybit Trading Bot
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /home/wafa/bybit-trader/index.js
+ExecStart=/usr/bin/node /home/wafa/bybit-trader/app.js
 WorkingDirectory=/home/wafa/bybit-trader
 Restart=always
 RestartSec=10
