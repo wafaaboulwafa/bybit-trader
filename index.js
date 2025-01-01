@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const axios = require("axios");
 const WebSocket = require("ws");
-const nodemailer = require("nodemailer");
 const { RSI, MACD } = require("technicalindicators");
 const fs = require("fs");
 
