@@ -1,8 +1,10 @@
 require("dotenv").config();
+
 const { RestClientV5 } = require("bybit-api");
 const { WebsocketClient } = require("bybit-api");
 const { DateTime } = require("luxon");
 const pairs = require("./pairs");
+const { notifyTelegram } = require("./telgramClient");
 
 const marketCandles = new Map();
 
@@ -50,6 +52,29 @@ async function loadMarketCandles() {
   }
 }
 
+async function getBalance() {
+  const response = await restClient.getWalletBalance({
+    accountType: "UNIFIED",
+  });
+
+  return response;
+}
+
+async function trade(pair, price, side, percentage = 1) {
+  const balance = await getBalance();
+  const buyAmount = balance * percentage;
+  const qty = (buyAmount / price).toFixed(3);
+  const response = await restClient.submitOrder({
+    category: "spot",
+    symbol: pair,
+    orderType: "Limit",
+    qty: qty,
+    side: side,
+  });
+
+  return response;
+}
+
 function getClosePrices(candles) {
   const canndlesArray = Array.from(candles.values());
   canndlesArray.sort((a, b) => a.startTime - b.startTime);
@@ -57,8 +82,8 @@ function getClosePrices(candles) {
   return closePrices;
 }
 
-async function startServer(onNewCandle) {
-  //loadMarketCandles();
+async function startTradingBot(onUpdate) {
+  loadMarketCandles();
 
   const topics = pairs.map((r) => "kline." + r.time + "." + r.name);
 
@@ -96,9 +121,29 @@ async function startServer(onNewCandle) {
             marketCandles.set(pairKey, pairData);
           }
 
-          if (onNewCandle) {
+          if (onUpdate) {
             const closePrices = getClosePrices();
-            onNewCandle(pairName, candle, pairData, closePrices);
+
+            const openPosition = (side, percentage) => {
+              trade(pairName, candle.closePrice, side, percentage);
+              notifyTelegram(
+                `Position opened\r\nPair: ${pairName}\r\nType: ${side}`
+              );
+            };
+
+            const closePosition = (side, percentage) => {
+              //
+            };
+
+            onUpdate(
+              pairName,
+              candle,
+              pairData,
+              closePrices,
+              currentPrice,
+              openPosition,
+              closePosition
+            );
           }
         }
 
@@ -113,4 +158,4 @@ async function startServer(onNewCandle) {
   wsClient.subscribeV5(["order", "wallet", "greeks"], "spot");
 }
 
-module.exports = { startServer };
+module.exports = { startTradingBot };

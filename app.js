@@ -1,4 +1,4 @@
-const { startServer } = require("./server");
+const { startTradingBot } = require("./tradingBot");
 const {
   rsi,
   ema,
@@ -9,11 +9,32 @@ const {
   isEmaCrossDown,
 } = require("./indicators");
 
-function onNewCandle(pair, timeFrame, candles, closePrices) {
-  console.log("data: ", JSON.stringify(data));
-}
+startTradingBot(
+  (
+    pair,
+    timeFrame,
+    candles,
+    closePrices,
+    closePrice,
+    openPosition,
+    closePosition
+  ) => {
+    const rsiValue = rsi(closePrices, 14);
+    const macdValue = macd(closePrices);
+    const crossUpValue = isEmaCrossUp(closePrices);
+    const crossDownValue = isEmaCrossDown(closePrices);
 
-function onNewPrice(pair, price) {}
+    const buySignal = rsiValue < 30 && macdValue > 0 && crossUpValue;
+    const sellSignal = rsiValue > 70 && macdValue < 0 && crossDownValue;
 
-startServer(onNewCandle);
-// Back test based on history kline
+    if (buySignal) {
+      closePosition("Sell", 1);
+      openPosition("Buy", 0.25);
+    }
+
+    if (sellSignal) {
+      closePosition("Buy", 1);
+      openPosition("Sell", 0.25);
+    }
+  }
+);

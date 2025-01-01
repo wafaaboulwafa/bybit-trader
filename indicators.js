@@ -8,18 +8,18 @@ const {
   crossDown,
 } = require("technicalindicators");
 
-function calcRsi(closePrices, period) {
+function calcRsi(closePrices, period = 14) {
   const values = rsi({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
-function calcEma(closePrices, period) {
+function calcEma(closePrices, period = 20) {
   const values = ema({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
-function calcSma(closePrices, period) {
+function calcSma(closePrices, period = 20) {
   const values = sma({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
