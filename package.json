@@ -4,7 +4,8 @@
   "description": "ByBit Trader",
   "main": "./app",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "backtest": "node app.js"
   },
   "dependencies": {
     "axios": "^1.7.9",

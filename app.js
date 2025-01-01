@@ -1,9 +1,19 @@
-console.log("Hello there");
-
 const { startServer } = require("./server");
+const {
+  rsi,
+  ema,
+  sma,
+  macd,
+  bollingerbands,
+  isEmaCrossUp,
+  isEmaCrossDown,
+} = require("./indicators");
 
-function onCandle(data) {
+function onNewCandle(pair, timeFrame, candles, closePrices) {
   console.log("data: ", JSON.stringify(data));
 }
 
-startServer(onCandle);
+function onNewPrice(pair, price) {}
+
+startServer(onNewCandle);
+// Back test based on history kline
