@@ -158,4 +158,4 @@ async function startTradingBot(onUpdate) {
   wsClient.subscribeV5(["order", "wallet", "greeks"], "spot");
 }
 
-module.exports = { startTradingBot };
+module.exports = { startTradingBot, loadMarketCandles, getClosePrices };
