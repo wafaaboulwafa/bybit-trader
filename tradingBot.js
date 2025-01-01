@@ -122,7 +122,7 @@ async function startTradingBot(onUpdate) {
           }
 
           if (onUpdate) {
-            const closePrices = getClosePrices();
+            const closePrices = getClosePrices(pairData.candles);
 
             const openPosition = (side, percentage) => {
               trade(pairName, candle.closePrice, side, percentage);
