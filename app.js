@@ -21,7 +21,7 @@ const onUpdate = (
   openPosition,
   closePosition
 ) => {
-  const rsiValue = rsi(closePrices, 14);
+  const rsiValue = rsi(closePrices);
   const macdValue = macd(closePrices);
   const crossUpValue = isEmaCrossUp(closePrices);
   const crossDownValue = isEmaCrossDown(closePrices);

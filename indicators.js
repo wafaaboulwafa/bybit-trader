@@ -57,13 +57,16 @@ function isEmaCrossUp(
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
   fastLastElements = fastEmaValues.slice(
-    Math.max(closePrices.length - limit, 0)
+    Math.max(fastEmaValues.length - limit, 0)
   );
   slowLastElements = slowEmaValues.slice(
-    Math.max(closePrices.length - limit, 0)
+    Math.max(slowEmaValues.length - limit, 0)
   );
 
-  return crossUp({ lineA: fastLastElements, lineA: slowLastElements });
+  return (
+    fastLastElements[0] > slowLastElements[0] &&
+    fastLastElements[limit] < slowLastElements[limit]
+  );
 }
 
 function isEmaCrossDown(
@@ -76,13 +79,16 @@ function isEmaCrossDown(
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
   fastLastElements = fastEmaValues.slice(
-    Math.max(closePrices.length - limit, 0)
+    Math.max(fastEmaValues.length - limit, 0)
   );
   slowLastElements = slowEmaValues.slice(
-    Math.max(closePrices.length - limit, 0)
+    Math.max(slowEmaValues.length - limit, 0)
   );
 
-  return crossDown({ lineA: fastLastElements, lineA: slowLastElements });
+  return (
+    fastLastElements[0] < slowLastElements[0] &&
+    fastLastElements[limit] > slowLastElements[limit]
+  );
 }
 
 function getClosePrices(candles) {
