@@ -16,7 +16,8 @@ const onUpdate = (
   timeFrame,
   candles,
   closePrices,
-  closePrice,
+  price,
+  candle,
   openPosition,
   closePosition
 ) => {

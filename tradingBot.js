@@ -67,7 +67,6 @@ async function startTradingBot(onUpdate) {
           pairData.candles.set(candle.key, candle);
 
           const closePrices = getClosePrices(pairData.candles);
-          console.log(closePrices);
 
           const openPosition = (side, percentage) => {
             postBuyOrder(

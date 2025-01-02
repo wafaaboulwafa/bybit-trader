@@ -56,8 +56,12 @@ function isEmaCrossUp(
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
-  fastLastElements = fastEmaValues.slice(Math.max(arr.length - limit, 0));
-  slowLastElements = slowEmaValues.slice(Math.max(arr.length - limit, 0));
+  fastLastElements = fastEmaValues.slice(
+    Math.max(closePrices.length - limit, 0)
+  );
+  slowLastElements = slowEmaValues.slice(
+    Math.max(closePrices.length - limit, 0)
+  );
 
   return crossUp({ lineA: fastLastElements, lineA: slowLastElements });
 }
@@ -71,8 +75,12 @@ function isEmaCrossDown(
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
-  fastLastElements = fastEmaValues.slice(Math.max(arr.length - limit, 0));
-  slowLastElements = slowEmaValues.slice(Math.max(arr.length - limit, 0));
+  fastLastElements = fastEmaValues.slice(
+    Math.max(closePrices.length - limit, 0)
+  );
+  slowLastElements = slowEmaValues.slice(
+    Math.max(closePrices.length - limit, 0)
+  );
 
   return crossDown({ lineA: fastLastElements, lineA: slowLastElements });
 }
