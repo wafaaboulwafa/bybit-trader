@@ -39,7 +39,7 @@ const onUpdate = (
   }
 };
 
-const isBacktest = process.argv.findIndex("--backtest") > -1;
+const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
 
 if (!isBacktest) startTradingBot(onUpdate);
 else backtestTradingBot(onUpdate);
