@@ -1,11 +1,16 @@
 const { WebsocketClient } = require("bybit-api");
 const pairs = require("./pairs");
-const { notifyTelegram } = require("./telgramClient");
+const {
+  notifyWalletUpdate,
+  notifyOrderUpdate,
+  notifyExecutionUpdate,
+} = require("./telgramClient");
 const {
   getMarketCandles,
   postBuyOrder,
   postSellOrder,
 } = require("./tradingApi");
+const { getClosePrices } = require("./indicators");
 
 let marketCandles = new Map();
 
@@ -18,6 +23,10 @@ const wsClient = new WebsocketClient({
 
 process.once("SIGINT", (code) => wsClient.closeAll(true));
 process.once("SIGTERM", (code) => wsClient.closeAll(true));
+
+function print(object) {
+  console.log(JSON.stringify(object, null, 4));
+}
 
 async function startTradingBot(onUpdate) {
   marketCandles = getMarketCandles();
@@ -96,13 +105,16 @@ async function startTradingBot(onUpdate) {
 
         //console.log(marketCandles);
       }
+    } else if (data.topic === "execution") {
+      if (data.data.length > 0) notifyExecutionUpdate(data.data[0]);
+    } else if (data.topic === "order") {
+      if (data.data.length > 0) notifyOrderUpdate(data.data[0]);
+    } else if (data.topic === "wallet") {
+      if (data.data.length > 0) notifyWalletUpdate(data.data[0]);
     }
   });
 
-  wsClient.subscribeV5(topics, "spot");
-  wsClient.subscribeV5("position", "spot");
-  wsClient.subscribeV5("execution", "spot");
-  wsClient.subscribeV5(["order", "wallet", "greeks"], "spot");
+  wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
 }
 
 module.exports = { startTradingBot };
