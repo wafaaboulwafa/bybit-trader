@@ -1,6 +1,11 @@
 const { WebsocketClient } = require("bybit-api");
 const pairs = require("./pairs");
 const { notifyTelegram } = require("./telgramClient");
+const {
+  getMarketCandles,
+  postBuyOrder,
+  postSellOrder,
+} = require("./tradingApi");
 
 let marketCandles = new Map();
 
@@ -17,7 +22,7 @@ process.once("SIGTERM", (code) => wsClient.closeAll(true));
 async function startTradingBot(onUpdate) {
   marketCandles = getMarketCandles();
 
-  const topics = pairs.map((r) => "kline." + r.time + "." + r.name);
+  const topics = pairs.map((r) => "kline." + r.time + "." + r.pair);
 
   wsClient.on("update", (data) => {
     if (data.topic.startsWith("kline.")) {
@@ -55,16 +60,26 @@ async function startTradingBot(onUpdate) {
 
           if (onUpdate) {
             const closePrices = getClosePrices(pairData.candles);
+            const pairInfo = pairs.find((r) => r.pair === pairName);
 
             const openPosition = (side, percentage) => {
-              postTrade(pairName, candle.closePrice, side, percentage);
-              notifyTelegram(
-                `Position opened\r\nPair: ${pairName}\r\nType: ${side}`
-              );
+              if (pairInfo)
+                postBuyOrder(
+                  pairInfo.pair,
+                  pairInfo.buyCoin,
+                  candle.closePrice,
+                  percentage
+                );
             };
 
             const closePosition = (side, percentage) => {
-              //
+              if (pairInfo)
+                postSellOrder(
+                  pairInfo.pair,
+                  pairInfo.sellCoin,
+                  candle.closePrice,
+                  percentage
+                );
             };
 
             onUpdate(
