@@ -1,18 +1,8 @@
-require("dotenv").config();
-
-const { RestClientV5 } = require("bybit-api");
 const { WebsocketClient } = require("bybit-api");
-const { DateTime } = require("luxon");
 const pairs = require("./pairs");
 const { notifyTelegram } = require("./telgramClient");
 
-const marketCandles = new Map();
-
-const restClient = new RestClientV5({
-  testnet: process.env.BYBIT_API_TESTNET.toLowerCase() == "true",
-  key: process.env.BYBIT_API_KEY,
-  secret: process.env.BYBIT_API_SECRET,
-});
+let marketCandles = new Map();
 
 const wsClient = new WebsocketClient({
   market: "v5",
@@ -24,66 +14,8 @@ const wsClient = new WebsocketClient({
 process.once("SIGINT", (code) => wsClient.closeAll(true));
 process.once("SIGTERM", (code) => wsClient.closeAll(true));
 
-async function loadMarketCandles() {
-  const now = DateTime.now();
-
-  for (let pair of pairs) {
-    pairResponse = await restClient.getKline({
-      category: "spot",
-      symbol: pair.name,
-      interval: pair.time,
-      end: now.valueOf(),
-      start: now.minus({ months: 1 }).valueOf(),
-    });
-
-    const candles = pairResponse.result.list.map((r) => ({
-      startTime: new Date(parseInt(r[0])),
-      openPrice: parseFloat(r[1]),
-      highPrice: parseFloat(r[2]),
-      lowPrice: parseFloat(r[3]),
-      closePrice: parseFloat(r[4]),
-    }));
-
-    marketCandles.set(pair.name.toUpperCase() + "." + pair.time, {
-      name: pair.name.toUpperCase(),
-      time: pair.time,
-      candles: new Map(candles.map((r) => [r.startTime, r])),
-    });
-  }
-}
-
-async function getBalance() {
-  const response = await restClient.getWalletBalance({
-    accountType: "UNIFIED",
-  });
-
-  return response;
-}
-
-async function trade(pair, price, side, percentage = 1) {
-  const balance = await getBalance();
-  const buyAmount = balance * percentage;
-  const qty = (buyAmount / price).toFixed(3);
-  const response = await restClient.submitOrder({
-    category: "spot",
-    symbol: pair,
-    orderType: "Limit",
-    qty: qty,
-    side: side,
-  });
-
-  return response;
-}
-
-function getClosePrices(candles) {
-  const canndlesArray = Array.from(candles.values());
-  canndlesArray.sort((a, b) => a.startTime - b.startTime);
-  const closePrices = canndlesArray.map((r) => r.closePrice);
-  return closePrices;
-}
-
 async function startTradingBot(onUpdate) {
-  loadMarketCandles();
+  marketCandles = getMarketCandles();
 
   const topics = pairs.map((r) => "kline." + r.time + "." + r.name);
 
@@ -125,7 +57,7 @@ async function startTradingBot(onUpdate) {
             const closePrices = getClosePrices(pairData.candles);
 
             const openPosition = (side, percentage) => {
-              trade(pairName, candle.closePrice, side, percentage);
+              postTrade(pairName, candle.closePrice, side, percentage);
               notifyTelegram(
                 `Position opened\r\nPair: ${pairName}\r\nType: ${side}`
               );
@@ -158,4 +90,4 @@ async function startTradingBot(onUpdate) {
   wsClient.subscribeV5(["order", "wallet", "greeks"], "spot");
 }
 
-module.exports = { startTradingBot, loadMarketCandles, getClosePrices };
+module.exports = { startTradingBot };

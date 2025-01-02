@@ -1,6 +1,7 @@
-const { getClosePrices, loadMarketCandles } = require("./tradingBot");
+const { getMarketCandles } = require("./tradingApi");
+const { getClosePrices } = require("./indicators");
 
-const marketCandles = new Map();
+let marketCandles = new Map();
 
 const assets = {
   USD: 1000,
@@ -15,7 +16,7 @@ async function trade(pair, price, side, percentage = 1) {
 }
 
 async function startTradingBot(onUpdate) {
-  loadMarketCandles();
+  marketCandles = getMarketCandles();
 
   //Starting assets
   console.log(assets);

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { startTradingBot } = require("./tradingBot");
 const { startTradingBot: backtestTradingBot } = require("./backtest");
 const {

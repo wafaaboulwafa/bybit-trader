@@ -77,6 +77,13 @@ function isEmaCrossDown(
   return crossDown({ lineA: fastLastElements, lineA: slowLastElements });
 }
 
+function getClosePrices(candles) {
+  const canndlesArray = Array.from(candles.values());
+  canndlesArray.sort((a, b) => a.startTime - b.startTime);
+  const closePrices = canndlesArray.map((r) => r.closePrice);
+  return closePrices;
+}
+
 module.exports = {
   rsi: calcRsi,
   ema: calcEma,
@@ -85,4 +92,5 @@ module.exports = {
   bollingerbands: calcbollingerbands,
   isEmaCrossUp,
   isEmaCrossDown,
+  getClosePrices,
 };
