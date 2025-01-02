@@ -6,13 +6,13 @@ const {
   notifyExecutionUpdate,
 } = require("./telgramClient");
 const {
-  getMarketCandles,
+  loadMarketCandles,
   postBuyOrder,
   postSellOrder,
 } = require("./tradingApi");
 const { getClosePrices } = require("./indicators");
 
-let marketCandles = new Map();
+const marketCandles = new Map();
 
 const wsClient = new WebsocketClient({
   market: "v5",
@@ -29,9 +29,7 @@ function print(object) {
 }
 
 async function startTradingBot(onUpdate) {
-  marketCandles = getMarketCandles();
-
-  const topics = pairs.map((r) => "kline." + r.time + "." + r.pair);
+  await loadMarketCandles(marketCandles);
 
   wsClient.on("update", (data) => {
     if (data.topic.startsWith("kline.")) {
@@ -42,6 +40,9 @@ async function startTradingBot(onUpdate) {
         const pairName = matches[2].toUpperCase();
         const timeFrame = matches[1];
         const pairKey = pairName + "." + timeFrame;
+        const pairInfo = pairs.find((r) => r.pair === pairName);
+
+        if (!pairInfo) return;
 
         if (!marketCandles.has(pairKey)) {
           marketCandles.set(pairKey, {
@@ -55,6 +56,7 @@ async function startTradingBot(onUpdate) {
 
         for (let r of data.data) {
           const candle = {
+            key: r.start,
             startTime: new Date(parseInt(r.start)),
             openPrice: parseFloat(r.open),
             highPrice: parseFloat(r.high),
@@ -62,48 +64,42 @@ async function startTradingBot(onUpdate) {
             closePrice: parseFloat(r.close),
           };
 
-          if (!pairData.candles.has(candle.startTime)) {
-            pairData.candles.set(candle.startTime, candle);
-            marketCandles.set(pairKey, pairData);
-          }
+          pairData.candles.set(candle.key, candle);
+
+          const closePrices = getClosePrices(pairData.candles);
+          console.log(closePrices);
+
+          const openPosition = (side, percentage) => {
+            postBuyOrder(
+              pairInfo.pair,
+              pairInfo.buyCoin,
+              candle.closePrice,
+              percentage
+            );
+          };
+
+          const closePosition = (side, percentage) => {
+            postSellOrder(
+              pairInfo.pair,
+              pairInfo.sellCoin,
+              candle.closePrice,
+              percentage
+            );
+          };
 
           if (onUpdate) {
-            const closePrices = getClosePrices(pairData.candles);
-            const pairInfo = pairs.find((r) => r.pair === pairName);
-
-            const openPosition = (side, percentage) => {
-              if (pairInfo)
-                postBuyOrder(
-                  pairInfo.pair,
-                  pairInfo.buyCoin,
-                  candle.closePrice,
-                  percentage
-                );
-            };
-
-            const closePosition = (side, percentage) => {
-              if (pairInfo)
-                postSellOrder(
-                  pairInfo.pair,
-                  pairInfo.sellCoin,
-                  candle.closePrice,
-                  percentage
-                );
-            };
-
             onUpdate(
               pairName,
-              candle,
-              pairData,
+              timeFrame,
+              pairData.candles,
               closePrices,
-              currentPrice,
+              candle.closePrice,
+              candle,
               openPosition,
               closePosition
             );
           }
         }
-
-        //console.log(marketCandles);
       }
     } else if (data.topic === "execution") {
       if (data.data.length > 0) notifyExecutionUpdate(data.data[0]);
@@ -114,6 +110,7 @@ async function startTradingBot(onUpdate) {
     }
   });
 
+  const topics = pairs.map((r) => "kline." + r.time + "." + r.pair);
   wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
 }
 

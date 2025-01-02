@@ -1,5 +1,6 @@
 const { RestClientV5 } = require("bybit-api");
 const { DateTime } = require("luxon");
+const pairs = require("./pairs");
 
 const restClient = new RestClientV5({
   testnet: process.env.BYBIT_API_TESTNET.toLowerCase() == "true",
@@ -11,20 +12,21 @@ function print(object) {
   console.log(JSON.stringify(object, null, 4));
 }
 
-async function getMarketCandles() {
+async function loadMarketCandles(candlesSet) {
   const now = DateTime.now();
-  const candlesSet = new Map();
 
-  for (let pair of pairs) {
+  for (let rec of pairs) {
     pairResponse = await restClient.getKline({
       category: "spot",
-      symbol: pair.name,
-      interval: pair.time,
+      symbol: rec.pair,
+      interval: rec.time,
       end: now.valueOf(),
       start: now.minus({ months: 1 }).valueOf(),
+      limit: 1000,
     });
 
     const candles = pairResponse.result.list.map((r) => ({
+      key: r[0],
       startTime: new Date(parseInt(r[0])),
       openPrice: parseFloat(r[1]),
       highPrice: parseFloat(r[2]),
@@ -32,14 +34,12 @@ async function getMarketCandles() {
       closePrice: parseFloat(r[4]),
     }));
 
-    candlesSet.set(pair.name.toUpperCase() + "." + pair.time, {
-      name: pair.name.toUpperCase(),
-      time: pair.time,
-      candles: new Map(candles.map((r) => [r.startTime, r])),
+    candlesSet.set(rec.pair.toUpperCase() + "." + rec.time, {
+      name: rec.pair.toUpperCase(),
+      time: rec.time,
+      candles: new Map(candles.map((r) => [r.key, r])),
     });
   }
-
-  return candlesSet;
 }
 
 async function getEquity() {
@@ -172,7 +172,7 @@ async function postSellOrder(pair, coin, price, percentage = 1) {
 }
 
 module.exports = {
-  getMarketCandles,
+  loadMarketCandles,
   postTrade,
   postSellOrder,
   postBuyOrder,
