@@ -66,20 +66,14 @@ async function cancelOrders(pair) {
   return response;
 }
 
-async function postTrade(pair, price, side, percentage = 1) {
-  await cancelOrders(pair);
-
-  const balance = await getBalance();
-  const fullQty = balance / price;
-  const buyQty = fullQty * percentage;
-
+async function postTrade(pair, price, side, qty) {
   const response = await restClient
     .submitOrder({
       category: "spot",
       symbol: pair,
       orderType: "Limit",
       price: price.toString(),
-      qty: buyQty.toFixed(6).toString(),
+      qty: qty.toFixed(6).toString(),
       side: side,
       timeInForce: "GTC",
     })
@@ -110,10 +104,80 @@ async function getCoinBalance(coin) {
   return response;
 }
 
+async function getFeesRate(symbol, coin) {
+  const response = await restClient
+    .getFeeRate({
+      category: "spot",
+      symbol,
+      baseCoin: coin,
+    })
+    .then((r) => {
+      const feesRec = r.result.list[0];
+      return {
+        takerFeeRate: parseFloat(feesRec?.takerFeeRate || 0),
+        makerFeeRate: parseFloat(feesRec?.makerFeeRate || 0),
+      };
+    });
+
+  return response;
+}
+
+async function postBuyOrder(pair, coin = "USDT", price, percentage = 1) {
+  await cancelOrders(pair);
+  const balance = await getCoinBalance(coin);
+  const fullQty = balance / price;
+  const buyQty = fullQty * percentage;
+
+  const feesRate = await getFeesRate(pair, coin);
+  const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
+  const fees = buyQty * rate;
+
+  const response = await restClient
+    .submitOrder({
+      category: "spot",
+      symbol: pair,
+      orderType: price > 0 ? "Limit" : "Market",
+      price: price > 0 ? price.toString() : null,
+      qty: (buyQty - fees).toFixed(6).toString(),
+      side: "Buy",
+      timeInForce: "GTC",
+    })
+    .then((r) => r.result.orderId);
+
+  return response;
+}
+
+async function postSellOrder(pair, coin, price, percentage = 1) {
+  await cancelOrders(pair);
+  const fullQty = await getCoinBalance(coin);
+  const sellQty = fullQty * percentage;
+
+  const feesRate = await getFeesRate(pair, coin);
+  const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
+  const fees = sellQty * rate;
+
+  const response = await restClient
+    .submitOrder({
+      category: "spot",
+      symbol: pair,
+      orderType: price > 0 ? "Limit" : "Market",
+      price: price > 0 ? price.toString() : null,
+      qty: (sellQty - fees).toFixed(6).toString(),
+      side: "Sell",
+      timeInForce: "GTC",
+    })
+    .then((r) => r.result.orderId);
+
+  return response;
+}
+
 module.exports = {
   getMarketCandles,
   postTrade,
+  postSellOrder,
+  postBuyOrder,
   getEquity,
   cancelOrders,
   getCoinBalance,
+  getFeesRate,
 };
