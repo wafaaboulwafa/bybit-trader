@@ -4,8 +4,10 @@ const chatId = process.env.TELEGRAM_CHAT_ID;
 
 const telegramBot = new TelegramBot(token, { polling: true });
 
+//Telegram send message
 const notifyTelegram = (message) => telegramBot.sendMessage(chatId, message);
 
+//Send telegram message when wallet is updated
 function notifyWalletUpdate(rec) {
   const message =
     "Wallet 💰" +
@@ -25,6 +27,7 @@ function notifyWalletUpdate(rec) {
   notifyTelegram(message + assetsMsg);
 }
 
+//Send telegram message when order is created
 function notifyOrderUpdate(rec) {
   const sideEmoji = rec.side.toLowerCase() === "sell" ? "🔻" : "🔺";
   const message =
@@ -41,6 +44,7 @@ function notifyOrderUpdate(rec) {
   notifyTelegram(message);
 }
 
+//Send telegram message when order is executed
 function notifyExecutionUpdate(rec) {
   const sideEmoji = rec.side.toLowerCase() === "sell" ? "🔻" : "🔺";
   const message =

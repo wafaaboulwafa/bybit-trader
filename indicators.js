@@ -8,23 +8,28 @@ const {
   crossDown,
 } = require("technicalindicators");
 
+//Get last rsi value
 function calcRsi(closePrices, period = 14) {
   const values = rsi({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
+//get last exponential moving average value
 function calcEma(closePrices, period = 20) {
   const values = ema({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
+
+//get last simple moving average value
 function calcSma(closePrices, period = 20) {
   const values = sma({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
+//Get last macd value
 function calcMacd(
   closePrices,
   fastPeriod = 12,
@@ -41,12 +46,14 @@ function calcMacd(
   return last;
 }
 
+//Get last bollinger band value
 function calcbollingerbands(closePrices, stdDev = 2, period = 26) {
   const values = bollingerbands({ values: closePrices, period, stdDev });
   const last = values[values.length - 1];
   return last;
 }
 
+//Is two ema crossing up
 function isEmaCrossUp(
   closePrices,
   fastEmaPeriod = 3,
@@ -69,6 +76,7 @@ function isEmaCrossUp(
   );
 }
 
+//Is two ema crossing down
 function isEmaCrossDown(
   closePrices,
   fastEmaPeriod = 3,
@@ -91,6 +99,7 @@ function isEmaCrossDown(
   );
 }
 
+//Convert candles set to clsoing price array
 function getClosePrices(candles) {
   const canndlesArray = Array.from(candles.values());
   canndlesArray.sort((a, b) => a.startTime - b.startTime);

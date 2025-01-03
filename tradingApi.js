@@ -2,12 +2,14 @@ const { RestClientV5 } = require("bybit-api");
 const { DateTime } = require("luxon");
 const pairs = require("./pairs");
 
+//ByBit rest client
 const restClient = new RestClientV5({
   testnet: process.env.BYBIT_API_TESTNET.toLowerCase() == "true",
   key: process.env.BYBIT_API_KEY,
   secret: process.env.BYBIT_API_SECRET,
 });
 
+//Get candles history for spot pair
 async function loadSpotMarketCandles(candlesSet) {
   const now = DateTime.now();
 
@@ -38,6 +40,7 @@ async function loadSpotMarketCandles(candlesSet) {
   }
 }
 
+//Get equity total value for unified account
 async function getEquity() {
   const response = await restClient
     .getWalletBalance({
@@ -51,6 +54,7 @@ async function getEquity() {
   return response;
 }
 
+//Cancel all spot pending orders for a pair
 async function cancelSpotOrders(pair) {
   const response = await restClient
     .cancelAllOrders({
@@ -62,22 +66,7 @@ async function cancelSpotOrders(pair) {
   return response;
 }
 
-async function postSpotTrade(pair, price, side, qty) {
-  const response = await restClient
-    .submitOrder({
-      category: "spot",
-      symbol: pair,
-      orderType: "Limit",
-      price: price.toString(),
-      qty: qty.toFixed(6).toString(),
-      side: side,
-      timeInForce: "GTC",
-    })
-    .then((r) => r.result.orderId);
-
-  return response;
-}
-
+//Get coin balance for unified account
 async function getCoinBalance(coin) {
   const response = await restClient
     .getWalletBalance({
@@ -100,6 +89,7 @@ async function getCoinBalance(coin) {
   return response;
 }
 
+//Get spot fees rate for a coin
 async function getSpotFeesRate(symbol, coin) {
   const response = await restClient
     .getFeeRate({
@@ -118,6 +108,7 @@ async function getSpotFeesRate(symbol, coin) {
   return response;
 }
 
+//Create a spot buy order
 async function postBuySpotOrder(pair, coin = "USDT", price, percentage = 1) {
   await cancelSpotOrders(pair);
   const balance = await getCoinBalance(coin);
@@ -143,6 +134,7 @@ async function postBuySpotOrder(pair, coin = "USDT", price, percentage = 1) {
   return response;
 }
 
+//Create a spot sell order
 async function postSellSpotOrder(pair, coin, price, percentage = 1) {
   await cancelSpotOrders(pair);
   const fullQty = await getCoinBalance(coin);
@@ -169,7 +161,6 @@ async function postSellSpotOrder(pair, coin, price, percentage = 1) {
 
 module.exports = {
   loadSpotMarketCandles,
-  postSpotTrade,
   postSellSpotOrder,
   postBuySpotOrder,
   getEquity,

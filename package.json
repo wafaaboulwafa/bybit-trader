@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "backtest": "node app.js --backtest",
+    "generatebacktest": "node app.js --generatebacktestdata",
     "test": "node test.js"
   },
   "dependencies": {

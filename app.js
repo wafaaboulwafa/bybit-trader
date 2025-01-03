@@ -1,47 +1,27 @@
 require("dotenv").config();
 const { startTradingBot } = require("./tradingBot");
-const { startTradingBot: backtestTradingBot } = require("./backtest");
 const {
-  rsi,
-  ema,
-  sma,
-  macd,
-  bollingerbands,
-  isEmaCrossUp,
-  isEmaCrossDown,
-} = require("./indicators");
+  startTradingBot: backtestTradingBot,
+  seralizeMarketDataFiles,
+} = require("./backtest");
 
-const onUpdate = (
-  pair,
-  timeFrame,
-  candles,
-  closePrices,
-  price,
-  candle,
-  buyPosition,
-  sellPosition,
-  closePositions
-) => {
-  const rsiValue = rsi(closePrices);
-  const macdValue = macd(closePrices);
-  const crossUpValue = isEmaCrossUp(closePrices);
-  const crossDownValue = isEmaCrossDown(closePrices);
+//Strategy method
+const onUpdate = require("./strategy");
 
-  const buySignal = rsiValue < 30 && macdValue > 0 && crossUpValue;
-  const sellSignal = rsiValue > 70 && macdValue < 0 && crossDownValue;
-
-  if (buySignal) {
-    closePositions();
-    buyPosition(0.25);
-  }
-
-  if (sellSignal) {
-    closePositions();
-    sellPosition(0.25);
-  }
-};
-
+//Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
 
-if (!isBacktest) startTradingBot(onUpdate);
-else backtestTradingBot(onUpdate);
+//Generate backtest market info files
+const isGenerateBacktestMarketData =
+  process.argv.findIndex((r) => r === "--generatebacktestdata") > -1;
+
+if (isGenerateBacktestMarketData) {
+  //Generate backtest info
+  seralizeMarketDataFiles();
+} else if (isBacktest) {
+  // Run backtest emulator
+  backtestTradingBot(onUpdate);
+} else {
+  // Run socket bot
+  startTradingBot(onUpdate);
+}

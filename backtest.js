@@ -1,11 +1,5 @@
-const { getMarketCandles } = require("./tradingApi");
+const { loadSpotMarketCandles } = require("./tradingApi");
 const { getClosePrices } = require("./indicators");
-
-let marketCandles = new Map();
-
-const assets = {
-  USD: 1000,
-};
 
 async function trade(pair, price, side, percentage = 1) {
   const balance = assets.balance;
@@ -16,7 +10,12 @@ async function trade(pair, price, side, percentage = 1) {
 }
 
 async function startTradingBot(onUpdate) {
-  marketCandles = getMarketCandles();
+  const marketCandles = new Map();
+  deseralizeMarketDataFiles(marketCandles);
+
+  const assets = {
+    USD: 1000,
+  };
 
   //Starting assets
   console.log(assets);
@@ -53,4 +52,11 @@ async function startTradingBot(onUpdate) {
   console.log(assets);
 }
 
-module.exports = { startTradingBot };
+async function seralizeMarketDataFiles() {
+  const marketCandles = new Map();
+  await loadSpotMarketCandles(marketCandles);
+}
+
+async function deseralizeMarketDataFiles() {}
+
+module.exports = { startTradingBot, seralizeMarketDataFiles };
