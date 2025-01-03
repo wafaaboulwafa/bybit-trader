@@ -1,6 +1,6 @@
 const { RestClientV5 } = require("bybit-api");
 const { DateTime } = require("luxon");
-const pairs = require("../strategy/pairs");
+const pairs = require("../constants/config.json");
 
 //ByBit rest client
 const restClient = new RestClientV5({

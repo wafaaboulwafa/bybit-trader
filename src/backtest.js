@@ -11,7 +11,7 @@ async function trade(pair, price, side, percentage = 1) {
 
 async function startTradingBot(onUpdate) {
   const marketCandles = new Map();
-  deseralizeMarketDataFiles(marketCandles);
+  await deseralizeMarketDataFiles(marketCandles);
 
   const assets = {
     USD: 1000,
@@ -55,8 +55,15 @@ async function startTradingBot(onUpdate) {
 async function seralizeMarketDataFiles() {
   const marketCandles = new Map();
   await loadSpotMarketCandles(marketCandles);
+  const fs = require("fs");
+  const jsonString = JSON.stringify(marketCandles, null, 2);
+  const filePath = "./constants/backtestData.json";
+  await fs.writeFileSync(filePath, jsonString, {});
 }
 
-async function deseralizeMarketDataFiles() {}
+async function deseralizeMarketDataFiles(marketCandles) {
+  const marketData = require("../constants/backtestData.json");
+  marketCandles.set(marketData);
+}
 
 module.exports = { startTradingBot, seralizeMarketDataFiles };
