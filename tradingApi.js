@@ -8,11 +8,7 @@ const restClient = new RestClientV5({
   secret: process.env.BYBIT_API_SECRET,
 });
 
-function print(object) {
-  console.log(JSON.stringify(object, null, 4));
-}
-
-async function loadMarketCandles(candlesSet) {
+async function loadSpotMarketCandles(candlesSet) {
   const now = DateTime.now();
 
   for (let rec of pairs) {
@@ -55,7 +51,7 @@ async function getEquity() {
   return response;
 }
 
-async function cancelOrders(pair) {
+async function cancelSpotOrders(pair) {
   const response = await restClient
     .cancelAllOrders({
       category: "spot",
@@ -66,7 +62,7 @@ async function cancelOrders(pair) {
   return response;
 }
 
-async function postTrade(pair, price, side, qty) {
+async function postSpotTrade(pair, price, side, qty) {
   const response = await restClient
     .submitOrder({
       category: "spot",
@@ -104,7 +100,7 @@ async function getCoinBalance(coin) {
   return response;
 }
 
-async function getFeesRate(symbol, coin) {
+async function getSpotFeesRate(symbol, coin) {
   const response = await restClient
     .getFeeRate({
       category: "spot",
@@ -122,13 +118,13 @@ async function getFeesRate(symbol, coin) {
   return response;
 }
 
-async function postBuyOrder(pair, coin = "USDT", price, percentage = 1) {
-  await cancelOrders(pair);
+async function postBuySpotOrder(pair, coin = "USDT", price, percentage = 1) {
+  await cancelSpotOrders(pair);
   const balance = await getCoinBalance(coin);
   const fullQty = balance / price;
   const buyQty = fullQty * percentage;
 
-  const feesRate = await getFeesRate(pair, coin);
+  const feesRate = await getSpotFeesRate(pair, coin);
   const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
   const fees = buyQty * rate;
 
@@ -147,12 +143,12 @@ async function postBuyOrder(pair, coin = "USDT", price, percentage = 1) {
   return response;
 }
 
-async function postSellOrder(pair, coin, price, percentage = 1) {
-  await cancelOrders(pair);
+async function postSellSpotOrder(pair, coin, price, percentage = 1) {
+  await cancelSpotOrders(pair);
   const fullQty = await getCoinBalance(coin);
   const sellQty = fullQty * percentage;
 
-  const feesRate = await getFeesRate(pair, coin);
+  const feesRate = await getSpotFeesRate(pair, coin);
   const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
   const fees = sellQty * rate;
 
@@ -172,12 +168,12 @@ async function postSellOrder(pair, coin, price, percentage = 1) {
 }
 
 module.exports = {
-  loadMarketCandles,
-  postTrade,
-  postSellOrder,
-  postBuyOrder,
+  loadSpotMarketCandles,
+  postSpotTrade,
+  postSellSpotOrder,
+  postBuySpotOrder,
   getEquity,
-  cancelOrders,
+  cancelSpotOrders,
   getCoinBalance,
-  getFeesRate,
+  getSpotFeesRate,
 };

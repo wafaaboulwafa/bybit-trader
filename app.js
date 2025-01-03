@@ -18,8 +18,9 @@ const onUpdate = (
   closePrices,
   price,
   candle,
-  openPosition,
-  closePosition
+  buyPosition,
+  sellPosition,
+  closePositions
 ) => {
   const rsiValue = rsi(closePrices);
   const macdValue = macd(closePrices);
@@ -30,13 +31,13 @@ const onUpdate = (
   const sellSignal = rsiValue > 70 && macdValue < 0 && crossDownValue;
 
   if (buySignal) {
-    closePosition("Sell", 1);
-    openPosition("Buy", 0.25);
+    closePositions();
+    buyPosition(0.25);
   }
 
   if (sellSignal) {
-    closePosition("Buy", 1);
-    openPosition("Sell", 0.25);
+    closePositions();
+    sellPosition(0.25);
   }
 };
 

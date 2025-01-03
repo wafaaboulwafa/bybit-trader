@@ -6,9 +6,9 @@ const {
   notifyExecutionUpdate,
 } = require("./telgramClient");
 const {
-  loadMarketCandles,
-  postBuyOrder,
-  postSellOrder,
+  loadSpotMarketCandles,
+  postBuySpotOrder,
+  postSellSpotOrder,
 } = require("./tradingApi");
 const { getClosePrices } = require("./indicators");
 
@@ -24,12 +24,8 @@ const wsClient = new WebsocketClient({
 process.once("SIGINT", (code) => wsClient.closeAll(true));
 process.once("SIGTERM", (code) => wsClient.closeAll(true));
 
-function print(object) {
-  console.log(JSON.stringify(object, null, 4));
-}
-
 async function startTradingBot(onUpdate) {
-  await loadMarketCandles(marketCandles);
+  await loadSpotMarketCandles(marketCandles);
 
   wsClient.on("update", (data) => {
     if (data.topic.startsWith("kline.")) {
@@ -68,8 +64,8 @@ async function startTradingBot(onUpdate) {
 
           const closePrices = getClosePrices(pairData.candles);
 
-          const openPosition = (side, percentage) => {
-            postBuyOrder(
+          const buyPosition = (percentage) => {
+            postBuySpotOrder(
               pairInfo.pair,
               pairInfo.buyCoin,
               candle.closePrice,
@@ -77,12 +73,21 @@ async function startTradingBot(onUpdate) {
             );
           };
 
-          const closePosition = (side, percentage) => {
-            postSellOrder(
+          const sellPosition = (percentage) => {
+            postSellSpotOrder(
               pairInfo.pair,
               pairInfo.sellCoin,
               candle.closePrice,
               percentage
+            );
+          };
+
+          const closePositions = () => {
+            postSellSpotOrder(
+              pairInfo.pair,
+              pairInfo.sellCoin,
+              candle.closePrice,
+              1
             );
           };
 
@@ -94,8 +99,9 @@ async function startTradingBot(onUpdate) {
               closePrices,
               candle.closePrice,
               candle,
-              openPosition,
-              closePosition
+              buyPosition,
+              sellPosition,
+              closePositions
             );
           }
         }
