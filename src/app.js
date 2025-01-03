@@ -6,7 +6,7 @@ const {
 } = require("./backtest");
 
 //Strategy method
-const onUpdate = require("./strategy");
+const onUpdate = require("../strategy/strategy");
 
 //Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;

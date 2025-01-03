@@ -1,5 +1,5 @@
 const { WebsocketClient } = require("bybit-api");
-const pairs = require("./pairs");
+const pairs = require("../strategy/pairs");
 const {
   notifyWalletUpdate,
   notifyOrderUpdate,

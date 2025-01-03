@@ -2,11 +2,11 @@
   "name": "bybit-trader",
   "version": "1.0.0",
   "description": "ByBit Trader",
-  "main": "./app",
+  "main": "./src/app",
   "scripts": {
-    "start": "node app.js",
-    "backtest": "node app.js --backtest",
-    "generatebacktest": "node app.js --generatebacktestdata",
+    "start": "node ./src/app.js",
+    "backtest": "node ./src/app.js --backtest",
+    "generatebacktest": "node ./src/app.js --generatebacktestdata",
     "test": "node test.js"
   },
   "dependencies": {

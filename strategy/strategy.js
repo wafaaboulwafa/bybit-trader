@@ -6,7 +6,7 @@ const {
   bollingerbands,
   isEmaCrossUp,
   isEmaCrossDown,
-} = require("./indicators");
+} = require("../src/indicators");
 
 function strategy(
   pair,
