@@ -103,6 +103,11 @@ async function startTradingBot(onUpdate: OnUpdateType) {
             closePositions
           );
         }
+
+        //Close all positions at the end
+        const isLastCandle =
+          candles[candles.length - 1] === candle && index === 3;
+        if (isLastCandle) closePositions();
       }
     }
   }
