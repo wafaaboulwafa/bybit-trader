@@ -1,14 +1,16 @@
-const TelegramBot = require("node-telegram-bot-api");
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const chatId = process.env.TELEGRAM_CHAT_ID;
+import TelegramBot from "node-telegram-bot-api";
+
+const token = process.env.TELEGRAM_BOT_TOKEN || "";
+const chatId = process.env.TELEGRAM_CHAT_ID || "";
 
 const telegramBot = new TelegramBot(token, { polling: true });
 
 //Telegram send message
-const notifyTelegram = (message) => telegramBot.sendMessage(chatId, message);
+const notifyTelegram = (message: string) =>
+  telegramBot.sendMessage(chatId, message);
 
 //Send telegram message when wallet is updated
-function notifyWalletUpdate(rec) {
+export function notifyWalletUpdate(rec: any) {
   const message =
     "Wallet 💰" +
     "\r\n" +
@@ -16,11 +18,12 @@ function notifyWalletUpdate(rec) {
     parseFloat(rec.totalEquity).toFixed(2).toString() +
     "\r\n----------------\r\n";
   const assets = rec.coin.map(
-    (r) => r.coin + ": " + parseFloat(r.usdValue).toFixed(2).toString()
+    (r: any) => r.coin + ": " + parseFloat(r.usdValue).toFixed(2).toString()
   );
 
   const assetsMsg = assets.reduce(
-    (accumulator, currentValue) => accumulator + "\r\n" + currentValue,
+    (accumulator: string, currentValue: string) =>
+      accumulator + "\r\n" + currentValue,
     ""
   );
 
@@ -28,7 +31,7 @@ function notifyWalletUpdate(rec) {
 }
 
 //Send telegram message when order is created
-function notifyOrderUpdate(rec) {
+export function notifyOrderUpdate(rec: any) {
   const sideEmoji = rec.side.toLowerCase() === "sell" ? "🔻" : "🔺";
   const message =
     "Order [" +
@@ -45,7 +48,7 @@ function notifyOrderUpdate(rec) {
 }
 
 //Send telegram message when order is executed
-function notifyExecutionUpdate(rec) {
+export function notifyExecutionUpdate(rec: any) {
   const sideEmoji = rec.side.toLowerCase() === "sell" ? "🔻" : "🔺";
   const message =
     "Order Executed ✅\r\n----------------\r\n" +
@@ -65,10 +68,3 @@ function notifyExecutionUpdate(rec) {
 
   notifyTelegram(message);
 }
-
-module.exports = {
-  notifyTelegram,
-  notifyWalletUpdate,
-  notifyOrderUpdate,
-  notifyExecutionUpdate,
-};

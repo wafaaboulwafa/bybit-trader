@@ -1,4 +1,7 @@
-const {
+import { MACDOutput } from "technicalindicators/declarations/moving_averages/MACD";
+import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
+import { CandleType } from "./types";
+import {
   rsi,
   macd,
   sma,
@@ -6,67 +9,73 @@ const {
   bollingerbands,
   crossUp,
   crossDown,
-} = require("technicalindicators");
+} from "technicalindicators";
 
 //Get last rsi value
-function calcRsi(closePrices, period = 14) {
+export function calcRsi(closePrices: number[], period: number = 14): number {
   const values = rsi({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
 //get last exponential moving average value
-function calcEma(closePrices, period = 20) {
+export function calcEma(closePrices: number[], period: number = 20): number {
   const values = ema({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
 //get last simple moving average value
-function calcSma(closePrices, period = 20) {
+export function calcSma(closePrices: number[], period: number = 20): number {
   const values = sma({ values: closePrices, period });
   const last = values[values.length - 1];
   return last;
 }
 
 //Get last macd value
-function calcMacd(
-  closePrices,
-  fastPeriod = 12,
-  slowPeriod = 26,
-  signalPeriod = 9
-) {
+export function calcMacd(
+  closePrices: number[],
+  fastPeriod: number = 12,
+  slowPeriod: number = 26,
+  signalPeriod: number = 9
+): MACDOutput {
   const values = macd({
     values: closePrices,
     fastPeriod,
     slowPeriod,
     signalPeriod,
+    SimpleMAOscillator: false,
+    SimpleMASignal: false,
   });
   const last = values[values.length - 1];
   return last;
 }
 
 //Get last bollinger band value
-function calcbollingerbands(closePrices, stdDev = 2, period = 26) {
+export function calcbollingerbands(
+  closePrices: number[],
+  stdDev: number = 2,
+  period: number = 26
+): BollingerBandsOutput {
   const values = bollingerbands({ values: closePrices, period, stdDev });
   const last = values[values.length - 1];
   return last;
 }
 
 //Is two ema crossing up
-function isEmaCrossUp(
-  closePrices,
-  fastEmaPeriod = 3,
-  slowEmaPeriod = 4,
-  limit = 4
-) {
+export function isEmaCrossUp(
+  closePrices: number[],
+  fastEmaPeriod: number = 3,
+  slowEmaPeriod: number = 4,
+  limit: number = 4
+): boolean {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
-  fastLastElements = fastEmaValues.slice(
+  const fastLastElements = fastEmaValues.slice(
     Math.max(fastEmaValues.length - limit, 0)
   );
-  slowLastElements = slowEmaValues.slice(
+  const slowLastElements = slowEmaValues.slice(
     Math.max(slowEmaValues.length - limit, 0)
   );
 
@@ -77,19 +86,19 @@ function isEmaCrossUp(
 }
 
 //Is two ema crossing down
-function isEmaCrossDown(
-  closePrices,
-  fastEmaPeriod = 3,
-  slowEmaPeriod = 4,
-  limit = 4
-) {
+export function isEmaCrossDown(
+  closePrices: number[],
+  fastEmaPeriod: number = 3,
+  slowEmaPeriod: number = 4,
+  limit: number = 4
+): boolean {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
 
-  fastLastElements = fastEmaValues.slice(
+  const fastLastElements = fastEmaValues.slice(
     Math.max(fastEmaValues.length - limit, 0)
   );
-  slowLastElements = slowEmaValues.slice(
+  const slowLastElements = slowEmaValues.slice(
     Math.max(slowEmaValues.length - limit, 0)
   );
 
@@ -100,20 +109,9 @@ function isEmaCrossDown(
 }
 
 //Convert candles set to clsoing price array
-function getClosePrices(candles) {
+export function getClosePrices(candles: CandleType[]): number[] {
   const canndlesArray = Array.from(candles.values());
-  canndlesArray.sort((a, b) => a.startTime - b.startTime);
+  canndlesArray.sort((a, b) => a.key - b.key);
   const closePrices = canndlesArray.map((r) => r.closePrice);
   return closePrices;
 }
-
-module.exports = {
-  rsi: calcRsi,
-  ema: calcEma,
-  sma: calcSma,
-  macd: calcMacd,
-  bollingerbands: calcbollingerbands,
-  isEmaCrossUp,
-  isEmaCrossDown,
-  getClosePrices,
-};

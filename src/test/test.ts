@@ -1,15 +1,14 @@
 require("dotenv").config();
-const {
+import {
   getEquity,
-  getMarketCandles,
-  postTrade,
-  cancelOrders,
+  loadSpotMarketCandles,
+  cancelSpotOrders,
   getCoinBalance,
-  postBuyOrder,
-  postSellOrder,
-  getFeesRate,
-} = require("./tradingApi");
-const { getClosePrices } = require("./indicators");
+  postBuySpotOrder,
+  postSellSpotOrder,
+  getSpotFeesRate,
+} from "./../service/tradingApi";
+import { getClosePrices } from "./../service/indicators";
 
 //getEquity().then((r) => console.log(r));
 

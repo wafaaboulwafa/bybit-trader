@@ -2,12 +2,12 @@
   "name": "bybit-trader",
   "version": "1.0.0",
   "description": "ByBit Trader",
-  "main": "./src/app",
   "scripts": {
-    "start": "node ./src/app.js",
-    "backtest": "node ./src/app.js --backtest",
-    "generatebacktest": "node ./src/app.js --generatebacktestdata",
-    "test": "node test.js"
+    "start": "ts-node ./src/service/app.ts",
+    "backtest": "ts-node ./src/service/app.ts --backtest",
+    "generatebacktest": "ts-node ./src/service/app.ts --generatebacktestdata",
+    "test": "ts-node ./src/service/test.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -19,6 +19,10 @@
     "technicalindicators": "^3.1.0"
   },
   "devDependencies": {
-    "@types/node-telegram-bot-api": "^0.64.7"
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^22.10.5",
+    "@types/node-telegram-bot-api": "^0.64.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
   }
 }

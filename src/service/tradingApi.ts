@@ -1,38 +1,45 @@
-const { RestClientV5 } = require("bybit-api");
-const { DateTime } = require("luxon");
-const pairs = require("../constants/config.json");
+import { CandleType, MarketDataType } from "./types";
+import { KlineIntervalV3, RestClientV5 } from "bybit-api";
+import { DateTime } from "luxon";
+const pairs = require("../../constants/config.json");
 
 //ByBit rest client
 const restClient = new RestClientV5({
-  testnet: process.env.BYBIT_API_TESTNET.toLowerCase() == "true",
+  testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
   key: process.env.BYBIT_API_KEY,
   secret: process.env.BYBIT_API_SECRET,
 });
 
-async function loadPairSpotMarketCandles(
-  candlesSet,
-  pair,
-  timeFrame = 1,
-  start = null,
-  end = null
+export async function loadPairSpotMarketCandles(
+  candlesSet: Map<number, CandleType>,
+  pair: string,
+  timeFrame: number = 1,
+  start: Date | null = null,
+  end: Date | null = null
 ) {
   candlesSet.clear();
 
-  let endDate = end === null ? DateTime.now() : null;
-  let startDate = start === null ? endDate.minus({ years: 2 }) : start;
+  let endDate: DateTime | null = end === null ? DateTime.now() : null;
+  let startDate: DateTime | null =
+    start === null && endDate !== null
+      ? endDate.minus({ years: 2 })
+      : start !== null
+      ? DateTime.fromJSDate(start)
+      : null;
+
   let moreData = true;
 
   while (moreData) {
-    pairResponse = await restClient.getKline({
+    let pairResponse = await restClient.getKline({
       category: "spot",
       symbol: pair,
-      interval: timeFrame,
-      end: startDate.valueOf(),
-      start: endDate.valueOf(),
+      interval: timeFrame.toString() as KlineIntervalV3,
+      end: (startDate && startDate.valueOf()) || 0,
+      start: (endDate && endDate.valueOf()) || 0,
       limit: 1000,
     });
 
-    const candles = pairResponse.result.list.map((r) => ({
+    const candles: CandleType[] = pairResponse.result.list.map((r: any) => ({
       key: r[0],
       startTime: new Date(parseInt(r[0])),
       openPrice: parseFloat(r[1]),
@@ -41,23 +48,25 @@ async function loadPairSpotMarketCandles(
       closePrice: parseFloat(r[4]),
     }));
 
-    let maxCandleDate = 0;
-    for (let candle in candles) {
+    let maxCandleDate: number = 0;
+    for (let candle of candles) {
       candlesSet.set(candle.key, candle);
       if (candle.key > maxCandleDate) maxCandleDate = candle.key;
     }
 
-    startDate = DateTime.fromJSDate(maxDate);
-    moreData = endDate.diff(startDate, "days").days > 2;
+    startDate = DateTime.fromMillis(maxCandleDate);
+    moreData = (endDate && endDate.diff(startDate, "days").days > 2) || false;
   }
 }
 
 //Get candles history for spot pair
-async function loadSpotMarketCandles(candlesSet) {
+export async function loadSpotMarketCandles(
+  candlesSet: Map<string, MarketDataType>
+) {
   const now = DateTime.now();
 
   for (let rec of pairs) {
-    pairResponse = await restClient.getKline({
+    let pairResponse = await restClient.getKline({
       category: "spot",
       symbol: rec.pair,
       interval: rec.time,
@@ -66,7 +75,7 @@ async function loadSpotMarketCandles(candlesSet) {
       limit: 1000,
     });
 
-    const candles = pairResponse.result.list.map((r) => ({
+    const candles: CandleType[] = pairResponse.result.list.map((r: any) => ({
       key: r[0],
       startTime: new Date(parseInt(r[0])),
       openPrice: parseFloat(r[1]),
@@ -84,13 +93,13 @@ async function loadSpotMarketCandles(candlesSet) {
 }
 
 //Get equity total value for unified account
-async function getEquity() {
+export async function getEquity() {
   const response = await restClient
     .getWalletBalance({
       accountType: "UNIFIED",
     })
-    .then((r) => {
-      const coins = r.result.list.find((r) => (accountType = "UNIFIED"));
+    .then((r: any) => {
+      const coins = r.result.list.find((x: any) => (x.accountType = "UNIFIED"));
       if (coins) return coins.totalEquity;
       return 0;
     });
@@ -98,29 +107,29 @@ async function getEquity() {
 }
 
 //Cancel all spot pending orders for a pair
-async function cancelSpotOrders(pair) {
+export async function cancelSpotOrders(pair: string) {
   const response = await restClient
     .cancelAllOrders({
       category: "spot",
       symbol: pair,
     })
-    .then((r) => r.result.success);
+    .then((r: any) => r.result.success);
 
   return response;
 }
 
 //Get coin balance for unified account
-async function getCoinBalance(coin) {
+export async function getCoinBalance(coin: string) {
   const response = await restClient
     .getWalletBalance({
       accountType: "UNIFIED",
     })
-    .then((r) => {
-      const coins = r.result.list.find((r) => (accountType = "UNIFIED"));
+    .then((r: any) => {
+      const coins = r.result.list.find((n: any) => (n.accountType = "UNIFIED"));
 
       if (coins && coins.coin.length > 0) {
         const coinRec = coins.coin.find(
-          (n) => n.coin.toLowerCase() === coin.toLowerCase()
+          (n: any) => n.coin.toLowerCase() === coin.toLowerCase()
         );
 
         if (coinRec) return coinRec.equity;
@@ -133,14 +142,14 @@ async function getCoinBalance(coin) {
 }
 
 //Get spot fees rate for a coin
-async function getSpotFeesRate(symbol, coin) {
+export async function getSpotFeesRate(symbol: string, coin: string) {
   const response = await restClient
     .getFeeRate({
       category: "spot",
       symbol,
       baseCoin: coin,
     })
-    .then((r) => {
+    .then((r: any) => {
       const feesRec = r.result.list[0];
       return {
         takerFeeRate: parseFloat(feesRec?.takerFeeRate || 0),
@@ -152,7 +161,12 @@ async function getSpotFeesRate(symbol, coin) {
 }
 
 //Create a spot buy order
-async function postBuySpotOrder(pair, coin = "USDT", price, percentage = 1) {
+export async function postBuySpotOrder(
+  pair: string,
+  coin: string = "USDT",
+  price: number,
+  percentage: number = 1
+) {
   await cancelSpotOrders(pair);
   const balance = await getCoinBalance(coin);
   const fullQty = balance / price;
@@ -167,18 +181,23 @@ async function postBuySpotOrder(pair, coin = "USDT", price, percentage = 1) {
       category: "spot",
       symbol: pair,
       orderType: price > 0 ? "Limit" : "Market",
-      price: price > 0 ? price.toString() : null,
+      price: price > 0 ? price.toString() : undefined,
       qty: (buyQty - fees).toFixed(6).toString(),
       side: "Buy",
       timeInForce: "GTC",
     })
-    .then((r) => r.result.orderId);
+    .then((r: any) => r.result.orderId);
 
   return response;
 }
 
 //Create a spot sell order
-async function postSellSpotOrder(pair, coin, price, percentage = 1) {
+export async function postSellSpotOrder(
+  pair: string,
+  coin: string,
+  price: number,
+  percentage: number = 1
+) {
   await cancelSpotOrders(pair);
   const fullQty = await getCoinBalance(coin);
   const sellQty = fullQty * percentage;
@@ -192,23 +211,12 @@ async function postSellSpotOrder(pair, coin, price, percentage = 1) {
       category: "spot",
       symbol: pair,
       orderType: price > 0 ? "Limit" : "Market",
-      price: price > 0 ? price.toString() : null,
+      price: price > 0 ? price.toString() : undefined,
       qty: (sellQty - fees).toFixed(6).toString(),
       side: "Sell",
       timeInForce: "GTC",
     })
-    .then((r) => r.result.orderId);
+    .then((r: any) => r.result.orderId);
 
   return response;
 }
-
-module.exports = {
-  loadPairSpotMarketCandles,
-  loadSpotMarketCandles,
-  postSellSpotOrder,
-  postBuySpotOrder,
-  getEquity,
-  cancelSpotOrders,
-  getCoinBalance,
-  getSpotFeesRate,
-};

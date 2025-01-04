@@ -1,21 +1,22 @@
-const { WebsocketClient } = require("bybit-api");
-const pairs = require("../constants/config.json");
-const {
+import { OnUpdateType } from "./types";
+import { WebsocketClient } from "bybit-api";
+import {
   notifyWalletUpdate,
   notifyOrderUpdate,
   notifyExecutionUpdate,
-} = require("./telgramClient");
-const {
+} from "./telgramClient";
+import {
   loadSpotMarketCandles,
   postBuySpotOrder,
   postSellSpotOrder,
-} = require("./tradingApi");
-const { getClosePrices } = require("./indicators");
+} from "./tradingApi";
+import { getClosePrices } from "./indicators";
+const pairs = require("../../constants/config.json");
 
 //ByBit Socket client
 const wsClient = new WebsocketClient({
   market: "v5",
-  testnet: process.env.BYBIT_API_TESTNET.toLowerCase() == "true",
+  testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
   key: process.env.BYBIT_API_KEY,
   secret: process.env.BYBIT_API_SECRET,
 });
@@ -24,25 +25,24 @@ const wsClient = new WebsocketClient({
 process.once("SIGINT", (code) => wsClient.closeAll(true));
 process.once("SIGTERM", (code) => wsClient.closeAll(true));
 
-async function startTradingBot(onUpdate) {
+export default async function startTradingBot(onUpdate: OnUpdateType) {
   //Hold all market candles in memory
   const marketCandles = new Map();
   //Load previous candles
   await loadSpotMarketCandles(marketCandles);
 
-  wsClient.on("update", (data) => {
+  wsClient.on("update", (data: any) => {
     //On price update
     if (data.topic.startsWith("kline.")) {
       //Candle topic example: kline.5.BTCUSDT
       const reg = /^kline\.(.+)\.(.+)$/gi;
       const matches = reg.exec(data.topic);
-
-      if (matches.length > 2) {
+      if (matches && matches.length > 2) {
         const pairName = matches[2].toUpperCase();
-        const timeFrame = matches[1];
+        const timeFrame: number = parseInt(matches[1]);
         const pairKey = pairName + "." + timeFrame;
         //Find if we are allowed to trade this pair
-        const pairInfo = pairs.find((r) => r.pair === pairName);
+        const pairInfo = pairs.find((r: any) => r.pair === pairName);
 
         if (!pairInfo) return;
 
@@ -73,7 +73,7 @@ async function startTradingBot(onUpdate) {
           const closePrices = getClosePrices(pairData.candles);
 
           //Create buy position
-          const buyPosition = (percentage) => {
+          const buyPosition = (percentage: number) => {
             postBuySpotOrder(
               pairInfo.pair,
               pairInfo.buyCoin,
@@ -83,7 +83,7 @@ async function startTradingBot(onUpdate) {
           };
 
           //Create sell position
-          const sellPosition = (percentage) => {
+          const sellPosition = (percentage: number) => {
             postSellSpotOrder(
               pairInfo.pair,
               pairInfo.sellCoin,
@@ -131,8 +131,6 @@ async function startTradingBot(onUpdate) {
   });
 
   //Create socket subscriptions
-  const topics = pairs.map((r) => "kline." + r.time + "." + r.pair);
+  const topics = pairs.map((r: any) => "kline." + r.time + "." + r.pair);
   wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
 }
-
-module.exports = { startTradingBot };

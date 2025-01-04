@@ -1,12 +1,9 @@
 require("dotenv").config();
-const { startTradingBot } = require("./tradingBot");
-const {
-  startTradingBot: backtestTradingBot,
-  seralizeMarketDataFiles,
-} = require("./backtest");
+import startTradingBot from "./tradingBot";
+//import startTradingBot: backtestTradingBot , { seralizeMarketDataFiles } from "./backtest";
 
 //Strategy method
-const onUpdate = require("../strategy/strategy");
+import strategy from "../strategy/strategy";
 
 //Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
@@ -15,6 +12,10 @@ const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
 const isGenerateBacktestMarketData =
   process.argv.findIndex((r) => r === "--generatebacktestdata") > -1;
 
+// Run socket bot
+startTradingBot(strategy);
+
+/*
 if (isGenerateBacktestMarketData) {
   //Generate backtest info
   seralizeMarketDataFiles();
@@ -25,3 +26,4 @@ if (isGenerateBacktestMarketData) {
   // Run socket bot
   startTradingBot(onUpdate);
 }
+*/
