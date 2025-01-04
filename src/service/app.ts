@@ -3,7 +3,7 @@ import startTradingBot from "./tradingBot";
 //import startTradingBot: backtestTradingBot , { seralizeMarketDataFiles } from "./backtest";
 
 //Strategy method
-import strategy from "../strategy/strategy";
+import RsiEmaCrossStrategy from "../strategy/RsiEMACross";
 
 //Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
@@ -13,7 +13,7 @@ const isGenerateBacktestMarketData =
   process.argv.findIndex((r) => r === "--generatebacktestdata") > -1;
 
 // Run socket bot
-startTradingBot(strategy);
+startTradingBot(RsiEmaCrossStrategy);
 
 /*
 if (isGenerateBacktestMarketData) {
