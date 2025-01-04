@@ -3,7 +3,7 @@ import startTradingBot from "./tradingBot";
 //import startTradingBot: backtestTradingBot , { seralizeMarketDataFiles } from "./backtest";
 
 //Strategy method
-import RsiEmaCrossStrategy from "../strategy/RsiEMACross";
+import RsiEmaCrossStrategy from "../strategies/RsiEMACross";
 
 //Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
