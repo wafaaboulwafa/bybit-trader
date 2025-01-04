@@ -1,5 +1,7 @@
-const { loadSpotMarketCandles } = require("./tradingApi");
+const { loadPairSpotMarketCandles } = require("./tradingApi");
 const { getClosePrices } = require("./indicators");
+const { DateTime } = require("luxon");
+const fs = require("fs");
 
 async function trade(pair, price, side, percentage = 1) {
   const balance = assets.balance;
@@ -53,11 +55,19 @@ async function startTradingBot(onUpdate) {
 }
 
 async function seralizeMarketDataFiles() {
-  const marketCandles = new Map();
-  await loadSpotMarketCandles(marketCandles);
-  const fs = require("fs");
-  const jsonString = JSON.stringify(marketCandles, null, 2);
+  const data = [];
+
+  for (const pair of pairs) {
+    const candlesSet = new Map();
+    await loadPairSpotMarketCandles(candlesSet);
+    candles = Array.from(candlesSet.values());
+    data.push({ pair, candles });
+  }
+
   const filePath = "./constants/backtestData.json";
+
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  const jsonString = JSON.stringify(data, null, 2);
   await fs.writeFileSync(filePath, jsonString, {});
 }
 

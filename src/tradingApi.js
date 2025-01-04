@@ -9,6 +9,49 @@ const restClient = new RestClientV5({
   secret: process.env.BYBIT_API_SECRET,
 });
 
+async function loadPairSpotMarketCandles(
+  candlesSet,
+  pair,
+  timeFrame = 1,
+  start = null,
+  end = null
+) {
+  candlesSet.clear();
+
+  let endDate = end === null ? DateTime.now() : null;
+  let startDate = start === null ? endDate.minus({ years: 2 }) : start;
+  let moreData = true;
+
+  while (moreData) {
+    pairResponse = await restClient.getKline({
+      category: "spot",
+      symbol: pair,
+      interval: timeFrame,
+      end: startDate.valueOf(),
+      start: endDate.valueOf(),
+      limit: 1000,
+    });
+
+    const candles = pairResponse.result.list.map((r) => ({
+      key: r[0],
+      startTime: new Date(parseInt(r[0])),
+      openPrice: parseFloat(r[1]),
+      highPrice: parseFloat(r[2]),
+      lowPrice: parseFloat(r[3]),
+      closePrice: parseFloat(r[4]),
+    }));
+
+    let maxCandleDate = 0;
+    for (let candle in candles) {
+      candlesSet.set(candle.key, candle);
+      if (candle.key > maxCandleDate) maxCandleDate = candle.key;
+    }
+
+    startDate = DateTime.fromJSDate(maxDate);
+    moreData = endDate.diff(startDate, "days").days > 2;
+  }
+}
+
 //Get candles history for spot pair
 async function loadSpotMarketCandles(candlesSet) {
   const now = DateTime.now();
@@ -160,6 +203,7 @@ async function postSellSpotOrder(pair, coin, price, percentage = 1) {
 }
 
 module.exports = {
+  loadPairSpotMarketCandles,
   loadSpotMarketCandles,
   postSellSpotOrder,
   postBuySpotOrder,
