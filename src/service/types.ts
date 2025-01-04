@@ -24,3 +24,10 @@ export type OnUpdateType = (
   sellPosition: (percentage: number) => void,
   closePositions: () => void
 ) => void;
+
+export type PairConfigType = {
+  pairName: string;
+  timeFrame: number;
+  buyCoin: string;
+  sellCoin: string;
+};

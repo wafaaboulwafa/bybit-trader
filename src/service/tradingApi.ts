@@ -1,7 +1,8 @@
-import { CandleType, MarketDataType } from "./types";
+import { CandleType, MarketDataType, PairConfigType } from "./types";
 import { KlineIntervalV3, RestClientV5 } from "bybit-api";
 import { DateTime } from "luxon";
-const pairs = require("../../constants/config.json");
+
+const pairs: PairConfigType[] = require("../../constants/config.json");
 
 //ByBit rest client
 const restClient = new RestClientV5({
@@ -68,8 +69,8 @@ export async function loadSpotMarketCandles(
   for (let rec of pairs) {
     let pairResponse = await restClient.getKline({
       category: "spot",
-      symbol: rec.pair,
-      interval: rec.time,
+      symbol: rec.pairName,
+      interval: rec.timeFrame.toString() as KlineIntervalV3,
       end: now.valueOf(),
       start: now.minus({ months: 1 }).valueOf(),
       limit: 1000,
@@ -84,9 +85,9 @@ export async function loadSpotMarketCandles(
       closePrice: parseFloat(r[4]),
     }));
 
-    candlesSet.set(rec.pair.toUpperCase() + "." + rec.time, {
-      name: rec.pair.toUpperCase(),
-      time: rec.time,
+    candlesSet.set(rec.pairName.toUpperCase() + "." + rec.timeFrame, {
+      name: rec.pairName.toUpperCase(),
+      time: rec.timeFrame,
       candles: new Map(candles.map((r) => [r.key, r])),
     });
   }

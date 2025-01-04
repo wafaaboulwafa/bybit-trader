@@ -1,9 +1,12 @@
 require("dotenv").config();
+
 import startTradingBot from "./tradingBot";
-//import startTradingBot: backtestTradingBot , { seralizeMarketDataFiles } from "./backtest";
+import backtestTradingBot, { seralizeMarketDataFiles } from "./backtest";
 
 //Strategy method
 import RsiEmaCrossStrategy from "../strategies/RsiEMACross";
+
+const strategy = RsiEmaCrossStrategy;
 
 //Run backtest
 const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
@@ -12,18 +15,13 @@ const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
 const isGenerateBacktestMarketData =
   process.argv.findIndex((r) => r === "--generatebacktestdata") > -1;
 
-// Run socket bot
-startTradingBot(RsiEmaCrossStrategy);
-
-/*
 if (isGenerateBacktestMarketData) {
   //Generate backtest info
   seralizeMarketDataFiles();
 } else if (isBacktest) {
   // Run backtest emulator
-  backtestTradingBot(onUpdate);
+  backtestTradingBot(strategy);
 } else {
   // Run socket bot
-  startTradingBot(onUpdate);
+  startTradingBot(strategy);
 }
-*/

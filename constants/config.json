@@ -1,4 +1,14 @@
 [
-  { "pair": "XRPUSDT", "time": 1, "buyCoin": "USDT", "sellCoin": "XRP" },
-  { "pair": "BTCUSDT", "time": 1, "buyCoin": "USDT", "sellCoin": "XRP" }
+  {
+    "pairName": "XRPUSDT",
+    "timeFrame": 1,
+    "buyCoin": "USDT",
+    "sellCoin": "XRP"
+  },
+  {
+    "pairName": "BTCUSDT",
+    "timeFrame": 1,
+    "buyCoin": "USDT",
+    "sellCoin": "XRP"
+  }
 ]

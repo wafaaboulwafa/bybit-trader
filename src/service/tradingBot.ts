@@ -1,4 +1,9 @@
-import { OnUpdateType } from "./types";
+import {
+  CandleType,
+  MarketDataType,
+  OnUpdateType,
+  PairConfigType,
+} from "./types";
 import { WebsocketClient } from "bybit-api";
 import {
   notifyWalletUpdate,
@@ -11,7 +16,7 @@ import {
   postSellSpotOrder,
 } from "./tradingApi";
 import { getClosePrices } from "./indicators";
-const pairs = require("../../constants/config.json");
+const pairs: PairConfigType[] = require("../../constants/config.json");
 
 //ByBit Socket client
 const wsClient = new WebsocketClient({
@@ -27,7 +32,7 @@ process.once("SIGTERM", (code) => wsClient.closeAll(true));
 
 export default async function startTradingBot(onUpdate: OnUpdateType) {
   //Hold all market candles in memory
-  const marketCandles = new Map();
+  const marketCandles = new Map<string, MarketDataType>();
   //Load previous candles
   await loadSpotMarketCandles(marketCandles);
 
@@ -55,6 +60,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
         }
 
         const pairData = marketCandles.get(pairKey);
+        if (!pairData) return;
 
         for (let r of data.data) {
           //Create candle
@@ -75,7 +81,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
           //Create buy position
           const buyPosition = (percentage: number) => {
             postBuySpotOrder(
-              pairInfo.pair,
+              pairInfo.pairName,
               pairInfo.buyCoin,
               candle.closePrice,
               percentage
@@ -85,7 +91,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
           //Create sell position
           const sellPosition = (percentage: number) => {
             postSellSpotOrder(
-              pairInfo.pair,
+              pairInfo.pairName,
               pairInfo.sellCoin,
               candle.closePrice,
               percentage
@@ -95,19 +101,21 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
           //Liquidate all positions
           const closePositions = () => {
             postSellSpotOrder(
-              pairInfo.pair,
+              pairInfo.pairName,
               pairInfo.sellCoin,
               candle.closePrice,
               1
             );
           };
 
+          const candles: CandleType[] = Array.from(pairData.candles.values());
+
           //Call strategy method
           if (onUpdate) {
             onUpdate(
               pairName,
               timeFrame,
-              pairData.candles,
+              candles,
               closePrices,
               candle.closePrice,
               candle,

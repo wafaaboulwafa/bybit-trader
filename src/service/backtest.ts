@@ -1,48 +1,62 @@
 import { loadPairSpotMarketCandles } from "./tradingApi";
-import { getClosePrices } from "./indicators";
-import { DateTime } from "luxon";
 import fs from "fs";
-import { MarketDataType, OnUpdateType } from "./types";
+import {
+  CandleType,
+  MarketDataType,
+  OnUpdateType,
+  PairConfigType,
+} from "./types";
 
-export async function startTradingBot(onUpdate: OnUpdateType) {
-  const marketCandles:MarketDataType; 
+const pairs: PairConfigType[] = require("../../constants/config.json");
+
+const startBalance = 1000;
+
+async function startTradingBot(onUpdate: OnUpdateType) {
+  const marketCandles = new Map<string, MarketDataType>();
   await deseralizeMarketDataFiles(marketCandles);
 
   const assets = {
-    USD: 1000,
+    USD: startBalance,
   };
 
   //Starting assets
   console.log(assets);
 
-  for (let pair of marketCandles) {
-    const candles = candles;
+  for (let pair of pairs) {
+    const marketInfo = marketCandles.get(pair.pairName + "." + pair.timeFrame);
 
-    for (let candle of candles) {
-        const closePrices = getClosePrices(candles);
+    const candles =
+      (marketInfo?.candles && Array.from(marketInfo?.candles?.values())) || [];
+    candles.sort((a, b) => b.key - a.key);
+    const accumulatedCandles: CandleType[] = [];
+    const accumulatedClosePrices: number[] = [];
 
-        const buyPosition = (percentage: number) => {};
+    for (const candle of candles) {
+      accumulatedCandles.push(candle);
+      accumulatedClosePrices.push(candle.closePrice);
 
-        const sellPosition = (percentage: number) => {
-          //
-        };
+      const buyPosition = (percentage: number) => {};
 
-        const closePositions = () => {
-          //
-        };
+      const sellPosition = (percentage: number) => {
+        //
+      };
 
-        if (onUpdate) {
-          onUpdate(
-          pairName: string,
-          timeFrame: number,
-          candles: CandleType[],
-          closePrices: number[],
-          closePrice: number,
-          candle: CandleType,
+      const closePositions = () => {
+        //
+      };
+
+      if (onUpdate) {
+        onUpdate(
+          pair.pairName,
+          pair.timeFrame,
+          accumulatedCandles,
+          accumulatedClosePrices,
+          candle.closePrice,
+          candle,
           buyPosition,
           sellPosition,
           closePositions
-                );
+        );
       }
     }
   }
@@ -51,24 +65,44 @@ export async function startTradingBot(onUpdate: OnUpdateType) {
   console.log(assets);
 }
 
+const backtestFilePath = "./../../constants/backtestData.json";
+
 export async function seralizeMarketDataFiles() {
   const data = [];
 
   for (const pair of pairs) {
-    const candlesSet = new Map();
-    await loadPairSpotMarketCandles(candlesSet);
-    candles = Array.from(candlesSet.values());
-    data.push({ pair, candles });
+    const candlesSet = new Map<number, CandleType>();
+    await loadPairSpotMarketCandles(candlesSet, pair.pairName, pair.timeFrame);
+    const candles = Array.from(candlesSet.values());
+    data.push({ pair: pair.pairName, time: pair.timeFrame, candles });
   }
 
-  const filePath = "./constants/backtestData.json";
-
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  if (fs.existsSync(backtestFilePath)) fs.unlinkSync(backtestFilePath);
   const jsonString = JSON.stringify(data, null, 2);
-  await fs.writeFileSync(filePath, jsonString, {});
+  await fs.writeFileSync(backtestFilePath, jsonString, {});
 }
 
-async function deseralizeMarketDataFiles(marketCandles:MarketDataType) {
-  const marketData = require("../../constants/backtestData.json");
-  marketCandles.set(marketData);
+async function deseralizeMarketDataFiles(
+  marketCandles: Map<string, MarketDataType>
+) {
+  if (!fs.existsSync(backtestFilePath)) return;
+
+  marketCandles.clear();
+  const fileContent = require(backtestFilePath);
+
+  for (let pair of fileContent.entries()) {
+    const marketInfo: MarketDataType = {
+      name: pair?.name,
+      time: parseInt(pair?.time),
+      candles: new Map<number, CandleType>(),
+    };
+
+    for (let candle of pair.candles.entries()) {
+      marketInfo.candles.set(candle.key, candle);
+    }
+
+    marketCandles.set(marketInfo.name, marketInfo);
+  }
 }
+
+export default startTradingBot;
