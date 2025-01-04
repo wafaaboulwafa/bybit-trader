@@ -8,6 +8,7 @@ import {
 } from "./types";
 
 const pairs: PairConfigType[] = require("../../constants/config.json");
+const backtestFilePath = "./../../constants/backtestData.json";
 
 const startBalance = 1000;
 
@@ -15,12 +16,17 @@ async function startTradingBot(onUpdate: OnUpdateType) {
   const marketCandles = new Map<string, MarketDataType>();
   await deseralizeMarketDataFiles(marketCandles);
 
-  const assets = {
-    USD: startBalance,
+  const coinStartBalance = startBalance;
+
+  const wallet = {
+    sellCoinBalanace: coinStartBalance,
+    buyCoinBalance: 0,
   };
+  let buyTrades = 0;
+  let sellTrades = 0;
 
   //Starting assets
-  console.log(assets);
+  console.log("Start wallet", wallet);
 
   for (let pair of pairs) {
     const marketInfo = marketCandles.get(pair.pairName + "." + pair.timeFrame);
@@ -28,6 +34,7 @@ async function startTradingBot(onUpdate: OnUpdateType) {
     const candles =
       (marketInfo?.candles && Array.from(marketInfo?.candles?.values())) || [];
     candles.sort((a, b) => b.key - a.key);
+
     const accumulatedCandles: CandleType[] = [];
     const accumulatedClosePrices: number[] = [];
 
@@ -35,37 +42,80 @@ async function startTradingBot(onUpdate: OnUpdateType) {
       accumulatedCandles.push(candle);
       accumulatedClosePrices.push(candle.closePrice);
 
-      const buyPosition = (percentage: number) => {};
+      const ohlc = [
+        candle.openPrice,
+        candle.highPrice,
+        candle.lowPrice,
+        candle.closePrice,
+      ];
 
-      const sellPosition = (percentage: number) => {
-        //
+      const printCandle: CandleType = {
+        ...candle,
+        lowPrice: candle.openPrice,
+        highPrice: candle.openPrice,
+        closePrice: candle.openPrice,
       };
 
-      const closePositions = () => {
-        //
-      };
+      for (const [index, price] of ohlc.entries()) {
+        if (index === 1) printCandle.highPrice = price;
+        else if (index === 2) printCandle.lowPrice = price;
+        else if (index === 3) printCandle.closePrice = price;
 
-      if (onUpdate) {
-        onUpdate(
-          pair.pairName,
-          pair.timeFrame,
-          accumulatedCandles,
-          accumulatedClosePrices,
-          candle.closePrice,
-          candle,
-          buyPosition,
-          sellPosition,
-          closePositions
-        );
+        const buyPosition = (percentage: number) => {
+          if (wallet.buyCoinBalance > 0) {
+            const buyAmount = wallet.buyCoinBalance * percentage;
+            wallet.buyCoinBalance = wallet.buyCoinBalance - buyAmount;
+            const qty = buyAmount / price;
+            wallet.sellCoinBalanace = wallet.sellCoinBalanace + qty;
+
+            const message = `Buy transaction: Price: ${price}, Qty: ${qty}`;
+            console.log(message);
+            buyTrades++;
+          }
+        };
+
+        const sellPosition = (percentage: number) => {
+          if (wallet.sellCoinBalanace > 0) {
+            const sellAmount = wallet.sellCoinBalanace * percentage;
+            wallet.sellCoinBalanace = wallet.sellCoinBalanace - sellAmount;
+            wallet.buyCoinBalance = wallet.buyCoinBalance + sellAmount * price;
+
+            const message = `Sell transaction: Price: ${price}, Qty: ${sellAmount}`;
+            console.log(message);
+            sellTrades++;
+          }
+        };
+
+        const closePositions = () => {
+          sellPosition(1);
+        };
+
+        if (onUpdate) {
+          onUpdate(
+            pair.pairName,
+            pair.timeFrame,
+            accumulatedCandles,
+            accumulatedClosePrices,
+            price,
+            printCandle,
+            buyPosition,
+            sellPosition,
+            closePositions
+          );
+        }
       }
     }
   }
 
-  //End assets
-  console.log(assets);
+  //Print backtest result
+  console.log("Wallet:", wallet);
+  console.log("Sell trades", sellTrades);
+  console.log("Buy trades", buyTrades);
+  console.log(
+    "Balance growth",
+    Math.round((wallet.sellCoinBalanace * 100) / coinStartBalance) + " %"
+  );
 }
-
-const backtestFilePath = "./../../constants/backtestData.json";
 
 export async function seralizeMarketDataFiles() {
   const data = [];
