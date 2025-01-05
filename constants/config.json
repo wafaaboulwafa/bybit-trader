@@ -1,14 +1,8 @@
 [
   {
-    "pairName": "PAXGUSDT",
+    "pairName": "DOGEUSDT",
     "timeFrame": 1,
     "buyCoin": "USDT",
-    "sellCoin": "PAXG"
-  },
-  {
-    "pairName": "BTCUSDT",
-    "timeFrame": 1,
-    "buyCoin": "USDT",
-    "sellCoin": "BTC"
+    "sellCoin": "DOGE"
   }
 ]
