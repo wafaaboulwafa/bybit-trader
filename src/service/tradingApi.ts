@@ -1,5 +1,10 @@
 import { CandleType, MarketDataType, PairConfigType } from "./types";
-import { KlineIntervalV3, RestClientV5 } from "bybit-api";
+import {
+  FeeRateV5,
+  KlineIntervalV3,
+  RestClientV5,
+  SpotInstrumentInfoV5,
+} from "bybit-api";
 import { DateTime } from "luxon";
 
 const pairs: PairConfigType[] = require("../../constants/config.json");
@@ -130,38 +135,52 @@ export async function loadSpotMarketCandles(
 }
 
 //Get equity total value for unified account
-export async function getEquity() {
-  const response = await restClient
+export async function getEquity(): Promise<number | void> {
+  return await restClient
     .getWalletBalance({
       accountType: "UNIFIED",
     })
-    .then((r: any) => {
-      const coins = r.result.list.find((x: any) => (x.accountType = "UNIFIED"));
-      if (coins) return coins.totalEquity;
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      if (r.result.list) {
+        const coins = r.result.list.find(
+          (x: any) => (x.accountType = "UNIFIED")
+        );
+        if (coins) return parseFloat(coins.totalEquity);
+      }
       return 0;
+    })
+    .catch((e) => {
+      console.warn(e);
     });
-  return response;
 }
 
 //Cancel all spot pending orders for a pair
-export async function cancelSpotOrders(pair: string) {
+export async function cancelSpotOrders(pair: string): Promise<boolean | void> {
   const response = await restClient
     .cancelAllOrders({
       category: "spot",
       symbol: pair,
     })
-    .then((r: any) => r.result.success);
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      return r.retCode === 0;
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
 
   return response;
 }
 
 //Get coin balance for unified account
-export async function getCoinBalance(coin: string) {
+export async function getCoinBalance(coin: string): Promise<number | void> {
   const response = await restClient
     .getWalletBalance({
       accountType: "UNIFIED",
     })
-    .then((r: any) => {
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
       const coins = r.result.list.find((n: any) => (n.accountType = "UNIFIED"));
 
       if (coins && coins.coin.length > 0) {
@@ -169,29 +188,42 @@ export async function getCoinBalance(coin: string) {
           (n: any) => n.coin.toLowerCase() === coin.toLowerCase()
         );
 
-        if (coinRec) return coinRec.equity;
+        if (coinRec) return parseFloat(coinRec.equity);
       }
 
       return 0;
+    })
+    .catch((e) => {
+      console.warn(e);
     });
 
   return response;
 }
 
 //Get spot fees rate for a coin
-export async function getSpotFeesRate(symbol: string, coin: string) {
+export async function getSpotFeesRate(
+  symbol: string,
+  coin: string,
+  isLimit: boolean
+): Promise<number | void> {
   const response = await restClient
     .getFeeRate({
       category: "spot",
       symbol,
       baseCoin: coin,
     })
-    .then((r: any) => {
-      const feesRec = r.result.list[0];
-      return {
-        takerFeeRate: parseFloat(feesRec?.takerFeeRate || 0),
-        makerFeeRate: parseFloat(feesRec?.makerFeeRate || 0),
-      };
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      const feesRec = (r.result.list && r.result.list[0]) || undefined;
+
+      if (!feesRec) return 0;
+
+      return isLimit
+        ? parseFloat(feesRec.takerFeeRate)
+        : parseFloat(feesRec.makerFeeRate);
+    })
+    .catch((e) => {
+      console.warn(e);
     });
 
   return response;
@@ -203,15 +235,24 @@ export async function postBuySpotOrder(
   coin: string = "USDT",
   price: number,
   percentage: number = 1
-) {
+): Promise<boolean | void> {
   await cancelSpotOrders(pair);
-  const balance = await getCoinBalance(coin);
+  const balance = (await getCoinBalance(coin)) || 0;
   const fullQty = balance / price;
   const buyQty = fullQty * percentage;
 
-  const feesRate = await getSpotFeesRate(pair, coin);
-  const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
+  const rate = (await getSpotFeesRate(pair, coin, price > 0)) || 0;
   const fees = buyQty * rate;
+
+  console.log({
+    category: "spot",
+    symbol: pair,
+    orderType: price > 0 ? "Limit" : "Market",
+    price: price > 0 ? price.toString() : undefined,
+    qty: (buyQty - fees).toFixed(6).toString(),
+    side: "Buy",
+    timeInForce: "GTC",
+  });
 
   const response = await restClient
     .submitOrder({
@@ -223,7 +264,13 @@ export async function postBuySpotOrder(
       side: "Buy",
       timeInForce: "GTC",
     })
-    .then((r: any) => r.result.orderId);
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      return r.retCode === 0;
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
 
   return response;
 }
@@ -234,13 +281,12 @@ export async function postSellSpotOrder(
   coin: string,
   price: number,
   percentage: number = 1
-) {
+): Promise<boolean | void> {
   await cancelSpotOrders(pair);
-  const fullQty = await getCoinBalance(coin);
+  const fullQty = (await getCoinBalance(coin)) || 0;
   const sellQty = fullQty * percentage;
 
-  const feesRate = await getSpotFeesRate(pair, coin);
-  const rate = price > 0 ? feesRate.takerFeeRate : feesRate.makerFeeRate;
+  const rate = (await getSpotFeesRate(pair, coin, price > 0)) || 0;
   const fees = sellQty * rate;
 
   const response = await restClient
@@ -253,7 +299,33 @@ export async function postSellSpotOrder(
       side: "Sell",
       timeInForce: "GTC",
     })
-    .then((r: any) => r.result.orderId);
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      return r.retCode === 0;
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
+
+  return response;
+}
+
+//Get spot fees rate for a coin
+export async function getSpotSymboleInfo(
+  symbol: string
+): Promise<SpotInstrumentInfoV5 | void> {
+  const response = await restClient
+    .getInstrumentsInfo({
+      category: "spot",
+      symbol,
+    })
+    .then((r) => {
+      if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+      if (r.result.list.length > 0) return r.result.list[0];
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
 
   return response;
 }

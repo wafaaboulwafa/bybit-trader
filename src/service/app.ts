@@ -4,16 +4,18 @@ import startTradingBot from "./tradingBot";
 import backtestTradingBot, { seralizeMarketDataFiles } from "./backtest";
 
 //Strategy method
-import RsiEmaCrossStrategy from "../strategies/RsiEMACross";
+//import rsiEmaCrossStrategy from "../strategies/RsiEMACross";
+import emaCrossStrategy from "../strategies/emaCross";
 
-const strategy = RsiEmaCrossStrategy;
+const strategy = emaCrossStrategy;
 
 //Run backtest
-const isBacktest = process.argv.findIndex((r) => r === "--backtest") > -1;
+const isBacktest =
+  process.argv.findIndex((r: string) => r === "--backtest") > -1;
 
 //Generate backtest market info files
 const isGenerateBacktestMarketData =
-  process.argv.findIndex((r) => r === "--generatebacktestdata") > -1;
+  process.argv.findIndex((r: string) => r === "--generatebacktestdata") > -1;
 
 if (isGenerateBacktestMarketData) {
   //Generate backtest info

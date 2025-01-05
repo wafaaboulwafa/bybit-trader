@@ -6,7 +6,7 @@
     "start": "ts-node ./src/service/app.ts",
     "backtest": "ts-node ./src/service/app.ts --backtest",
     "generatebacktest": "ts-node ./src/service/app.ts --generatebacktestdata",
-    "test": "ts-node ./src/service/test.ts",
+    "test": "ts-node ./src/test/test.ts",
     "build": "tsc"
   },
   "dependencies": {
