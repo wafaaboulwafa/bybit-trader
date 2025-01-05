@@ -34,7 +34,7 @@ async function startTradingBot(onUpdate: OnUpdateType) {
 
     const candles =
       (marketInfo?.candles && Array.from(marketInfo?.candles?.values())) || [];
-    candles.sort((a, b) => b.key - a.key);
+    candles.sort((a, b) => a.key - b.key);
 
     const accumulatedCandles: CandleType[] = [];
     const accumulatedClosePrices: number[] = [];
@@ -141,23 +141,23 @@ export async function seralizeMarketDataFiles() {
 async function deseralizeMarketDataFiles(
   marketCandles: Map<string, MarketDataType>
 ) {
-  if (!fs.existsSync(backtestFilePath)) return;
+  const filePath = path.resolve(__dirname, backtestFilePath);
+  if (!fs.existsSync(filePath)) return;
 
   marketCandles.clear();
-  const fileContent = require(backtestFilePath);
+  const fileContent = require(filePath);
 
-  for (let pair of fileContent.entries()) {
+  for (let pair of fileContent) {
     const marketInfo: MarketDataType = {
-      name: pair?.name,
+      name: pair?.pair,
       time: parseInt(pair?.time),
       candles: new Map<number, CandleType>(),
     };
 
-    for (let candle of pair.candles.entries()) {
+    for (let candle of pair.candles) {
       marketInfo.candles.set(candle.key, candle);
     }
-
-    marketCandles.set(marketInfo.name, marketInfo);
+    marketCandles.set(marketInfo.name + "." + marketInfo.time, marketInfo);
   }
 }
 
