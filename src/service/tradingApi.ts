@@ -49,18 +49,28 @@ export async function loadPairSpotMarketCandles(
       closePrice: parseFloat(r[4]),
     }));
 
+    let minCandleDate: number = 0;
     let maxCandleDate: number = 0;
+
     for (let candle of candles) {
       candlesSet.set(candle.key, candle);
-      if (candle.key > maxCandleDate) maxCandleDate = candle.key;
+      if (minCandleDate === 0 || candle.key < minCandleDate)
+        minCandleDate = candle.key;
+      if (maxCandleDate === 0 || candle.key > maxCandleDate)
+        maxCandleDate = candle.key;
     }
 
-    startDate = DateTime.fromMillis(maxCandleDate);
+    const loadedMinDate = DateTime.fromMillis(minCandleDate);
+
     moreData =
       (pairResponse?.result?.list?.length > 0 &&
-        endDate &&
-        endDate.diff(startDate, "days").days > 2) ||
+        startDate &&
+        loadedMinDate.diff(startDate, "days").days > 2) ||
       false;
+
+    if (moreData) {
+      endDate = loadedMinDate;
+    }
   }
 }
 
