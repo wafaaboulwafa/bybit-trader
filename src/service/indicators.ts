@@ -76,46 +76,32 @@ export function calcbollingerbands(
 export function isEmaCrossUp(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4,
-  limit: number = 4
-): boolean {
+  slowEmaPeriod: number = 4
+): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
-
-  const fastLastElements = fastEmaValues.slice(
-    Math.max(fastEmaValues.length - limit, 0)
-  );
-  const slowLastElements = slowEmaValues.slice(
-    Math.max(slowEmaValues.length - limit, 0)
-  );
-
-  return (
-    fastLastElements[0] > slowLastElements[0] &&
-    fastLastElements[limit] < slowLastElements[limit]
-  );
+  const values = crossUp({
+    lineA: fastEmaValues,
+    lineB: slowEmaValues,
+  });
+  const last = (values.length > 0 && values[values.length - 1]) || undefined;
+  return last;
 }
 
 //Is two ema crossing down
 export function isEmaCrossDown(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4,
-  limit: number = 4
-): boolean {
+  slowEmaPeriod: number = 4
+): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
-
-  const fastLastElements = fastEmaValues.slice(
-    Math.max(fastEmaValues.length - limit, 0)
-  );
-  const slowLastElements = slowEmaValues.slice(
-    Math.max(slowEmaValues.length - limit, 0)
-  );
-
-  return (
-    fastLastElements[0] < slowLastElements[0] &&
-    fastLastElements[limit] > slowLastElements[limit]
-  );
+  const values = crossDown({
+    lineA: fastEmaValues,
+    lineB: slowEmaValues,
+  });
+  const last = (values.length > 0 && values[values.length - 1]) || undefined;
+  return last;
 }
 
 //Convert candles set to clsoing price array
