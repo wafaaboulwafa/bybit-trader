@@ -81,6 +81,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
 
           //Create buy position
           const buyPosition = (percentage: number) => {
+            console.log("Buy position ...");
             postBuySpotOrder(
               pairInfo.pairName,
               pairInfo.buyCoin,
@@ -91,6 +92,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
 
           //Create sell position
           const sellPosition = (percentage: number) => {
+            console.log("Sell position ...");
             postSellSpotOrder(
               pairInfo.pairName,
               pairInfo.sellCoin,
