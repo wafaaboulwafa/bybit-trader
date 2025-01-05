@@ -140,6 +140,6 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
   });
 
   //Create socket subscriptions
-  const topics = pairs.map((r: any) => "kline." + r.time + "." + r.pair);
+  const topics = pairs.map((r) => "kline." + r.timeFrame + "." + r.pairName);
   wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
 }
