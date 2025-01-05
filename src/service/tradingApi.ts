@@ -291,10 +291,27 @@ export async function postSellSpotOrder(
 ): Promise<boolean | void> {
   await cancelSpotOrders(pair);
   const fullQty = (await getCoinBalance(coin)) || 0;
-  const sellQty = fullQty * percentage;
+  let sellQty = fullQty * percentage;
 
   const rate = (await getSpotFeesRate(pair, coin, price > 0)) || 0;
-  const fees = sellQty * rate;
+  sellQty = sellQty - sellQty * rate;
+
+  const symboleInfo = await getSpotSymboleInfo(pair);
+
+  if (!symboleInfo) {
+    console.warn("Invalid symbol info");
+    return;
+  }
+
+  const precision = parseFloat(symboleInfo?.lotSizeFilter?.quotePrecision);
+  const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderAmt);
+  const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderAmt);
+
+  if (precision && precision !== 0)
+    sellQty = Math.floor(sellQty / precision) * precision;
+
+  if (sellQty > maxQty) sellQty = maxQty;
+  if (sellQty < minQty) sellQty = minQty;
 
   const response = await restClient
     .submitOrder({
@@ -302,7 +319,7 @@ export async function postSellSpotOrder(
       symbol: pair,
       orderType: price > 0 ? "Limit" : "Market",
       price: price > 0 ? price.toString() : undefined,
-      qty: (sellQty - fees).toFixed(6).toString(),
+      qty: sellQty.toString(),
       side: "Sell",
       timeInForce: "GTC",
     })
