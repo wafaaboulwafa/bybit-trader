@@ -9,9 +9,6 @@ import { DateTime } from "luxon";
 
 const pairs: PairConfigType[] = require("../../constants/config.json");
 
-console.log("BYBIT_API_KEY:" + process.env.BYBIT_API_KEY);
-console.log("BYBIT_API_SECRET:" + process.env.BYBIT_API_SECRET);
-
 //ByBit rest client
 const restClient = new RestClientV5({
   testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
