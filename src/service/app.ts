@@ -18,9 +18,7 @@ const isGenerateBacktestMarketData =
 if (isGenerateBacktestMarketData) {
   //Generate backtest info
   seralizeMarketDataFiles();
-}
-
-if (isBacktest) {
+} else if (isBacktest) {
   // Run backtest emulator
   backtestTradingBot(strategy);
 } else {

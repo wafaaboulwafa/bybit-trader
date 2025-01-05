@@ -43,14 +43,20 @@ export async function loadPairSpotMarketCandles(
       limit: 1000,
     });
 
-    const candles: CandleType[] = pairResponse.result.list.map((r: any) => ({
-      key: parseInt(r[0]),
-      startTime: new Date(parseInt(r[0])),
-      openPrice: parseFloat(r[1]),
-      highPrice: parseFloat(r[2]),
-      lowPrice: parseFloat(r[3]),
-      closePrice: parseFloat(r[4]),
-    }));
+    if (pairResponse.retCode > 0)
+      console.warn(pairResponse.retCode + " - " + pairResponse.retMsg);
+
+    const candles: CandleType[] =
+      (pairResponse.result.list &&
+        pairResponse.result.list.map((r: any) => ({
+          key: parseInt(r[0]),
+          startTime: new Date(parseInt(r[0])),
+          openPrice: parseFloat(r[1]),
+          highPrice: parseFloat(r[2]),
+          lowPrice: parseFloat(r[3]),
+          closePrice: parseFloat(r[4]),
+        }))) ||
+      [];
 
     let minCandleDate: number = 0;
     let maxCandleDate: number = 0;
@@ -100,14 +106,20 @@ export async function loadSpotMarketCandles(
       limit: 1000,
     });
 
-    const candles: CandleType[] = pairResponse.result.list.map((r: any) => ({
-      key: r[0],
-      startTime: new Date(parseInt(r[0])),
-      openPrice: parseFloat(r[1]),
-      highPrice: parseFloat(r[2]),
-      lowPrice: parseFloat(r[3]),
-      closePrice: parseFloat(r[4]),
-    }));
+    if (pairResponse.retCode > 0)
+      console.warn(pairResponse.retCode + " - " + pairResponse.retMsg);
+
+    const candles: CandleType[] =
+      (pairResponse.result.list &&
+        pairResponse.result.list.map((r: any) => ({
+          key: r[0],
+          startTime: new Date(parseInt(r[0])),
+          openPrice: parseFloat(r[1]),
+          highPrice: parseFloat(r[2]),
+          lowPrice: parseFloat(r[3]),
+          closePrice: parseFloat(r[4]),
+        }))) ||
+      [];
 
     candlesSet.set(rec.pairName.toUpperCase() + "." + rec.timeFrame, {
       name: rec.pairName.toUpperCase(),
