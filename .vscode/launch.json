@@ -10,9 +10,9 @@
       "request": "launch",
       "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
       "runtimeArgs": [
-        "--transpile-only",
+        "--transpile-only"
         // if you use esm
-        "--esm"
+        //"--esm"
       ],
       // "program": "${file}",
       "program": "./src/service/app.ts",

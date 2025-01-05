@@ -57,8 +57,8 @@ export function calcMacd(
     SimpleMAOscillator: false,
     SimpleMASignal: false,
   });
-  const last = (values.length > 0 && values[values.length - 1]) || undefined;
-  return last;
+  const result = (values.length > 0 && values[values.length - 1]) || undefined;
+  return result;
 }
 
 //Get last bollinger band value
@@ -68,40 +68,54 @@ export function calcbollingerbands(
   period: number = 26
 ): BollingerBandsOutput | undefined {
   const values = bollingerbands({ values: closePrices, period, stdDev });
-  const last = (values.length > 0 && values[values.length - 1]) || undefined;
-  return last;
+  const result = (values.length > 0 && values[values.length - 1]) || undefined;
+  return result;
 }
 
 //Is two ema crossing up
 export function isEmaCrossUp(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4
+  slowEmaPeriod: number = 4,
+  limit: number = 5
 ): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
-  const values = crossUp({
-    lineA: fastEmaValues,
-    lineB: slowEmaValues,
-  });
-  const last = (values.length > 0 && values[values.length - 1]) || undefined;
-  return last;
+
+  if (fastEmaValues.length < limit || slowEmaValues.length < limit)
+    return undefined;
+
+  const fastEmaOld = fastEmaValues[fastEmaValues.length - limit];
+  const fastEmaNew = fastEmaValues[fastEmaValues.length - 1];
+
+  const slowEmaOld = slowEmaValues[slowEmaValues.length - limit];
+  const slowEmaNew = slowEmaValues[slowEmaValues.length - 1];
+
+  const result = fastEmaNew > slowEmaNew && fastEmaOld < slowEmaOld;
+  return result;
 }
 
 //Is two ema crossing down
 export function isEmaCrossDown(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4
+  slowEmaPeriod: number = 4,
+  limit: number = 5
 ): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
   const slowEmaValues = ema({ values: closePrices, period: slowEmaPeriod });
-  const values = crossDown({
-    lineA: fastEmaValues,
-    lineB: slowEmaValues,
-  });
-  const last = (values.length > 0 && values[values.length - 1]) || undefined;
-  return last;
+
+  if (fastEmaValues.length < limit || slowEmaValues.length < limit)
+    return undefined;
+
+  const fastEmaOld = fastEmaValues[fastEmaValues.length - limit];
+  const fastEmaNew = fastEmaValues[fastEmaValues.length - 1];
+
+  const slowEmaOld = slowEmaValues[slowEmaValues.length - limit];
+  const slowEmaNew = slowEmaValues[slowEmaValues.length - 1];
+
+  const result = fastEmaNew < slowEmaNew && fastEmaOld > slowEmaOld;
+  return result;
 }
 
 //Convert candles set to clsoing price array
