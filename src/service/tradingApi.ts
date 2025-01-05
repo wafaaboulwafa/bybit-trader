@@ -239,20 +239,28 @@ export async function postBuySpotOrder(
   await cancelSpotOrders(pair);
   const balance = (await getCoinBalance(coin)) || 0;
   const fullQty = balance / price;
-  const buyQty = fullQty * percentage;
+  let buyQty = fullQty * percentage;
 
   const rate = (await getSpotFeesRate(pair, coin, price > 0)) || 0;
-  const fees = buyQty * rate;
 
-  console.log({
-    category: "spot",
-    symbol: pair,
-    orderType: price > 0 ? "Limit" : "Market",
-    price: price > 0 ? price.toString() : undefined,
-    qty: (buyQty - fees).toFixed(6).toString(),
-    side: "Buy",
-    timeInForce: "GTC",
-  });
+  buyQty = buyQty - buyQty * rate; //Cut the fees
+
+  const symboleInfo = await getSpotSymboleInfo(pair);
+
+  if (!symboleInfo) {
+    console.warn("Invalid symbol info");
+    return;
+  }
+
+  const precision = parseFloat(symboleInfo?.lotSizeFilter?.basePrecision);
+  const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
+  const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
+
+  if (precision && precision !== 0)
+    buyQty = Math.floor(buyQty / precision) * precision;
+
+  if (buyQty > maxQty) buyQty = maxQty;
+  if (buyQty < minQty) buyQty = minQty;
 
   const response = await restClient
     .submitOrder({
@@ -260,7 +268,7 @@ export async function postBuySpotOrder(
       symbol: pair,
       orderType: price > 0 ? "Limit" : "Market",
       price: price > 0 ? price.toString() : undefined,
-      qty: (buyQty - fees).toFixed(6).toString(),
+      qty: buyQty.toString(),
       side: "Buy",
       timeInForce: "GTC",
     })
@@ -271,7 +279,6 @@ export async function postBuySpotOrder(
     .catch((e) => {
       console.warn(e);
     });
-
   return response;
 }
 

@@ -29,8 +29,8 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
   });
 
   //Close all socket connection when application shutdown
-  process.once("SIGINT", (code) => wsClient.closeAll(true));
-  process.once("SIGTERM", (code) => wsClient.closeAll(true));
+  process.once("SIGINT", () => wsClient.closeAll(true));
+  process.once("SIGTERM", () => wsClient.closeAll(true));
 
   //Hold all market candles in memory
   const marketCandles = new Map<string, MarketDataType>();
