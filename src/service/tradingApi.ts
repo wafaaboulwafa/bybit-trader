@@ -30,13 +30,16 @@ export async function loadPairSpotMarketCandles(
 
   let moreData = true;
 
+  let loadingStartDate = startDate;
+  let loadingEndDate = endDate;
+
   while (moreData) {
     let pairResponse = await restClient.getKline({
       category: "spot",
       symbol: pair,
       interval: timeFrame.toString() as KlineIntervalV3,
-      start: (startDate && startDate.valueOf()) || 0,
-      end: (endDate && endDate.valueOf()) || 0,
+      start: (loadingStartDate && loadingStartDate.valueOf()) || 0,
+      end: (loadingEndDate && loadingEndDate.valueOf()) || 0,
       limit: 1000,
     });
 
@@ -74,7 +77,9 @@ export async function loadPairSpotMarketCandles(
       false;
 
     if (moreData) {
-      endDate = loadedMinDate;
+      if (loadingEndDate?.valueOf() != loadedMinDate?.valueOf())
+        loadingEndDate = loadedMinDate;
+      else moreData = false;
     }
   }
 }
