@@ -9,6 +9,6 @@
     "pairName": "BTCUSDT",
     "timeFrame": 1,
     "buyCoin": "USDT",
-    "sellCoin": "XRP"
+    "sellCoin": "BTC"
   }
 ]
