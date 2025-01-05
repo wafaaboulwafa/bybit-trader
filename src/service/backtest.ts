@@ -64,25 +64,26 @@ async function startTradingBot(onUpdate: OnUpdateType) {
         else if (index === 2) printCandle.lowPrice = price;
 
         const buyPosition = (percentage: number) => {
-          if (wallet.buyCoinBalance > 0) {
-            const buyAmount = wallet.buyCoinBalance * percentage;
-            wallet.buyCoinBalance = wallet.buyCoinBalance - buyAmount;
+          if (wallet.sellCoinBalanace > 0) {
+            const buyAmount = wallet.sellCoinBalanace * percentage;
+            wallet.sellCoinBalanace = wallet.sellCoinBalanace - buyAmount;
             const qty = buyAmount / price;
-            wallet.sellCoinBalanace = wallet.sellCoinBalanace + qty;
+            wallet.buyCoinBalance = wallet.buyCoinBalance + qty;
 
-            const message = `Buy transaction: Price: ${price}, Qty: ${qty}`;
+            const message = `[Buy] Price: ${price}, Qty: ${qty}, Date: ${printCandle.startTime}`;
             console.log(message);
             buyTrades++;
           }
         };
 
         const sellPosition = (percentage: number) => {
-          if (wallet.sellCoinBalanace > 0) {
-            const sellAmount = wallet.sellCoinBalanace * percentage;
-            wallet.sellCoinBalanace = wallet.sellCoinBalanace - sellAmount;
-            wallet.buyCoinBalance = wallet.buyCoinBalance + sellAmount * price;
+          if (wallet.buyCoinBalance > 0) {
+            const sellAmount = wallet.buyCoinBalance * percentage;
+            wallet.buyCoinBalance = wallet.buyCoinBalance - sellAmount;
+            wallet.sellCoinBalanace =
+              wallet.sellCoinBalanace + sellAmount * price;
 
-            const message = `Sell transaction: Price: ${price}, Qty: ${sellAmount}`;
+            const message = `[Sell] Price: ${price}, Qty: ${sellAmount}, Wallet: ${wallet.sellCoinBalanace}, Date: ${printCandle.startTime}`;
             console.log(message);
             sellTrades++;
           }

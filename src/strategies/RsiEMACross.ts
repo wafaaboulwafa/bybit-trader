@@ -29,10 +29,14 @@ const strategy: OnUpdateType = (
   if (!macdValue) return;
 
   const buySignal =
-    rsiValue < 30 && macdValue?.MACD && macdValue.MACD > 0 && crossUpValue;
+    rsiValue < 30 &&
+    macdValue.histogram &&
+    macdValue.histogram < 0; /*&& crossUpValue*/
 
   const sellSignal =
-    rsiValue > 70 && macdValue?.MACD && macdValue.MACD < 0 && crossDownValue;
+    rsiValue > 70 &&
+    macdValue.histogram &&
+    macdValue.histogram > 0; /*&& crossDownValue*/
 
   if (buySignal) {
     closePositions();
