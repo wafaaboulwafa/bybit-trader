@@ -61,11 +61,16 @@ export async function loadPairSpotMarketCandles(
     }
 
     const loadedMinDate = DateTime.fromMillis(minCandleDate);
+    const loadedMaxDate = DateTime.fromMillis(maxCandleDate);
+
+    console.log(
+      `Load data ${pair}, From: ${loadedMinDate.toString()}, To: ${loadedMaxDate.toString()}`
+    );
 
     moreData =
       (pairResponse?.result?.list?.length > 0 &&
         startDate &&
-        loadedMinDate.diff(startDate, "days").days > 2) ||
+        loadedMinDate.diff(startDate, "days").days > 0) ||
       false;
 
     if (moreData) {

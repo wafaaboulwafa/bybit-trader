@@ -136,6 +136,8 @@ export async function seralizeMarketDataFiles() {
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   const jsonString = JSON.stringify(data, null, 2);
   await fs.writeFileSync(filePath, jsonString, { flush: true });
+
+  console.log(`Saving load test data to file ${filePath}`);
 }
 
 async function deseralizeMarketDataFiles(
