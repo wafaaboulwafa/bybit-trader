@@ -25,8 +25,12 @@ const strategy: OnUpdateType = (
   const crossUpValue = isEmaCrossUp(closePrices);
   const crossDownValue = isEmaCrossDown(closePrices);
 
+  if (!rsiValue) return;
+  if (!macdValue) return;
+
   const buySignal =
     rsiValue < 30 && macdValue?.MACD && macdValue.MACD > 0 && crossUpValue;
+
   const sellSignal =
     rsiValue > 70 && macdValue?.MACD && macdValue.MACD < 0 && crossDownValue;
 

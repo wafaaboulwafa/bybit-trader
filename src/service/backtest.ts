@@ -17,19 +17,20 @@ async function startTradingBot(onUpdate: OnUpdateType) {
   const marketCandles = new Map<string, MarketDataType>();
   await deseralizeMarketDataFiles(marketCandles);
 
-  const coinStartBalance = startBalance;
-
-  const wallet = {
-    sellCoinBalanace: coinStartBalance,
-    buyCoinBalance: 0,
-  };
-  let buyTrades = 0;
-  let sellTrades = 0;
-
-  //Starting assets
-  console.log("Start wallet", wallet);
-
   for (let pair of pairs) {
+    const coinStartBalance = startBalance;
+
+    const wallet = {
+      sellCoinBalanace: coinStartBalance,
+      buyCoinBalance: 0,
+    };
+    let buyTrades = 0;
+    let sellTrades = 0;
+
+    //Starting assets
+    console.log("---------------------------------------------");
+    console.log(`Start wallet - Pair ${pair.pairName}`, wallet);
+
     const marketInfo = marketCandles.get(pair.pairName + "." + pair.timeFrame);
 
     const candles =
@@ -58,9 +59,9 @@ async function startTradingBot(onUpdate: OnUpdateType) {
       };
 
       for (const [index, price] of ohlc.entries()) {
+        printCandle.closePrice = price;
         if (index === 1) printCandle.highPrice = price;
         else if (index === 2) printCandle.lowPrice = price;
-        else if (index === 3) printCandle.closePrice = price;
 
         const buyPosition = (percentage: number) => {
           if (wallet.buyCoinBalance > 0) {
@@ -111,16 +112,17 @@ async function startTradingBot(onUpdate: OnUpdateType) {
         if (isLastCandle) closePositions();
       }
     }
-  }
 
-  //Print backtest result
-  console.log("Wallet:", wallet);
-  console.log("Sell trades", sellTrades);
-  console.log("Buy trades", buyTrades);
-  console.log(
-    "Balance growth",
-    Math.round((wallet.sellCoinBalanace * 100) / coinStartBalance) + " %"
-  );
+    //Print backtest result
+    console.log("Wallet:", wallet);
+    console.log("Sell trades", sellTrades);
+    console.log("Buy trades", buyTrades);
+    console.log(
+      "Balance growth",
+      Math.round((wallet.sellCoinBalanace * 100) / coinStartBalance) + " %"
+    );
+    console.log("---------------------------------------------");
+  }
 }
 
 export async function seralizeMarketDataFiles() {

@@ -11,25 +11,35 @@ import {
   crossDown,
 } from "technicalindicators";
 
+function getLastValue(values: number[]): number | undefined {
+  return (values.length > 0 && values[values.length - 1]) || undefined;
+}
+
 //Get last rsi value
-export function calcRsi(closePrices: number[], period: number = 14): number {
+export function calcRsi(
+  closePrices: number[],
+  period: number = 14
+): number | undefined {
   const values = rsi({ values: closePrices, period });
-  const last = values[values.length - 1];
-  return last;
+  return getLastValue(values);
 }
 
 //get last exponential moving average value
-export function calcEma(closePrices: number[], period: number = 20): number {
+export function calcEma(
+  closePrices: number[],
+  period: number = 20
+): number | undefined {
   const values = ema({ values: closePrices, period });
-  const last = values[values.length - 1];
-  return last;
+  return getLastValue(values);
 }
 
 //get last simple moving average value
-export function calcSma(closePrices: number[], period: number = 20): number {
+export function calcSma(
+  closePrices: number[],
+  period: number = 20
+): number | undefined {
   const values = sma({ values: closePrices, period });
-  const last = values[values.length - 1];
-  return last;
+  return getLastValue(values);
 }
 
 //Get last macd value
@@ -38,7 +48,7 @@ export function calcMacd(
   fastPeriod: number = 12,
   slowPeriod: number = 26,
   signalPeriod: number = 9
-): MACDOutput {
+): MACDOutput | undefined {
   const values = macd({
     values: closePrices,
     fastPeriod,
@@ -47,7 +57,7 @@ export function calcMacd(
     SimpleMAOscillator: false,
     SimpleMASignal: false,
   });
-  const last = values[values.length - 1];
+  const last = (values.length > 0 && values[values.length - 1]) || undefined;
   return last;
 }
 
@@ -56,9 +66,9 @@ export function calcbollingerbands(
   closePrices: number[],
   stdDev: number = 2,
   period: number = 26
-): BollingerBandsOutput {
+): BollingerBandsOutput | undefined {
   const values = bollingerbands({ values: closePrices, period, stdDev });
-  const last = values[values.length - 1];
+  const last = (values.length > 0 && values[values.length - 1]) || undefined;
   return last;
 }
 
