@@ -76,7 +76,7 @@ WorkingDirectory=/path/to/bybit-trader
 Restart=always
 RestartSec=10
 User=bybit-user
-Environment=NODE_ENV=production
+EnvironmentFile=/etc/environment
 LimitNOFILE=4096
 StandardOutput=journal
 StandardError=journal
