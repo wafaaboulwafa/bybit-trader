@@ -35,13 +35,13 @@ export async function loadPairSpotMarketCandles(
       category: "spot",
       symbol: pair,
       interval: timeFrame.toString() as KlineIntervalV3,
-      end: (startDate && startDate.valueOf()) || 0,
-      start: (endDate && endDate.valueOf()) || 0,
+      start: (startDate && startDate.valueOf()) || 0,
+      end: (endDate && endDate.valueOf()) || 0,
       limit: 1000,
     });
 
     const candles: CandleType[] = pairResponse.result.list.map((r: any) => ({
-      key: r[0],
+      key: parseInt(r[0]),
       startTime: new Date(parseInt(r[0])),
       openPrice: parseFloat(r[1]),
       highPrice: parseFloat(r[2]),
@@ -56,7 +56,11 @@ export async function loadPairSpotMarketCandles(
     }
 
     startDate = DateTime.fromMillis(maxCandleDate);
-    moreData = (endDate && endDate.diff(startDate, "days").days > 2) || false;
+    moreData =
+      (pairResponse?.result?.list?.length > 0 &&
+        endDate &&
+        endDate.diff(startDate, "days").days > 2) ||
+      false;
   }
 }
 

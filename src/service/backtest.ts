@@ -1,5 +1,6 @@
 import { loadPairSpotMarketCandles } from "./tradingApi";
 import fs from "fs";
+import path from "path";
 import {
   CandleType,
   MarketDataType,
@@ -8,7 +9,7 @@ import {
 } from "./types";
 
 const pairs: PairConfigType[] = require("../../constants/config.json");
-const backtestFilePath = "./../../constants/backtestData.json";
+const backtestFilePath = "../../constants/backtestData.json";
 
 const startBalance = 1000;
 
@@ -131,10 +132,10 @@ export async function seralizeMarketDataFiles() {
     const candles = Array.from(candlesSet.values());
     data.push({ pair: pair.pairName, time: pair.timeFrame, candles });
   }
-
-  if (fs.existsSync(backtestFilePath)) fs.unlinkSync(backtestFilePath);
+  const filePath = path.resolve(__dirname, backtestFilePath);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   const jsonString = JSON.stringify(data, null, 2);
-  await fs.writeFileSync(backtestFilePath, jsonString, {});
+  await fs.writeFileSync(filePath, jsonString, { flush: true });
 }
 
 async function deseralizeMarketDataFiles(
