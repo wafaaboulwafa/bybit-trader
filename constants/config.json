@@ -1,9 +1,9 @@
 [
   {
-    "pairName": "XRPUSDT",
+    "pairName": "PAXGUSDT",
     "timeFrame": 1,
     "buyCoin": "USDT",
-    "sellCoin": "XRP"
+    "sellCoin": "PAXG"
   },
   {
     "pairName": "BTCUSDT",

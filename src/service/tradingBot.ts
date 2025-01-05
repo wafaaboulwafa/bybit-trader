@@ -16,21 +16,22 @@ import {
   postSellSpotOrder,
 } from "./tradingApi";
 import { getClosePrices } from "./indicators";
-const pairs: PairConfigType[] = require("../../constants/config.json");
-
-//ByBit Socket client
-const wsClient = new WebsocketClient({
-  market: "v5",
-  testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
-  key: process.env.BYBIT_API_KEY,
-  secret: process.env.BYBIT_API_SECRET,
-});
-
-//Close all socket connection when application shutdown
-process.once("SIGINT", (code) => wsClient.closeAll(true));
-process.once("SIGTERM", (code) => wsClient.closeAll(true));
 
 export default async function startTradingBot(onUpdate: OnUpdateType) {
+  const pairs: PairConfigType[] = require("../../constants/config.json");
+
+  //ByBit Socket client
+  const wsClient = new WebsocketClient({
+    market: "v5",
+    testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
+    key: process.env.BYBIT_API_KEY,
+    secret: process.env.BYBIT_API_SECRET,
+  });
+
+  //Close all socket connection when application shutdown
+  process.once("SIGINT", (code) => wsClient.closeAll(true));
+  process.once("SIGTERM", (code) => wsClient.closeAll(true));
+
   //Hold all market candles in memory
   const marketCandles = new Map<string, MarketDataType>();
   //Load previous candles
