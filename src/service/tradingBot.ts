@@ -48,7 +48,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
         const timeFrame: number = parseInt(matches[1]);
         const pairKey = pairName + "." + timeFrame;
         //Find if we are allowed to trade this pair
-        const pairInfo = pairs.find((r: any) => r.pair === pairName);
+        const pairInfo = pairs.find((r) => r.pairName === pairName);
 
         if (!pairInfo) return;
 
