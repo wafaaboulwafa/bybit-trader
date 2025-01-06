@@ -26,17 +26,14 @@ const strategy: OnUpdateType = (
   if (crossUpValue === undefined || crossDownValue === undefined) return;
 
   const buySignal = crossUpValue;
-
   const sellSignal = crossDownValue;
 
   if (buySignal) {
-    closePositions();
-    buyPosition(1);
+    buyPosition(0.5);
   }
 
   if (sellSignal) {
     closePositions();
-    sellPosition(1);
   }
 };
 

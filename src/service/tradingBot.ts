@@ -11,6 +11,7 @@ import {
   notifyExecutionUpdate,
 } from "./telgramClient";
 import {
+  getMinutesBetweenDates,
   loadSpotMarketCandles,
   postBuySpotOrder,
   postSellSpotOrder,
@@ -19,6 +20,10 @@ import { getClosePrices } from "./indicators";
 
 export default async function startTradingBot(onUpdate: OnUpdateType) {
   const pairs: PairConfigType[] = require("../../constants/config.json");
+
+  //Hold trans time
+  let lastBuyTransTime: Date = new Date(0);
+  let lastSellTransTime: Date = new Date(0);
 
   //ByBit Socket client
   const wsClient = new WebsocketClient({
@@ -81,6 +86,12 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
 
           //Create buy position
           const buyPosition = (percentage: number) => {
+            const diffInMinutes = getMinutesBetweenDates(
+              new Date(),
+              lastBuyTransTime
+            );
+            if (1 > diffInMinutes) return; //Protection from multiple requests
+
             console.log("Buy position ...");
             postBuySpotOrder(
               pairInfo.pairName,
@@ -88,10 +99,17 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
               candle.closePrice,
               percentage
             );
+            lastBuyTransTime = new Date();
           };
 
           //Create sell position
           const sellPosition = (percentage: number) => {
+            const diffInMinutes = getMinutesBetweenDates(
+              new Date(),
+              lastSellTransTime
+            );
+            if (1 > diffInMinutes) return; //Protection from multiple requests
+
             console.log("Sell position ...");
             postSellSpotOrder(
               pairInfo.pairName,
@@ -99,6 +117,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
               candle.closePrice,
               percentage
             );
+            lastSellTransTime = new Date();
           };
 
           //Liquidate all positions

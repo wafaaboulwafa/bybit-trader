@@ -355,3 +355,9 @@ export async function getSpotSymboleInfo(
 
   return response;
 }
+
+export function getMinutesBetweenDates(date1: Date, date2: Date) {
+  const diffInMs = date1.valueOf() - date2.valueOf();
+  const diffInMinutes = Math.floor(diffInMs / 60000); // 60000 ms in a minute
+  return diffInMinutes;
+}
