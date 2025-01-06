@@ -2,6 +2,7 @@ import { CandleType, MarketDataType, PairConfigType } from "./types";
 import {
   FeeRateV5,
   KlineIntervalV3,
+  OrderParamsV5,
   RestClientV5,
   SpotInstrumentInfoV5,
 } from "bybit-api";
@@ -231,6 +232,13 @@ export async function getSpotFeesRate(
   return response;
 }
 
+function countDecimalDigits(input: string) {
+  const reg = /\.(\d+)/gi;
+  const res = reg.exec(input);
+  if (res && res.length === 2) return res[1].length;
+  else return 0;
+}
+
 //Create a spot buy order
 export async function postBuySpotOrder(
   pair: string,
@@ -251,10 +259,13 @@ export async function postBuySpotOrder(
 
   if (!symboleInfo) {
     console.warn("Invalid symbol info");
-    return;
+    return false;
   }
 
   const precision = parseFloat(symboleInfo?.lotSizeFilter?.basePrecision);
+  const numberOfDigits = countDecimalDigits(
+    symboleInfo?.lotSizeFilter?.basePrecision
+  );
   const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
   const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
 
@@ -262,18 +273,24 @@ export async function postBuySpotOrder(
     buyQty = Math.floor(buyQty / precision) * precision;
 
   if (buyQty > maxQty) buyQty = maxQty;
-  if (buyQty < minQty) buyQty = minQty;
+
+  if (buyQty < minQty) {
+    console.warn("Insufficient balance");
+    return false;
+  }
+
+  const request: OrderParamsV5 = {
+    category: "spot",
+    symbol: pair,
+    orderType: price > 0 ? "Limit" : "Market",
+    price: price > 0 ? price.toString() : undefined,
+    qty: buyQty.toFixed(numberOfDigits),
+    side: "Buy",
+    timeInForce: "GTC",
+  };
 
   const response = await restClient
-    .submitOrder({
-      category: "spot",
-      symbol: pair,
-      orderType: price > 0 ? "Limit" : "Market",
-      price: price > 0 ? price.toString() : undefined,
-      qty: buyQty.toString(),
-      side: "Buy",
-      timeInForce: "GTC",
-    })
+    .submitOrder(request)
     .then((r) => {
       if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
       return r.retCode === 0;
@@ -302,29 +319,38 @@ export async function postSellSpotOrder(
 
   if (!symboleInfo) {
     console.warn("Invalid symbol info");
-    return;
+    return false;
   }
 
-  const precision = parseFloat(symboleInfo?.lotSizeFilter?.quotePrecision);
-  const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderAmt);
-  const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderAmt);
+  const precision = parseFloat(symboleInfo?.lotSizeFilter?.basePrecision);
+  const numberOfDigits = countDecimalDigits(
+    symboleInfo?.lotSizeFilter?.basePrecision
+  );
+  const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
+  const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
 
   if (precision && precision !== 0)
     sellQty = Math.floor(sellQty / precision) * precision;
 
   if (sellQty > maxQty) sellQty = maxQty;
-  if (sellQty < minQty) sellQty = minQty;
+
+  if (sellQty < minQty) {
+    console.warn("Insufficient balance");
+    return false;
+  }
+
+  const request: OrderParamsV5 = {
+    category: "spot",
+    symbol: pair,
+    orderType: price > 0 ? "Limit" : "Market",
+    price: price > 0 ? price.toString() : undefined,
+    qty: sellQty.toFixed(numberOfDigits),
+    side: "Sell",
+    timeInForce: "GTC",
+  };
 
   const response = await restClient
-    .submitOrder({
-      category: "spot",
-      symbol: pair,
-      orderType: price > 0 ? "Limit" : "Market",
-      price: price > 0 ? price.toString() : undefined,
-      qty: sellQty.toString(),
-      side: "Sell",
-      timeInForce: "GTC",
-    })
+    .submitOrder(request)
     .then((r) => {
       if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
       return r.retCode === 0;
