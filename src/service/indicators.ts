@@ -76,7 +76,7 @@ export function calcbollingerbands(
 export function isEmaCrossUp(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4,
+  slowEmaPeriod: number = 5,
   limit: number = 5
 ): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
@@ -99,7 +99,7 @@ export function isEmaCrossUp(
 export function isEmaCrossDown(
   closePrices: number[],
   fastEmaPeriod: number = 3,
-  slowEmaPeriod: number = 4,
+  slowEmaPeriod: number = 5,
   limit: number = 5
 ): boolean | undefined {
   const fastEmaValues = ema({ values: closePrices, period: fastEmaPeriod });
