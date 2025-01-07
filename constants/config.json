@@ -3,6 +3,7 @@
     "pairName": "DOGEUSDT",
     "timeFrame": 1,
     "buyCoin": "USDT",
-    "sellCoin": "DOGE"
+    "sellCoin": "DOGE",
+    "strategy": "default"
   }
 ]

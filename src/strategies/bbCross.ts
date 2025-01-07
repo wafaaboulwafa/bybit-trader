@@ -9,7 +9,6 @@ import {
   isEmaCrossDown,
   getTrend,
 } from "../service/indicators";
-import { bollingerbands } from "technicalindicators";
 
 const lastSignal = new Map<string, "overbought" | "oversold">();
 

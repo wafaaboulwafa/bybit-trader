@@ -27,6 +27,7 @@ export type OnUpdateType = (
 
 export type PairConfigType = {
   pairName: string;
+  strategy: string;
   timeFrame: number;
   buyCoin: string;
   sellCoin: string;

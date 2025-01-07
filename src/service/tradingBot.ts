@@ -17,8 +17,9 @@ import {
   postSellSpotOrder,
 } from "./tradingApi";
 import { getClosePrices } from "./indicators";
+import strategies from "../strategies";
 
-export default async function startTradingBot(onUpdate: OnUpdateType) {
+export default async function startTradingBot() {
   const pairs: PairConfigType[] = require("../../constants/config.json");
 
   //Hold trans time
@@ -132,6 +133,11 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
           const candles: CandleType[] = Array.from(pairData.candles.values());
 
           //Call strategy method
+          const onUpdate: OnUpdateType | null =
+            strategies.get(pairInfo.strategy) ||
+            strategies.get("default") ||
+            null;
+
           if (onUpdate) {
             onUpdate(
               pairName,

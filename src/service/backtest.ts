@@ -7,13 +7,14 @@ import {
   OnUpdateType,
   PairConfigType,
 } from "./types";
+import strategies from "../strategies";
 
 const pairs: PairConfigType[] = require("../../constants/config.json");
 const backtestFilePath = "../../constants/backtestData.json";
 
 const startBalance = 1000;
 
-async function startTradingBot(onUpdate: OnUpdateType) {
+async function startTradingBot() {
   const marketCandles = new Map<string, MarketDataType>();
   await deseralizeMarketDataFiles(marketCandles);
 
@@ -92,6 +93,10 @@ async function startTradingBot(onUpdate: OnUpdateType) {
         const closePositions = (price: number) => {
           sellPosition(price, 1);
         };
+
+        //Strategy method
+        const onUpdate: OnUpdateType | null =
+          strategies.get(pair.strategy) || strategies.get("default") || null;
 
         if (onUpdate) {
           onUpdate(
