@@ -125,3 +125,31 @@ export function getClosePrices(candles: Map<number, CandleType>): number[] {
   const closePrices = canndlesArray.map((r) => r.closePrice);
   return closePrices;
 }
+
+export function getTrend(
+  closePrices: number[],
+  period: number = 5,
+  stdDev: number = 2
+): "uptrend" | "downtrend" | "sideways" | undefined {
+  const bbResult = bollingerbands({ values: closePrices, stdDev, period });
+
+  if (bbResult.length < 2) {
+    return undefined;
+  }
+
+  let trend: "uptrend" | "downtrend" | "sideways" | undefined = undefined;
+  const middleBands = bbResult.map((b) => b.middle);
+
+  const recentSlope =
+    middleBands[middleBands.length - 1] - middleBands[middleBands.length - 2];
+
+  if (recentSlope > 0) {
+    trend = "uptrend";
+  } else if (recentSlope < 0) {
+    trend = "downtrend";
+  } else {
+    trend = "sideways";
+  }
+
+  return trend;
+}
