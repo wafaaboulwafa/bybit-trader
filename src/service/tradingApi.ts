@@ -268,6 +268,9 @@ export async function postBuySpotOrder(
   );
   const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
   const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
+  const priceNumberOfDigits = countDecimalDigits(
+    symboleInfo?.priceFilter?.tickSize
+  );
 
   if (precision && precision !== 0)
     buyQty = Math.floor(buyQty / precision) * precision;
@@ -283,7 +286,7 @@ export async function postBuySpotOrder(
     category: "spot",
     symbol: pair,
     orderType: price > 0 ? "Limit" : "Market",
-    price: price > 0 ? price.toString() : undefined,
+    price: price > 0 ? price.toFixed(priceNumberOfDigits) : undefined,
     qty: buyQty.toFixed(numberOfDigits),
     side: "Buy",
     timeInForce: "GTC",
@@ -328,6 +331,9 @@ export async function postSellSpotOrder(
   );
   const maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
   const minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
+  const priceNumberOfDigits = countDecimalDigits(
+    symboleInfo?.priceFilter?.tickSize
+  );
 
   if (precision && precision !== 0)
     sellQty = Math.floor(sellQty / precision) * precision;
@@ -343,7 +349,7 @@ export async function postSellSpotOrder(
     category: "spot",
     symbol: pair,
     orderType: price > 0 ? "Limit" : "Market",
-    price: price > 0 ? price.toString() : undefined,
+    price: price > 0 ? price.toFixed(priceNumberOfDigits) : undefined,
     qty: sellQty.toFixed(numberOfDigits),
     side: "Sell",
     timeInForce: "GTC",
