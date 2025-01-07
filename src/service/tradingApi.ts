@@ -13,6 +13,10 @@ const pairs: PairConfigType[] = require("../../constants/config.json");
 //ByBit rest client
 const restClient = new RestClientV5({
   testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
+  demoTrading:
+    (process.env.BYBIT_API_DEMO || "").toLowerCase() === "true"
+      ? true
+      : undefined,
   key: process.env.BYBIT_API_KEY,
   secret: process.env.BYBIT_API_SECRET,
 });

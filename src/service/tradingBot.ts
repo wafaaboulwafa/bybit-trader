@@ -29,6 +29,10 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
   const wsClient = new WebsocketClient({
     market: "v5",
     testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
+    demoTrading:
+      (process.env.BYBIT_API_DEMO || "").toLowerCase() === "true"
+        ? true
+        : undefined,
     key: process.env.BYBIT_API_KEY,
     secret: process.env.BYBIT_API_SECRET,
   });
