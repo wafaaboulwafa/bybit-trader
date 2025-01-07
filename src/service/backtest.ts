@@ -63,7 +63,7 @@ async function startTradingBot(onUpdate: OnUpdateType) {
         if (index === 1) printCandle.highPrice = price;
         else if (index === 2) printCandle.lowPrice = price;
 
-        const buyPosition = (percentage: number) => {
+        const buyPosition = (price: number, percentage: number) => {
           if (wallet.sellCoinBalanace > 0) {
             const buyAmount = wallet.sellCoinBalanace * percentage;
             wallet.sellCoinBalanace = wallet.sellCoinBalanace - buyAmount;
@@ -76,7 +76,7 @@ async function startTradingBot(onUpdate: OnUpdateType) {
           }
         };
 
-        const sellPosition = (percentage: number) => {
+        const sellPosition = (price: number, percentage: number) => {
           if (wallet.buyCoinBalance > 0) {
             const sellAmount = wallet.buyCoinBalance * percentage;
             wallet.buyCoinBalance = wallet.buyCoinBalance - sellAmount;
@@ -89,8 +89,8 @@ async function startTradingBot(onUpdate: OnUpdateType) {
           }
         };
 
-        const closePositions = () => {
-          sellPosition(1);
+        const closePositions = (price: number) => {
+          sellPosition(price, 1);
         };
 
         if (onUpdate) {
@@ -110,7 +110,7 @@ async function startTradingBot(onUpdate: OnUpdateType) {
         //Close all positions at the end
         const isLastCandle =
           candles[candles.length - 1] === candle && index === 3;
-        if (isLastCandle) closePositions();
+        if (isLastCandle) closePositions(price);
       }
     }
 

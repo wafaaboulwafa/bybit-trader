@@ -1,5 +1,6 @@
 **/node_modules
 /dist
+/out
 constants/backtestData.json
 service/bybit-trader.service
 README.md

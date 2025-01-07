@@ -85,7 +85,7 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
           const closePrices = getClosePrices(pairData.candles);
 
           //Create buy position
-          const buyPosition = (percentage: number) => {
+          const buyPosition = (price: number, percentage: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastBuyTransTime
@@ -96,14 +96,14 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
             postBuySpotOrder(
               pairInfo.pairName,
               pairInfo.buyCoin,
-              candle.closePrice,
+              price,
               percentage
             );
             lastBuyTransTime = new Date();
           };
 
           //Create sell position
-          const sellPosition = (percentage: number) => {
+          const sellPosition = (price: number, percentage: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastSellTransTime
@@ -114,20 +114,15 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
             postSellSpotOrder(
               pairInfo.pairName,
               pairInfo.sellCoin,
-              candle.closePrice,
+              price,
               percentage
             );
             lastSellTransTime = new Date();
           };
 
           //Liquidate all positions
-          const closePositions = () => {
-            postSellSpotOrder(
-              pairInfo.pairName,
-              pairInfo.sellCoin,
-              candle.closePrice,
-              1
-            );
+          const closePositions = (price: number) => {
+            postSellSpotOrder(pairInfo.pairName, pairInfo.sellCoin, price, 1);
           };
 
           const candles: CandleType[] = Array.from(pairData.candles.values());

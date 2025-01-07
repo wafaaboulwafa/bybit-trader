@@ -27,13 +27,14 @@ const strategy: OnUpdateType = (
 
   const buySignal = crossUpValue;
   const sellSignal = crossDownValue;
+  const emaPrice = calcEma(closePrices, 5);
 
-  if (buySignal) {
-    buyPosition(0.5);
+  if (buySignal && emaPrice) {
+    buyPosition(emaPrice, 0.5);
   }
 
-  if (sellSignal) {
-    closePositions();
+  if (sellSignal && emaPrice) {
+    closePositions(emaPrice);
   }
 };
 

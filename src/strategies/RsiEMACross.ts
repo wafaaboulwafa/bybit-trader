@@ -39,13 +39,13 @@ const strategy: OnUpdateType = (
     macdValue.histogram > 0; /*&& crossDownValue*/
 
   if (buySignal) {
-    closePositions();
-    buyPosition(0.25);
+    closePositions(price);
+    buyPosition(price, 0.25);
   }
 
   if (sellSignal) {
-    closePositions();
-    sellPosition(0.25);
+    closePositions(price);
+    sellPosition(price, 0.25);
   }
 };
 

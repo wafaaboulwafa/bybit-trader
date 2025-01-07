@@ -20,9 +20,9 @@ export type OnUpdateType = (
   closePrices: number[],
   closePrice: number,
   candle: CandleType,
-  buyPosition: (percentage: number) => void,
-  sellPosition: (percentage: number) => void,
-  closePositions: () => void
+  buyPosition: (price: number, percentage: number) => void,
+  sellPosition: (price: number, percentage: number) => void,
+  closePositions: (price: number) => void
 ) => void;
 
 export type PairConfigType = {
