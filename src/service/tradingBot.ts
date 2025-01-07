@@ -93,13 +93,13 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
             if (1 > diffInMinutes) return; //Protection from multiple requests
 
             console.log("Buy position ...");
+            lastBuyTransTime = new Date();
             postBuySpotOrder(
               pairInfo.pairName,
               pairInfo.buyCoin,
               price,
               percentage
             );
-            lastBuyTransTime = new Date();
           };
 
           //Create sell position
@@ -111,13 +111,13 @@ export default async function startTradingBot(onUpdate: OnUpdateType) {
             if (1 > diffInMinutes) return; //Protection from multiple requests
 
             console.log("Sell position ...");
+            lastSellTransTime = new Date();
             postSellSpotOrder(
               pairInfo.pairName,
               pairInfo.sellCoin,
               price,
               percentage
             );
-            lastSellTransTime = new Date();
           };
 
           //Liquidate all positions
