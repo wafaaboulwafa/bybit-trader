@@ -1,9 +1,4 @@
-import {
-  CandleType,
-  MarketDataType,
-  OnStrategyType,
-  PairConfigType,
-} from "./types";
+import { OnStrategyType, PairConfigType } from "./types";
 import { WebsocketClient } from "bybit-api";
 import {
   notifyWalletUpdate,
@@ -13,12 +8,9 @@ import {
 import { getMinutesBetweenDates } from "./misc";
 import strategies from "../strategies";
 import wallet from "../repository/walletRepo";
-import PairRepo from "../repository/pairRepo";
+import marketInfo from "../repository/marketRepo";
 
 export default async function startTradingBot() {
-  const pairs: PairConfigType[] = require("../../constants/config.json");
-  const marketInfo = new Map<string, PairRepo>();
-
   //Hold trans time
   let lastBuyTransTime: Date = new Date(0);
   let lastSellTransTime: Date = new Date(0);
@@ -49,24 +41,9 @@ export default async function startTradingBot() {
         const pairName = matches[2].toUpperCase();
         const timeFrame: string = matches[1];
         //Find if we are allowed to trade this pair
-        const pairInfo = pairs.find((r) => r.pairName === pairName);
 
-        if (!pairInfo) return;
+        const pairData = marketInfo.getPair(pairName);
 
-        if (!marketInfo.has(pairName)) {
-          marketInfo.set(
-            pairName,
-            new PairRepo(
-              pairName,
-              pairInfo.timeFrames,
-              pairInfo.strategy,
-              pairInfo.baseCoin,
-              pairInfo.quotationCoin
-            )
-          );
-        }
-
-        const pairData = marketInfo.get(pairName);
         if (!pairData) return;
 
         for (let r of data.data) {
@@ -115,7 +92,7 @@ export default async function startTradingBot() {
 
           //Call strategy method
           const onStrategy: OnStrategyType | null =
-            strategies.get(pairInfo.strategy) ||
+            strategies.get(pairData.strategy) ||
             strategies.get("default") ||
             null;
 
@@ -150,6 +127,7 @@ export default async function startTradingBot() {
 
   //Create socket subscriptions
   const topics = [];
+  const pairs: PairConfigType[] = require("../../constants/config.json");
   for (let p of pairs) {
     for (let t of p.timeFrames) {
       topics.push("kline." + t + "." + p.pairName);

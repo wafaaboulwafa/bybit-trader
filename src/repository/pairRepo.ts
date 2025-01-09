@@ -11,6 +11,7 @@ class PairRepo {
   #strategy: string = "";
   #baseCoin: string = "";
   #quotationCoin: string = "";
+  #isFuture: boolean = false;
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -25,12 +26,14 @@ class PairRepo {
     timeFrames: string[] = [],
     strategy: string,
     baseCoin: string,
-    quotationCoin: string
+    quotationCoin: string,
+    isFuture: boolean
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
     this.#baseCoin = baseCoin;
     this.#quotationCoin = quotationCoin;
+    this.#isFuture = isFuture;
 
     for (let timeframe of timeFrames)
       this.#timeFrames.set(timeframe, new TimeFrameRepo(pair, timeframe));
@@ -52,6 +55,10 @@ class PairRepo {
     return this.#quotationCoin;
   }
 
+  get isFuture() {
+    return this.#isFuture;
+  }
+
   getTimeFrame(timeFrame: string) {
     return this.#timeFrames.get(timeFrame);
   }
@@ -70,7 +77,7 @@ class PairRepo {
 
     await restClient
       .getFeeRate({
-        category: !isFuture ? "spot" : "linear",
+        category: !this.#isFuture ? "spot" : "linear",
         symbol: this.#pair,
       })
       .then((r) => {
@@ -88,7 +95,7 @@ class PairRepo {
 
     await restClient
       .getInstrumentsInfo({
-        category: !isFuture ? "spot" : "linear",
+        category: !this.#isFuture ? "spot" : "linear",
         symbol: this.pair,
       })
       .then((r) => {
@@ -114,10 +121,10 @@ class PairRepo {
       });
   }
 
-  async cancelSpotOrders(isFuture: boolean = false): Promise<boolean | void> {
+  async cancelSpotOrders(): Promise<boolean | void> {
     const response = await restClient
       .cancelAllOrders({
-        category: !isFuture ? "spot" : "linear",
+        category: !this.#isFuture ? "spot" : "linear",
         symbol: this.#pair,
       })
       .then((r) => {
@@ -134,12 +141,11 @@ class PairRepo {
   //Create a spot buy order
   async postBuySpotOrder(
     price: number,
-    percentage: number = 1,
-    isFuture: boolean = false
+    percentage: number = 1
   ): Promise<boolean | void> {
     this.initPairInfo();
 
-    await this.cancelSpotOrders(isFuture);
+    await this.cancelSpotOrders();
     const balance = (await wallet.getCoinAmount(this.#baseCoin)) || 0;
     const fullQty = balance / price;
     let buyQty = fullQty * percentage;
@@ -159,7 +165,7 @@ class PairRepo {
     }
 
     const request: OrderParamsV5 = {
-      category: !isFuture ? "spot" : "linear",
+      category: !this.#isFuture ? "spot" : "linear",
       symbol: this.#pair,
       orderType: price > 0 ? "Limit" : "Market",
       price: price > 0 ? price.toFixed(this.#priceDigits) : undefined,
@@ -183,10 +189,9 @@ class PairRepo {
   //Create a spot sell order
   async postSellSpotOrder(
     price: number,
-    percentage: number = 1,
-    isFuture: boolean = false
+    percentage: number = 1
   ): Promise<boolean | void> {
-    await this.cancelSpotOrders(isFuture);
+    await this.cancelSpotOrders();
     const fullQty = (await wallet.getCoinAmount(this.quotationCoin)) || 0;
     let sellQty = fullQty * percentage;
 
@@ -204,7 +209,7 @@ class PairRepo {
     }
 
     const request: OrderParamsV5 = {
-      category: !isFuture ? "spot" : "linear",
+      category: !this.#isFuture ? "spot" : "linear",
       symbol: this.#pair,
       orderType: price > 0 ? "Limit" : "Market",
       price: price > 0 ? price.toFixed(this.#priceDigits) : undefined,

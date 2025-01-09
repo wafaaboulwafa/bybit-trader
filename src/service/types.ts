@@ -1,3 +1,5 @@
+import PairRepo from "../repository/pairRepo";
+
 export type CandleType = {
   key: number;
   startTime: Date;
@@ -21,7 +23,7 @@ export type OnStrategyType = (
   buyPosition: (price: number, percentage: number) => void,
   sellPosition: (price: number, percentage: number) => void,
   closePositions: (price: number) => void,
-  pairData: MarketDataType
+  pairData: PairRepo
 ) => void;
 
 export type PairConfigType = {
@@ -30,4 +32,5 @@ export type PairConfigType = {
   timeFrames: string[];
   baseCoin: string;
   quotationCoin: string;
+  isFuture: boolean;
 };

@@ -2,6 +2,7 @@ require("dotenv").config();
 
 import startTradingBot from "./tradingBot";
 import backtestTradingBot, { seralizeMarketDataFiles } from "./backtest";
+import startHttpServer from "./tradingViewNotify";
 
 //Run backtest
 const isBacktest =
@@ -20,4 +21,5 @@ if (isGenerateBacktestMarketData) {
 } else {
   // Run socket bot
   startTradingBot();
+  startHttpServer();
 }
