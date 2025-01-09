@@ -1,4 +1,7 @@
+import { DateTime } from "luxon";
 import { CandleType } from "../service/types";
+import { restClient } from "../service/tradingApi";
+import { KlineIntervalV3 } from "bybit-api";
 
 class TimeFrameRepo {
   #candlesMap: Map<number, CandleType> = new Map<number, CandleType>();
@@ -7,17 +10,8 @@ class TimeFrameRepo {
   #ohlc4: number[] = [];
   #maxSize = 1000;
 
-  constructor(initialValues: CandleType[] = []) {
-    this.initialize(initialValues);
-  }
-
-  initialize(initialValues: CandleType[]) {
-    this.#candlesMap.clear();
-    this.#candles = [];
-    this.#closePrices = [];
-    this.#ohlc4 = [];
-
-    for (let c of initialValues) this.addCandle(c);
+  constructor(pairName: string, timeFrame: string) {
+    this.loadMarketCandles(pairName, timeFrame);
   }
 
   addCandle(candle: CandleType) {
@@ -92,6 +86,44 @@ class TimeFrameRepo {
 
   get length() {
     return this.#candles.length;
+  }
+
+  //Get candles history for spot pair
+  async loadMarketCandles(
+    pairName: string,
+    timeFrame: string,
+    isFuture: boolean = false
+  ) {
+    this.#candlesMap.clear();
+    this.#candles = [];
+    this.#closePrices = [];
+    this.#ohlc4 = [];
+
+    const now = DateTime.now();
+
+    let pairResponse = await restClient.getKline({
+      category: !isFuture ? "spot" : "linear",
+      symbol: pairName,
+      interval: timeFrame.toString() as KlineIntervalV3,
+      end: now.valueOf(),
+      start: now.minus({ months: 1 }).valueOf(),
+      limit: 1000,
+    });
+
+    if (pairResponse.retCode > 0)
+      console.warn(pairResponse.retCode + " - " + pairResponse.retMsg);
+
+    for (let r of pairResponse.result.list) {
+      const candle: CandleType = {
+        key: parseInt(r[0]),
+        startTime: new Date(parseInt(r[0])),
+        openPrice: parseFloat(r[1]),
+        highPrice: parseFloat(r[2]),
+        lowPrice: parseFloat(r[3]),
+        closePrice: parseFloat(r[4]),
+      };
+      this.addCandle(candle);
+    }
   }
 }
 

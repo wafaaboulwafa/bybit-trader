@@ -236,13 +236,6 @@ export async function getSpotFeesRate(
   return response;
 }
 
-export function countDecimalDigits(input: string) {
-  const reg = /\.(\d+)/gi;
-  const res = reg.exec(input);
-  if (res && res.length === 2) return res[1].length;
-  else return 0;
-}
-
 //Create a spot buy order
 export async function postBuySpotOrder(
   pair: string,
@@ -390,10 +383,4 @@ export async function getSpotSymboleInfo(
     });
 
   return response;
-}
-
-export function getMinutesBetweenDates(date1: Date, date2: Date) {
-  const diffInMs = date1.valueOf() - date2.valueOf();
-  const diffInMinutes = Math.floor(diffInMs / 60000); // 60000 ms in a minute
-  return diffInMinutes;
 }

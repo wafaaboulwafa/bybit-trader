@@ -1,8 +1,9 @@
 import { OrderParamsV5 } from "bybit-api";
-import { countDecimalDigits, restClient } from "../service/tradingApi";
+import { restClient } from "../service/tradingApi";
 import { CandleType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
 import wallet from "./walletRepo";
+import { countDecimalDigits } from "../service/misc";
 
 class PairRepo {
   #pair: string = "";
@@ -32,7 +33,7 @@ class PairRepo {
     this.#quotationCoin = quotationCoin;
 
     for (let timeframe of timeFrames)
-      this.#timeFrames.set(timeframe, new TimeFrameRepo());
+      this.#timeFrames.set(timeframe, new TimeFrameRepo(pair, timeframe));
   }
 
   get pair() {

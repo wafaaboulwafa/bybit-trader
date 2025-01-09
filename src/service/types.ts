@@ -13,22 +13,21 @@ export type MarketDataType = {
   candles: Map<number, CandleType>;
 };
 
-export type OnUpdateType = (
+export type OnStrategyType = (
   pairName: string,
-  timeFrame: number,
-  candles: CandleType[],
-  closePrices: number[],
+  timeFrame: string,
   closePrice: number,
   candle: CandleType,
   buyPosition: (price: number, percentage: number) => void,
   sellPosition: (price: number, percentage: number) => void,
-  closePositions: (price: number) => void
+  closePositions: (price: number) => void,
+  pairData: MarketDataType
 ) => void;
 
 export type PairConfigType = {
   pairName: string;
   strategy: string;
-  timeFrame: number;
-  buyCoin: string;
-  sellCoin: string;
+  timeFrames: string[];
+  baseCoin: string;
+  quotationCoin: string;
 };

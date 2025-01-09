@@ -4,7 +4,7 @@ import path from "path";
 import {
   CandleType,
   MarketDataType,
-  OnUpdateType,
+  OnStrategyType,
   PairConfigType,
 } from "./types";
 import strategies from "../strategies";
@@ -95,7 +95,7 @@ async function startTradingBot() {
         };
 
         //Strategy method
-        const onUpdate: OnUpdateType | null =
+        const onUpdate: OnStrategyType | null =
           strategies.get(pair.strategy) || strategies.get("default") || null;
 
         if (onUpdate) {

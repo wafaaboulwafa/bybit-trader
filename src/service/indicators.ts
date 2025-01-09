@@ -118,14 +118,6 @@ export function isEmaCrossDown(
   return result;
 }
 
-//Convert candles set to clsoing price array
-export function getClosePrices(candles: Map<number, CandleType>): number[] {
-  const canndlesArray = Array.from(candles.values());
-  canndlesArray.sort((a, b) => a.key - b.key);
-  const closePrices = canndlesArray.map((r) => r.closePrice);
-  return closePrices;
-}
-
 export function getTrend(
   closePrices: number[],
   period: number = 5,

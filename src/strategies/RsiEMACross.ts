@@ -1,4 +1,4 @@
-import { OnUpdateType } from "../service/types";
+import { OnStrategyType } from "../service/types";
 import {
   calcRsi,
   calcEma,
@@ -9,21 +9,20 @@ import {
   isEmaCrossDown,
 } from "../service/indicators";
 
-const strategy: OnUpdateType = (
+const strategy: OnStrategyType = (
   pair,
   timeFrame,
-  candles,
-  closePrices,
   price,
   candle,
   buyPosition,
   sellPosition,
-  closePositions
+  closePositions,
+  pairData
 ) => {
-  const rsiValue = calcRsi(closePrices);
-  const macdValue = calcMacd(closePrices);
-  const crossUpValue = isEmaCrossUp(closePrices);
-  const crossDownValue = isEmaCrossDown(closePrices);
+  const rsiValue = calcRsi(pairData.closePrices);
+  const macdValue = calcMacd(pairData.closePrices);
+  const crossUpValue = isEmaCrossUp(pairData.closePrices);
+  const crossDownValue = isEmaCrossDown(pairData.closePrices);
 
   if (!rsiValue) return;
   if (!macdValue) return;

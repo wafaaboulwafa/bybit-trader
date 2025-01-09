@@ -1,7 +1,7 @@
 import {
   CandleType,
   MarketDataType,
-  OnUpdateType,
+  OnStrategyType,
   PairConfigType,
 } from "./types";
 import { WebsocketClient } from "bybit-api";
@@ -10,18 +10,14 @@ import {
   notifyOrderUpdate,
   notifyExecutionUpdate,
 } from "./telgramClient";
-import {
-  getMinutesBetweenDates,
-  loadSpotMarketCandles,
-  postBuySpotOrder,
-  postSellSpotOrder,
-} from "./tradingApi";
-import { getClosePrices } from "./indicators";
+import { getMinutesBetweenDates } from "./misc";
 import strategies from "../strategies";
 import wallet from "../repository/walletRepo";
+import PairRepo from "../repository/pairRepo";
 
 export default async function startTradingBot() {
   const pairs: PairConfigType[] = require("../../constants/config.json");
+  const marketInfo = new Map<string, PairRepo>();
 
   //Hold trans time
   let lastBuyTransTime: Date = new Date(0);
@@ -43,11 +39,6 @@ export default async function startTradingBot() {
   process.once("SIGINT", () => wsClient.closeAll(true));
   process.once("SIGTERM", () => wsClient.closeAll(true));
 
-  //Hold all market candles in memory
-  const marketCandles = new Map<string, MarketDataType>();
-  //Load previous candles
-  await loadSpotMarketCandles(marketCandles);
-
   wsClient.on("update", (data: any) => {
     //On price update
     if (data.topic.startsWith("kline.")) {
@@ -56,22 +47,26 @@ export default async function startTradingBot() {
       const matches = reg.exec(data.topic);
       if (matches && matches.length > 2) {
         const pairName = matches[2].toUpperCase();
-        const timeFrame: number = parseInt(matches[1]);
-        const pairKey = pairName + "." + timeFrame;
+        const timeFrame: string = matches[1];
         //Find if we are allowed to trade this pair
         const pairInfo = pairs.find((r) => r.pairName === pairName);
 
         if (!pairInfo) return;
 
-        if (!marketCandles.has(pairKey)) {
-          marketCandles.set(pairKey, {
-            name: pairName,
-            time: timeFrame,
-            candles: new Map(),
-          });
+        if (!marketInfo.has(pairName)) {
+          marketInfo.set(
+            pairName,
+            new PairRepo(
+              pairName,
+              pairInfo.timeFrames,
+              pairInfo.strategy,
+              pairInfo.baseCoin,
+              pairInfo.quotationCoin
+            )
+          );
         }
 
-        const pairData = marketCandles.get(pairKey);
+        const pairData = marketInfo.get(pairName);
         if (!pairData) return;
 
         for (let r of data.data) {
@@ -85,10 +80,7 @@ export default async function startTradingBot() {
             closePrice: parseFloat(r.close),
           };
 
-          pairData.candles.set(candle.key, candle);
-
-          //Generate close prices array for indicators
-          const closePrices = getClosePrices(pairData.candles);
+          pairData.addCandle(timeFrame, candle);
 
           //Create buy position
           const buyPosition = (price: number, percentage: number) => {
@@ -100,12 +92,7 @@ export default async function startTradingBot() {
 
             console.log("Buy position ...");
             lastBuyTransTime = new Date();
-            postBuySpotOrder(
-              pairInfo.pairName,
-              pairInfo.buyCoin,
-              price,
-              percentage
-            );
+            pairData.postBuySpotOrder(price, percentage);
           };
 
           //Create sell position
@@ -118,38 +105,30 @@ export default async function startTradingBot() {
 
             console.log("Sell position ...");
             lastSellTransTime = new Date();
-            postSellSpotOrder(
-              pairInfo.pairName,
-              pairInfo.sellCoin,
-              price,
-              percentage
-            );
+            pairData.postSellSpotOrder(price, percentage);
           };
 
           //Liquidate all positions
           const closePositions = (price: number) => {
-            postSellSpotOrder(pairInfo.pairName, pairInfo.sellCoin, price, 1);
+            pairData.postSellSpotOrder(price, 1);
           };
 
-          const candles: CandleType[] = Array.from(pairData.candles.values());
-
           //Call strategy method
-          const onUpdate: OnUpdateType | null =
+          const onStrategy: OnStrategyType | null =
             strategies.get(pairInfo.strategy) ||
             strategies.get("default") ||
             null;
 
-          if (onUpdate) {
-            onUpdate(
+          if (onStrategy) {
+            onStrategy(
               pairName,
               timeFrame,
-              candles,
-              closePrices,
               candle.closePrice,
               candle,
               buyPosition,
               sellPosition,
-              closePositions
+              closePositions,
+              pairData
             );
           }
         }
@@ -170,6 +149,11 @@ export default async function startTradingBot() {
   });
 
   //Create socket subscriptions
-  const topics = pairs.map((r) => "kline." + r.timeFrame + "." + r.pairName);
+  const topics = [];
+  for (let p of pairs) {
+    for (let t of p.timeFrames) {
+      topics.push("kline." + t + "." + p.pairName);
+    }
+  }
   wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
 }

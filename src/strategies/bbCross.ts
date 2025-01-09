@@ -1,4 +1,4 @@
-import { OnUpdateType } from "../service/types";
+import { OnStrategyType } from "../service/types";
 import {
   calcRsi,
   calcEma,
@@ -12,22 +12,21 @@ import {
 
 const lastSignal = new Map<string, "overbought" | "oversold">();
 
-const strategy: OnUpdateType = (
+const strategy: OnStrategyType = (
   pair,
   timeFrame,
-  candles,
-  closePrices,
   price,
   candle,
   buyPosition,
   sellPosition,
-  closePositions
+  closePositions,
+  pairData
 ) => {
   const period = 5;
   const stdDev = 2;
 
-  let trend = getTrend(closePrices);
-  let bb = calcbollingerbands(closePrices, stdDev, period);
+  let trend = getTrend(pairData.closePrices);
+  let bb = calcbollingerbands(pairData.closePrices, stdDev, period);
 
   if (!bb) return;
 
