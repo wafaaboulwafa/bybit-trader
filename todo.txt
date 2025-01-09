@@ -1,0 +1,13 @@
+Repo for keeping only last records
+
+Support multiple time frames for same pair
+
+Support margin trading (perpetual)
+
+Can identify pair trading type in settings
+
+Monitor all pairs to shoot tops (perpetual)
+
+Support trading view notification
+
+A strategy based on wyckoff theory. Identify price phases logic.
