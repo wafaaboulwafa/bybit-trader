@@ -18,6 +18,7 @@ import {
 } from "./tradingApi";
 import { getClosePrices } from "./indicators";
 import strategies from "../strategies";
+import wallet from "../repository/walletRepo";
 
 export default async function startTradingBot() {
   const pairs: PairConfigType[] = require("../../constants/config.json");
@@ -161,7 +162,10 @@ export default async function startTradingBot() {
       if (data.data.length > 0) notifyOrderUpdate(data.data[0]);
     } else if (data.topic === "wallet") {
       //Telegram notification for wallet update
-      if (data.data.length > 0) notifyWalletUpdate(data.data[0]);
+      if (data.data.length > 0) {
+        wallet.setCoinAmount(data.data[0].coin, data.data[0].totalEquity);
+        notifyWalletUpdate(data.data[0]);
+      }
     }
   });
 

@@ -11,7 +11,7 @@ import { DateTime } from "luxon";
 const pairs: PairConfigType[] = require("../../constants/config.json");
 
 //ByBit rest client
-const restClient = new RestClientV5({
+export const restClient = new RestClientV5({
   testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
   demoTrading:
     (process.env.BYBIT_API_DEMO || "").toLowerCase() === "true"
@@ -236,7 +236,7 @@ export async function getSpotFeesRate(
   return response;
 }
 
-function countDecimalDigits(input: string) {
+export function countDecimalDigits(input: string) {
   const reg = /\.(\d+)/gi;
   const res = reg.exec(input);
   if (res && res.length === 2) return res[1].length;
