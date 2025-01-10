@@ -1,5 +1,5 @@
 import emaCrossStrategy from "./emaCross";
-import rsiEmaCrossStrategy from "./RsiEMACross";
+import rsiEmaCrossStrategy from "./ResiEMACross";
 import bbCrossStrategy from "./bbCross";
 import { OnStrategyType } from "../service/types";
 import wychoffStrategy from "./wychoff";
