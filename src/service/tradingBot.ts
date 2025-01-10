@@ -135,5 +135,7 @@ export default async function startTradingBot() {
       topics.push("kline." + t + "." + p.pairName);
     }
   }
-  wsClient.subscribeV5([...topics, "order", "execution", "wallet"], "spot");
+  wsClient
+    .subscribeV5([...topics, "order", "execution", "wallet"], "spot")
+    .catch((e) => console.warn(e));
 }

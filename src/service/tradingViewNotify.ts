@@ -9,7 +9,7 @@ export default function startHttpServer() {
   app.use(bodyParser.json());
 
   app.get("/", (req: Request, res: Response) => {
-    res.status(200).emit("ByBit trader is running");
+    res.status(200).send("ByBit trader is running");
   });
 
   app.post("/", async (req: Request, res: Response) => {
