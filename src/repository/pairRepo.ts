@@ -2,7 +2,7 @@ import { OrderParamsV5 } from "bybit-api";
 import { restClient } from "../service/tradingApi";
 import { CandleType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
-import wallet from "./walletRepo";
+import { walletLiveInstance } from "./index";
 import { countDecimalDigits } from "../service/misc";
 
 class PairRepo {
@@ -146,7 +146,8 @@ class PairRepo {
     this.initPairInfo();
 
     await this.cancelSpotOrders();
-    const balance = (await wallet.getCoinAmount(this.#baseCoin)) || 0;
+    const balance =
+      (await walletLiveInstance.getCoinAmount(this.#baseCoin)) || 0;
     const fullQty = balance / price;
     let buyQty = fullQty * percentage;
 
@@ -192,7 +193,8 @@ class PairRepo {
     percentage: number = 1
   ): Promise<boolean | void> {
     await this.cancelSpotOrders();
-    const fullQty = (await wallet.getCoinAmount(this.quotationCoin)) || 0;
+    const fullQty =
+      (await walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
     let sellQty = fullQty * percentage;
 
     const rate = price > 0 ? this.#makerRate : this.#takerRate;

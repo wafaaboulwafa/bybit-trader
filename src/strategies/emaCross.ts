@@ -19,14 +19,17 @@ const strategy: OnStrategyType = (
   closePositions,
   pairData
 ) => {
-  const crossUpValue = isEmaCrossUp(pairData.closePrices);
-  const crossDownValue = isEmaCrossDown(pairData.closePrices);
+  let timeRepo = pairData.getTimeFrame(timeFrame);
+  if (!timeRepo) return;
+
+  const crossUpValue = isEmaCrossUp(timeRepo.closePrice);
+  const crossDownValue = isEmaCrossDown(timeRepo.closePrice);
 
   if (crossUpValue === undefined || crossDownValue === undefined) return;
 
   const buySignal = crossUpValue;
   const sellSignal = crossDownValue;
-  const emaPrice = calcEma(closePrices, 5);
+  const emaPrice = calcEma(timeRepo.closePrice, 5);
 
   if (buySignal && emaPrice) {
     buyPosition(emaPrice, 0.5);

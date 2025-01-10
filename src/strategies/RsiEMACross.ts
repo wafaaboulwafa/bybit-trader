@@ -19,10 +19,13 @@ const strategy: OnStrategyType = (
   closePositions,
   pairData
 ) => {
-  const rsiValue = calcRsi(pairData.closePrices);
-  const macdValue = calcMacd(pairData.closePrices);
-  const crossUpValue = isEmaCrossUp(pairData.closePrices);
-  const crossDownValue = isEmaCrossDown(pairData.closePrices);
+  let timeRepo = pairData.getTimeFrame(timeFrame);
+  if (!timeRepo) return;
+
+  const rsiValue = calcRsi(timeRepo.closePrice);
+  const macdValue = calcMacd(timeRepo.closePrice);
+  const crossUpValue = isEmaCrossUp(timeRepo.closePrice);
+  const crossDownValue = isEmaCrossDown(timeRepo.closePrice);
 
   if (!rsiValue) return;
   if (!macdValue) return;

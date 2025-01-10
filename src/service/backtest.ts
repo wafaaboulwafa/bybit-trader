@@ -1,30 +1,24 @@
 import { loadPairSpotMarketCandles } from "./tradingApi";
 import fs from "fs";
 import path from "path";
-import {
-  CandleType,
-  MarketDataType,
-  OnStrategyType,
-  PairConfigType,
-} from "./types";
+import { CandleType, OnStrategyType, PairConfigType } from "./types";
 import strategies from "../strategies";
+import WalletRepo from "../repository/walletRepo";
+import MarketRepo from "../repository/marketRepo";
 
-const pairs: PairConfigType[] = require("../../constants/config.json");
+//const pairs: PairConfigType[] = require("../../constants/config.json");
 const backtestFilePath = "../../constants/backtestData.json";
 
 const startBalance = 1000;
 
 async function startTradingBot() {
-  const marketCandles = new Map<string, MarketDataType>();
-  await deseralizeMarketDataFiles(marketCandles);
+  const marketRepo = new MarketRepo();
+  await deseralizeMarketDataFiles(marketRepo);
+  const wallet = new WalletRepo();
 
   for (let pair of pairs) {
     const coinStartBalance = startBalance;
 
-    const wallet = {
-      sellCoinBalanace: coinStartBalance,
-      buyCoinBalance: 0,
-    };
     let buyTrades = 0;
     let sellTrades = 0;
 

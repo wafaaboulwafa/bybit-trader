@@ -4,6 +4,7 @@
     "timeFrames": [1, 4],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
-    "strategy": "default"
+    "strategy": "default",
+    "isFuture": false
   }
 ]

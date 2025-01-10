@@ -3,9 +3,7 @@ import { restClient } from "../service/tradingApi";
 class WalletRepo {
   #coins: Map<string, number> = new Map<string, number>();
 
-  constructor() {
-    this.init();
-  }
+  constructor() {}
 
   getCoinAmount(coin: string) {
     return this.#coins.get(coin);
@@ -41,6 +39,4 @@ class WalletRepo {
   }
 }
 
-const walletInstance = new WalletRepo();
-
-export default walletInstance;
+export default WalletRepo;

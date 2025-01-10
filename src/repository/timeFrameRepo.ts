@@ -52,10 +52,10 @@ class TimeFrameRepo {
   }
 
   #candlesProxy: any = null;
-  get candle() {
+  get candle(): CandleType[] {
     if (this.#candlesProxy === null)
       this.#candlesProxy = new Proxy(this, {
-        get: (target, prop: string) => this.#candles[parseInt(prop)],
+        get: (target, prop: string) => this.#candles,
         set: (target, prop) => true,
       });
 
@@ -63,10 +63,10 @@ class TimeFrameRepo {
   }
 
   #closePriceProxy: any = null;
-  get closePrice() {
+  get closePrice(): number[] {
     if (this.#closePriceProxy === null)
       this.#closePriceProxy = new Proxy(this, {
-        get: (target, prop: string) => this.#closePrices[parseInt(prop)],
+        get: (target, prop: string) => this.#closePrices,
         set: (target, prop) => true,
       });
 
@@ -74,10 +74,10 @@ class TimeFrameRepo {
   }
 
   #ohlc4Proxy: any = null;
-  get ohlc4() {
+  get ohlc4(): number[] {
     if (this.#ohlc4Proxy === null)
       this.#ohlc4Proxy = new Proxy(this, {
-        get: (target, prop: string) => this.#ohlc4[parseInt(prop)],
+        get: (target, prop: string) => this.#ohlc4,
         set: (target, prop) => true,
       });
 

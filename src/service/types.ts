@@ -9,12 +9,6 @@ export type CandleType = {
   closePrice: number;
 };
 
-export type MarketDataType = {
-  name: string;
-  time: number;
-  candles: Map<number, CandleType>;
-};
-
 export type OnStrategyType = (
   pairName: string,
   timeFrame: string,

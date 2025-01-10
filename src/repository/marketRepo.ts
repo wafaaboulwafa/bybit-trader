@@ -4,9 +4,7 @@ import PairRepo from "./pairRepo";
 class MarketRepo {
   #pairs = new Map<string, PairRepo>();
 
-  constructor() {
-    this.init();
-  }
+  constructor() {}
 
   init() {
     this.#pairs.clear();
@@ -33,6 +31,4 @@ class MarketRepo {
   }
 }
 
-const marketInstance = new MarketRepo();
-
-export default marketInstance;
+export default MarketRepo;

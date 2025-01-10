@@ -1,6 +1,5 @@
 import { MACDOutput } from "technicalindicators/declarations/moving_averages/MACD";
 import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
-import { CandleType } from "./types";
 import {
   rsi,
   macd,

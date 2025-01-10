@@ -25,8 +25,11 @@ const strategy: OnStrategyType = (
   const period = 5;
   const stdDev = 2;
 
-  let trend = getTrend(pairData.closePrices);
-  let bb = calcbollingerbands(pairData.closePrices, stdDev, period);
+  let timeRepo = pairData.getTimeFrame(timeFrame);
+  if (!timeRepo) return;
+
+  let trend = getTrend(timeRepo?.closePrice);
+  let bb = calcbollingerbands(timeRepo.closePrice, stdDev, period);
 
   if (!bb) return;
 
@@ -40,12 +43,14 @@ const strategy: OnStrategyType = (
   const signal = lastSignal.get(pair + "." + timeFrame);
   const buySignal =
     signal === "overbought" &&
-    isEmaCrossDown(closePrices) &&
+    isEmaCrossDown(timeRepo.closePrice) &&
     trend === "downtrend";
   ////
 
   const sellSignal =
-    signal === "oversold" && isEmaCrossUp(closePrices) && trend === "uptrend";
+    signal === "oversold" &&
+    isEmaCrossUp(timeRepo.closePrice) &&
+    trend === "uptrend";
 
   if (buySignal) buyPosition(bb.lower, 0.5);
   if (sellSignal) closePositions(bb.upper);
