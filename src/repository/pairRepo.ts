@@ -101,7 +101,8 @@ class PairRepo {
 
     await restClient
       .getInstrumentsInfo({
-        category: !this.#isFuture ? "spot" : "linear",
+        //category: !this.#isFuture ? "spot" : "linear",
+        category: "spot",
         symbol: this.pair,
       })
       .then((r) => {
