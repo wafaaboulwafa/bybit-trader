@@ -29,3 +29,20 @@ export type PairConfigType = {
   quotationCoin: string;
   isFuture: boolean;
 };
+
+export type BacktestTimeFrameType = {
+  timeFrame: string;
+  data: CandleType[];
+};
+export type BacktestPairType = {
+  pairName: string;
+  timeFrames: BacktestTimeFrameType[];
+};
+
+export type BacktestDataType = BacktestPairType[];
+
+export type BacktestCandleType = {
+  pairName: string;
+  timeFrame: string;
+  candle: CandleType;
+};

@@ -31,14 +31,16 @@ class TimeFrameRepo {
       this.#ohlc4[this.#ohlc4.length - 1] = ohlc4;
     }
 
-    if (this.#candles.length > this.#maxSize * 2) this.cleanup();
+    if (this.#maxSize > 0 && this.#candles.length > this.#maxSize * 2)
+      this.cleanup();
   }
 
   cleanup() {
     let canndlesArray = Array.from(this.#candlesMap.values());
     canndlesArray.sort((a, b) => a.key - b.key);
 
-    if (canndlesArray.length > this.#maxSize)
+    //Avoid truncate for backtest
+    if (this.#maxSize > 0 && canndlesArray.length > this.#maxSize)
       canndlesArray = canndlesArray.slice(-1 * this.#maxSize);
 
     this.#candlesMap.clear();
@@ -120,6 +122,91 @@ class TimeFrameRepo {
       };
       this.addCandle(candle);
     }
+
+    //sort
+    this.cleanup();
+  }
+
+  async loadPairBacktestHistoryCandles(
+    pairName: string,
+    timeFrame: string,
+    isFuture: boolean = false,
+    start: Date | null = null,
+    end: Date | null = null
+  ) {
+    this.#candlesMap.clear();
+    this.#candles = [];
+    this.#closePrices = [];
+    this.#ohlc4 = [];
+    this.#maxSize = 0;
+
+    let endDate: DateTime | null = end === null ? DateTime.now() : null;
+    let startDate: DateTime | null =
+      start === null && endDate !== null
+        ? endDate.minus({ years: 2 })
+        : start !== null
+        ? DateTime.fromJSDate(start)
+        : null;
+
+    let moreData = true;
+
+    let loadingStartDate = startDate;
+    let loadingEndDate = endDate;
+
+    while (moreData) {
+      let pairResponse = await restClient.getKline({
+        category: !isFuture ? "spot" : "linear",
+        symbol: pairName,
+        interval: timeFrame as KlineIntervalV3,
+        start: (loadingStartDate && loadingStartDate.valueOf()) || 0,
+        end: (loadingEndDate && loadingEndDate.valueOf()) || 0,
+        limit: 1000,
+      });
+
+      if (pairResponse.retCode > 0)
+        console.warn(pairResponse.retCode + " - " + pairResponse.retMsg);
+
+      let minCandleDate: number = 0;
+      let maxCandleDate: number = 0;
+
+      for (let r of pairResponse.result.list) {
+        const candle: CandleType = {
+          key: parseInt(r[0]),
+          startTime: new Date(parseInt(r[0])),
+          openPrice: parseFloat(r[1]),
+          highPrice: parseFloat(r[2]),
+          lowPrice: parseFloat(r[3]),
+          closePrice: parseFloat(r[4]),
+        };
+        this.addCandle(candle);
+        if (minCandleDate === 0 || candle.key < minCandleDate)
+          minCandleDate = candle.key;
+        if (maxCandleDate === 0 || candle.key > maxCandleDate)
+          maxCandleDate = candle.key;
+      }
+
+      const loadedMinDate = DateTime.fromMillis(minCandleDate);
+      const loadedMaxDate = DateTime.fromMillis(maxCandleDate);
+
+      console.log(
+        `Load data ${pairName}, From: ${loadedMinDate.toString()}, To: ${loadedMaxDate.toString()}`
+      );
+
+      moreData =
+        (pairResponse?.result?.list?.length > 0 &&
+          startDate &&
+          loadedMinDate.diff(startDate, "days").days > 0) ||
+        false;
+
+      if (moreData) {
+        if (loadingEndDate?.valueOf() != loadedMinDate?.valueOf())
+          loadingEndDate = loadedMinDate;
+        else moreData = false;
+      }
+    }
+
+    //sort
+    this.cleanup();
   }
 }
 

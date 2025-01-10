@@ -69,6 +69,10 @@ class PairRepo {
     return this.#timeFrames.get(timeFrame);
   }
 
+  get timeFrames(): string[] {
+    return Array.from(this.#timeFrames.keys());
+  }
+
   addCandle(timeFrame: string, candle: CandleType) {
     if (this.#timeFrames.has(timeFrame))
       this.#timeFrames.get(timeFrame)?.addCandle(candle);

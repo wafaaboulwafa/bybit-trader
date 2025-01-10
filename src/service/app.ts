@@ -1,8 +1,9 @@
 require("dotenv").config();
 
 import startTradingBot from "./tradingBot";
-import backtestTradingBot, { seralizeMarketDataFiles } from "./backtest";
+import backtestTradingBot from "./backtest";
 import startHttpServer from "./tradingViewNotify";
+import BacktestRepo from "../repository/backtestRepo";
 
 //Run backtest
 const isBacktest =
@@ -14,7 +15,7 @@ const isGenerateBacktestMarketData =
 
 if (isGenerateBacktestMarketData) {
   //Generate backtest info
-  seralizeMarketDataFiles();
+  BacktestRepo.generateBacktestFile();
 } else if (isBacktest) {
   // Run backtest emulator
   backtestTradingBot();
