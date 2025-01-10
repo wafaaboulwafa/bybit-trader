@@ -39,6 +39,9 @@ export default function startHttpServer() {
       return;
     }
 
+    //TODO should only close on reverse
+    await pairData.closeOpenFuturePositions(price);
+
     if (side === "buy") {
       await pairData.postBuyOrder(price, percentage);
     } else if (side === "sell") {
