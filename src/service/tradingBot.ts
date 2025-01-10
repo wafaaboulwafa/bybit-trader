@@ -89,7 +89,8 @@ export default async function startTradingBot() {
 
           //Liquidate all positions
           const closePositions = (price: number) => {
-            if (pairData.isFuture) pairData.closeOpenFuturePositions(price);
+            if (pairData.isFuture)
+              pairData.closeOpenFuturePositions(price, true, true);
             else pairData.postSellOrder(price, 1);
           };
 

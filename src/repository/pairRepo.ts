@@ -263,12 +263,19 @@ class PairRepo {
     return response;
   }
 
-  async closeOpenFuturePositions(price: number = 0) {
+  async closeOpenFuturePositions(
+    price: number = 0,
+    closeSell = true,
+    closeBuy = true
+  ) {
     const positions = await this.getOpenFuturePositions();
 
     if (!positions) return;
 
     for (let postion of positions) {
+      if (!closeSell && postion.side === "Sell") continue;
+      if (!closeBuy && postion.side === "Buy") continue;
+
       const request: OrderParamsV5 = {
         category: "linear",
         symbol: postion.symbol,
