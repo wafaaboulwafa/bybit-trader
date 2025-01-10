@@ -20,7 +20,7 @@ async function startTradingBot() {
   let sellTrades = 0;
 
   console.log("---------------------------------------------");
-  console.log(`Start wallet`, wallet);
+  console.log(`Starting backtest`);
 
   while (backtestRepo.more) {
     const backtestCandle = backtestRepo.nextCandle;
@@ -124,9 +124,10 @@ async function startTradingBot() {
   //Print backtest result
   const finalBalance = wallet.getCoinAmount("USDT") || 0;
 
-  console.log("Wallet:", wallet);
+  console.log("---------------------------------------------");
   console.log("Sell trades", sellTrades);
   console.log("Buy trades", buyTrades);
+  console.log("Wallet balance:", finalBalance);
   console.log(
     "Balance growth",
     Math.round((finalBalance * 100) / startBalance) + " %"

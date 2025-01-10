@@ -71,7 +71,7 @@ export default async function startTradingBot() {
 
             console.log("Buy position ...");
             lastBuyTransTime = new Date();
-            pairData.postBuySpotOrder(price, percentage);
+            pairData.postBuyOrder(price, percentage);
           };
 
           //Create sell position
@@ -84,12 +84,13 @@ export default async function startTradingBot() {
 
             console.log("Sell position ...");
             lastSellTransTime = new Date();
-            pairData.postSellSpotOrder(price, percentage);
+            pairData.postSellOrder(price, percentage);
           };
 
           //Liquidate all positions
           const closePositions = (price: number) => {
-            pairData.postSellSpotOrder(price, 1);
+            if (pairData.isFuture) pairData.closeOpenFuturePositions(price);
+            else pairData.postSellOrder(price, 1);
           };
 
           //Call strategy method

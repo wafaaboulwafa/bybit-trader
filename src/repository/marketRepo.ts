@@ -13,7 +13,7 @@ class MarketRepo {
     for (let pairInfo of pairs)
       if (!this.#pairs.has(pairInfo.pairName)) {
         const pairRepo = this.addPair(pairInfo);
-        if (pairRepo) pairRepo.init();
+        if (pairRepo && loadHistory) pairRepo.init();
       }
   }
 

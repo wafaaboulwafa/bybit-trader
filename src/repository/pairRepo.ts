@@ -1,4 +1,4 @@
-import { OrderParamsV5 } from "bybit-api";
+import { OrderParamsV5, PositionInfoParamsV5, PositionV5 } from "bybit-api";
 import { restClient } from "../service/tradingApi";
 import { CandleType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
@@ -132,7 +132,7 @@ class PairRepo {
       });
   }
 
-  async cancelSpotOrders(): Promise<boolean | void> {
+  async cancelOrders(): Promise<boolean | void> {
     const response = await restClient
       .cancelAllOrders({
         category: !this.#isFuture ? "spot" : "linear",
@@ -150,13 +150,13 @@ class PairRepo {
   }
 
   //Create a spot buy order
-  async postBuySpotOrder(
+  async postBuyOrder(
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
     this.initPairInfo();
 
-    await this.cancelSpotOrders();
+    await this.cancelOrders();
     const balance =
       (await walletLiveInstance.getCoinAmount(this.#baseCoin)) || 0;
     const fullQty = balance / price;
@@ -199,11 +199,11 @@ class PairRepo {
   }
 
   //Create a spot sell order
-  async postSellSpotOrder(
+  async postSellOrder(
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
-    await this.cancelSpotOrders();
+    await this.cancelOrders();
     const fullQty =
       (await walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
     let sellQty = fullQty * percentage;
@@ -242,6 +242,53 @@ class PairRepo {
       });
 
     return response;
+  }
+
+  async getOpenFuturePositions(): Promise<PositionV5[] | void> {
+    const request: PositionInfoParamsV5 = {
+      category: "linear",
+      symbol: this.#pair,
+    };
+
+    const response = await restClient
+      .getPositionInfo(request)
+      .then((r) => {
+        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+        return r.result.list;
+      })
+      .catch((e) => {
+        console.warn(e);
+      });
+
+    return response;
+  }
+
+  async closeOpenFuturePositions(price: number = 0) {
+    const positions = await this.getOpenFuturePositions();
+
+    if (!positions) return;
+
+    for (let postion of positions) {
+      const request: OrderParamsV5 = {
+        category: "linear",
+        symbol: postion.symbol,
+        orderType: price > 0 ? "Limit" : "Market",
+        price: price > 0 ? price.toFixed(this.#priceDigits) : undefined,
+        qty: postion.size,
+        side: postion.side === "Buy" ? "Sell" : "Buy",
+        timeInForce: "GTC",
+      };
+
+      await restClient
+        .submitOrder(request)
+        .then((r) => {
+          if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+          return r.retCode === 0;
+        })
+        .catch((e) => {
+          console.warn(e);
+        });
+    }
   }
 }
 

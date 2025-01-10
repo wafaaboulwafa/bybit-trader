@@ -39,9 +39,11 @@ export default function startHttpServer() {
       return;
     }
 
-    if (side === "buy") await pairData.postBuySpotOrder(price, percentage);
-    else if (side === "sell")
-      await pairData.postSellSpotOrder(price, percentage);
+    if (side === "buy") {
+      await pairData.postBuyOrder(price, percentage);
+    } else if (side === "sell") {
+      await pairData.postSellOrder(price, percentage);
+    }
 
     res.status(200);
   });
