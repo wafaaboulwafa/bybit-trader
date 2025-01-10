@@ -7,8 +7,10 @@ import {
 } from "./telgramClient";
 import { getMinutesBetweenDates } from "./misc";
 import strategies from "../strategies";
-import wallet from "../repository/walletRepo";
-import marketInfo from "../repository/marketRepo";
+import {
+  walletLiveInstance as wallet,
+  marketLiveInstance as marketInfo,
+} from "../repository/index";
 
 export default async function startTradingBot() {
   //Hold trans time

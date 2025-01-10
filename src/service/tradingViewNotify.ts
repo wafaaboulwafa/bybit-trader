@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
-import marketInfo from "../repository/marketRepo";
+import { marketLiveInstance as marketInfo } from "../repository/index";
 
 export default function startHttpServer() {
   const app = express();

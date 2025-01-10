@@ -7,4 +7,4 @@ marketLiveInstance.init();
 const walletLiveInstance = new WalletRepo();
 walletLiveInstance.init();
 
-export default { marketLiveInstance, walletLiveInstance };
+export { marketLiveInstance, walletLiveInstance };

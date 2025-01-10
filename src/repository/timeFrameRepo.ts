@@ -10,9 +10,7 @@ class TimeFrameRepo {
   #ohlc4: number[] = [];
   #maxSize = 1000;
 
-  constructor(pairName: string, timeFrame: string) {
-    this.loadMarketCandles(pairName, timeFrame);
-  }
+  constructor() {}
 
   addCandle(candle: CandleType) {
     const ohlc4: number =
@@ -89,11 +87,7 @@ class TimeFrameRepo {
   }
 
   //Get candles history for spot pair
-  async loadMarketCandles(
-    pairName: string,
-    timeFrame: string,
-    isFuture: boolean = false
-  ) {
+  async init(pairName: string, timeFrame: string, isFuture: boolean = false) {
     this.#candlesMap.clear();
     this.#candles = [];
     this.#closePrices = [];

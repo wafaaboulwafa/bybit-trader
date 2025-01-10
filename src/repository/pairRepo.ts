@@ -35,10 +35,16 @@ class PairRepo {
     this.#quotationCoin = quotationCoin;
     this.#isFuture = isFuture;
 
-    for (let timeframe of timeFrames)
-      this.#timeFrames.set(timeframe, new TimeFrameRepo(pair, timeframe));
+    for (let timeframe of timeFrames) {
+      this.#timeFrames.set(timeframe, new TimeFrameRepo());
+    }
   }
 
+  init() {
+    this.#timeFrames.forEach((value, key) => {
+      value.init(this.#pair, key, this.#isFuture);
+    });
+  }
   get pair() {
     return this.#pair;
   }

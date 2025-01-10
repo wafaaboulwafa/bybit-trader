@@ -12,17 +12,16 @@ class MarketRepo {
 
     for (let pairInfo of pairs)
       if (!this.#pairs.has(pairInfo.pairName)) {
-        this.#pairs.set(
+        const pairRepo = new PairRepo(
           pairInfo.pairName,
-          new PairRepo(
-            pairInfo.pairName,
-            pairInfo.timeFrames,
-            pairInfo.strategy,
-            pairInfo.baseCoin,
-            pairInfo.quotationCoin,
-            pairInfo.isFuture
-          )
+          pairInfo.timeFrames,
+          pairInfo.strategy,
+          pairInfo.baseCoin,
+          pairInfo.quotationCoin,
+          pairInfo.isFuture
         );
+        pairRepo.init();
+        this.#pairs.set(pairInfo.pairName, pairRepo);
       }
   }
 
