@@ -1,3 +1,4 @@
+import { KlineIntervalV3 } from "bybit-api";
 import PairRepo from "../repository/pairRepo";
 
 export type CandleType = {
@@ -23,7 +24,7 @@ export type OnStrategyType = (
 export type PairConfigType = {
   pairName: string;
   strategy: string;
-  timeFrames: string[];
+  timeFrames: KlineIntervalV3[];
   baseCoin: string;
   quotationCoin: string;
   isFuture: boolean;

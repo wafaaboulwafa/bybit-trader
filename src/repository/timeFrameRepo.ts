@@ -104,8 +104,10 @@ class TimeFrameRepo {
       limit: 1000,
     });
 
-    if (pairResponse.retCode > 0)
+    if (pairResponse.retCode > 0) {
       console.warn(pairResponse.retCode + " - " + pairResponse.retMsg);
+      return;
+    }
 
     for (let r of pairResponse.result.list) {
       const candle: CandleType = {

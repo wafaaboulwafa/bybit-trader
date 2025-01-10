@@ -1,7 +1,7 @@
 [
   {
     "pairName": "DOGEUSDT",
-    "timeFrames": [1, 4],
+    "timeFrames": [1, 60],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
     "strategy": "default",
