@@ -36,7 +36,10 @@ class PairRepo {
     this.#isFuture = isFuture;
 
     for (let timeframe of timeFrames) {
-      this.#timeFrames.set(timeframe, new TimeFrameRepo());
+      this.#timeFrames.set(
+        timeframe.toString().toLocaleLowerCase(),
+        new TimeFrameRepo()
+      );
     }
   }
 
@@ -67,7 +70,7 @@ class PairRepo {
   }
 
   getTimeFrame(timeFrame: string) {
-    return this.#timeFrames.get(timeFrame);
+    return this.#timeFrames.get(timeFrame.toString().toLocaleLowerCase());
   }
 
   get timeFrames(): string[] {
@@ -75,8 +78,9 @@ class PairRepo {
   }
 
   addCandle(timeFrame: string, candle: CandleType) {
-    if (this.#timeFrames.has(timeFrame))
-      this.#timeFrames.get(timeFrame)?.addCandle(candle);
+    const timeFrameKey = timeFrame.toString().toLocaleLowerCase();
+    if (this.#timeFrames.has(timeFrameKey))
+      this.#timeFrames.get(timeFrameKey)?.addCandle(candle);
   }
 
   cleanup() {

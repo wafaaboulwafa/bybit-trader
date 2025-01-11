@@ -37,6 +37,8 @@ export default async function startTradingBot() {
         const pairData = marketInfo.getPair(pairName);
 
         if (!pairData) return;
+        //Wait for candles to be loaded first
+        if ((pairData.getTimeFrame(timeFrame)?.length || 0) === 0) return;
 
         for (let r of data.data) {
           //Create candle
