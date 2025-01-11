@@ -1,3 +1,4 @@
+import { notifyChart } from "../service/telgramClient";
 import { CandleType, OnStrategyType } from "../service/types";
 import { SMA, RSI } from "technicalindicators";
 
@@ -22,6 +23,7 @@ type TrendlineType = "Uptrend" | "Downtrend" | "Sideways";
 
 const lastSignal = new Map<string, SignalType>();
 const rsiPeriod = 14; // RSI period
+const lastAnalyses = new Map<string, AnalysesType>();
 
 // Identify Support and Resistance Levels
 function identifyLevels(data: CandleType[]) {
@@ -127,8 +129,21 @@ const strategy: OnStrategyType = (
     const timeFrameRepo = pairData.getTimeFrame(timeframe);
     const data = timeFrameRepo?.candle;
     if (!data) continue;
+
+    const newAnalyses = analyzeData(data);
+    const prevAnalyses = lastAnalyses.get(pair + "." + timeFrame);
+
+    if (prevAnalyses != newAnalyses.analyses) {
+      lastAnalyses.set(pair + "." + timeFrame, newAnalyses.analyses);
+      notifyChart(
+        "Wychoff stage change\r\nPair: ${pair}\r\nTimeFrame: ${timeFrame}",
+        pair,
+        data
+      );
+    }
+
     if (timeFrameRepo?.candle.length > rsiPeriod) {
-      analyses.set(timeFrame, analyzeData(timeFrameRepo?.candle));
+      analyses.set(timeFrame, newAnalyses);
     }
   }
 
