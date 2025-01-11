@@ -1,5 +1,4 @@
 import { OnStrategyType, PairConfigType } from "./types";
-import { WebsocketClient } from "bybit-api";
 import {
   notifyWalletUpdate,
   notifyOrderUpdate,
@@ -11,6 +10,7 @@ import {
   walletLiveInstance as wallet,
   marketLiveInstance as marketInfo,
 } from "../repository/index";
+import { createSocketClient } from "./bybitClient";
 
 export default async function startTradingBot() {
   //Hold trans time
@@ -18,17 +18,7 @@ export default async function startTradingBot() {
   let lastSellTransTime: Date = new Date(0);
 
   //ByBit Socket client
-  const wsClient = new WebsocketClient({
-    market: "v5",
-    testnet: (process.env.BYBIT_API_TESTNET || "").toLowerCase() == "true",
-    demoTrading:
-      (process.env.BYBIT_API_DEMO || "").toLowerCase() === "true"
-        ? true
-        : undefined,
-    key: process.env.BYBIT_API_KEY,
-    secret: process.env.BYBIT_API_SECRET,
-  });
-
+  const wsClient = createSocketClient();
   //Close all socket connection when application shutdown
   process.once("SIGINT", () => wsClient.closeAll(true));
   process.once("SIGTERM", () => wsClient.closeAll(true));

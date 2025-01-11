@@ -1,4 +1,4 @@
-import { restClient } from "../service/tradingApi";
+import { restClient } from "../service/bybitClient";
 
 class WalletRepo {
   #coins: Map<string, number> = new Map<string, number>();

@@ -1,5 +1,5 @@
 import { OrderParamsV5, PositionInfoParamsV5, PositionV5 } from "bybit-api";
-import { restClient } from "../service/tradingApi";
+import { restClient } from "../service/bybitClient";
 import { CandleType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
 import { walletLiveInstance } from "./index";

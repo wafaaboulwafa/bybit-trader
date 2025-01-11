@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 import { CandleType } from "../service/types";
-import { restClient } from "../service/tradingApi";
+import { restClient } from "../service/bybitClient";
 import { KlineIntervalV3 } from "bybit-api";
 
 class TimeFrameRepo {
