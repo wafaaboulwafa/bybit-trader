@@ -5,6 +5,6 @@
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
     "strategy": "default",
-    "isFuture": false
+    "isFuture": true
   }
 ]

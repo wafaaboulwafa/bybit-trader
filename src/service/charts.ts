@@ -127,7 +127,7 @@ export async function generateChart(
   symbol: string,
   data: CandleType[]
 ): Promise<Buffer<ArrayBufferLike>> {
-  const labels = data.map((d) => d.startTime.toISOString().slice(11, 16));
+  const labels = data.map((d) => new Date(d.key).toISOString().slice(11, 16));
 
   const canvasRenderService = new ChartJSNodeCanvas({
     width,
