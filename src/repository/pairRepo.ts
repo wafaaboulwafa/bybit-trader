@@ -45,6 +45,7 @@ class PairRepo {
       value.init(this.#pair, key, this.#isFuture);
     });
   }
+
   get pair() {
     return this.#pair;
   }
@@ -82,7 +83,7 @@ class PairRepo {
     this.#timeFrames.forEach((value, key) => value.cleanup());
   }
 
-  async initPairInfo(isFuture = false) {
+  async initPairInfo() {
     if (this.#maxQty > 0) return;
 
     await restClient
@@ -154,9 +155,9 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
-    this.initPairInfo();
-
+    await this.initPairInfo();
     await this.cancelOrders();
+
     const balance =
       (await walletLiveInstance.getCoinAmount(this.#baseCoin)) || 0;
     const fullQty = balance / price;
@@ -203,6 +204,7 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
+    await this.initPairInfo();
     await this.cancelOrders();
     const fullQty =
       (await walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
@@ -268,6 +270,7 @@ class PairRepo {
     closeSell = true,
     closeBuy = true
   ) {
+    await this.initPairInfo();
     const positions = await this.getOpenFuturePositions();
 
     if (!positions) return;

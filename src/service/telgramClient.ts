@@ -1,4 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
+import { CandleType } from "./types";
+import { generateChart } from "./charts";
 
 const token = process.env.TELEGRAM_BOT_TOKEN || "";
 const chatId = process.env.TELEGRAM_CHAT_ID || "";
@@ -8,6 +10,10 @@ const telegramBot = new TelegramBot(token, { polling: true });
 //Telegram send message
 const notifyTelegram = (message: string) =>
   telegramBot.sendMessage(chatId, message);
+
+//Telegram send image
+const notifyTelegramWithImage = (caption: string, imageBuffer: Buffer) =>
+  telegramBot.sendPhoto(chatId, imageBuffer, { caption });
 
 //Send telegram message when wallet is updated
 export function notifyWalletUpdate(rec: any) {
@@ -67,4 +73,13 @@ export function notifyExecutionUpdate(rec: any) {
     parseFloat(rec.execValue).toFixed(2).toString();
 
   notifyTelegram(message);
+}
+
+export async function notifyChart(
+  caption: string,
+  pair: string,
+  candles: CandleType[]
+) {
+  const buffer = await generateChart(600, 800, pair, candles);
+  notifyTelegramWithImage(caption, buffer);
 }

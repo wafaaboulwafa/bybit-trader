@@ -9,6 +9,7 @@ import {
   isEmaCrossDown,
   getTrend,
 } from "../service/indicators";
+import { notifyChart } from "../service/telgramClient";
 
 const lastSignal = new Map<string, "overbought" | "oversold">();
 
@@ -52,8 +53,14 @@ const strategy: OnStrategyType = (
     isEmaCrossUp(timeRepo.closePrice) &&
     trend === "uptrend";
 
-  if (buySignal) buyPosition(bb.lower, 0.5);
-  if (sellSignal) closePositions(bb.upper);
+  if (buySignal) {
+    buyPosition(bb.lower, 0.5);
+    notifyChart("bbCross buy signal", pair, timeRepo.candle);
+  }
+  if (sellSignal) {
+    closePositions(bb.upper);
+    notifyChart("bbCross sell signal", pair, timeRepo.candle);
+  }
 
   if (buySignal || sellSignal) lastSignal.delete(pair + "." + timeFrame);
 };

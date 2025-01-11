@@ -89,7 +89,7 @@ class TimeFrameRepo {
   }
 
   //Get candles history for spot pair
-  async init(pairName: string, timeFrame: string, isFuture: boolean = false) {
+  async init(pairName: string, timeFrame: string, isFuture: boolean) {
     this.#candlesMap.clear();
     this.#candles = [];
     this.#closePrices = [];
@@ -130,7 +130,7 @@ class TimeFrameRepo {
   async loadPairBacktestHistoryCandles(
     pairName: string,
     timeFrame: string,
-    isFuture: boolean = false,
+    isFuture: boolean,
     start: Date | null = null,
     end: Date | null = null
   ) {

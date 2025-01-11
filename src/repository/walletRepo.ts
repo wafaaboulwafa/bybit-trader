@@ -6,7 +6,7 @@ class WalletRepo {
   constructor() {}
 
   getCoinAmount(coin: string) {
-    return this.#coins.get(coin);
+    return this.#coins.get(coin) || 0;
   }
 
   setCoinAmount(coin: string, value: number) {
@@ -15,7 +15,7 @@ class WalletRepo {
 
   async init(): Promise<void> {
     this.#coins.clear();
-    const response = await restClient
+    await restClient
       .getWalletBalance({
         accountType: "UNIFIED",
       })

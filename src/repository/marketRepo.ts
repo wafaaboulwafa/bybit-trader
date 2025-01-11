@@ -3,7 +3,7 @@ import PairRepo from "./pairRepo";
 
 class MarketRepo {
   #pairs = new Map<string, PairRepo>();
-  #queue = [];
+
   constructor() {}
 
   init(loadHistory: boolean) {
@@ -35,6 +35,7 @@ class MarketRepo {
       return pairRepo;
     }
   }
+
   getPair(pairName: string): PairRepo | undefined {
     return this.#pairs.get(pairName);
   }
