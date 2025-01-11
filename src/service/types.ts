@@ -46,3 +46,8 @@ export type BacktestCandleType = {
   timeFrame: string;
   candle: CandleType;
 };
+
+export type BacktestAssetValueType = {
+  time: Date;
+  value: number;
+};

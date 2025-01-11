@@ -1,4 +1,6 @@
 import { CandleType } from "./types";
+import fs from "fs";
+import path from "path";
 
 export function getMinutesBetweenDates(date1: Date, date2: Date) {
   const diffInMs = date1.valueOf() - date2.valueOf();
@@ -19,4 +21,10 @@ export function getClosePrices(candles: Map<number, CandleType>): number[] {
   canndlesArray.sort((a, b) => a.key - b.key);
   const closePrices = canndlesArray.map((r) => r.closePrice);
   return closePrices;
+}
+
+export function saveBuffer(filePath: string, buffer: Buffer) {
+  const fileAbsPath = path.resolve(__dirname, filePath);
+  if (fs.existsSync(fileAbsPath)) fs.unlinkSync(fileAbsPath);
+  fs.writeFileSync(fileAbsPath, buffer, { flush: true });
 }

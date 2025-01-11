@@ -6,7 +6,6 @@ import {
 import MarketRepo from "./marketRepo";
 import fs from "fs";
 import path from "path";
-import PairRepo from "./pairRepo";
 
 const backtestFilePath = "../../constants/backtestData.json";
 

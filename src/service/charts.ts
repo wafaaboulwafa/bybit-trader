@@ -1,4 +1,4 @@
-import { CandleType } from "./types";
+import { BacktestAssetValueType, CandleType } from "./types";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import { RSI, EMA, BollingerBands } from "technicalindicators";
 import { ChartConfiguration } from "chart.js";
@@ -167,16 +167,11 @@ export async function generateChart(
   return imageBuffer;
 }
 
-type AssetValueType = {
-  time: Date;
-  value: number;
-};
-
 // Generate Assets Chart
-async function generateAssetChart(
+export async function generateAssetChart(
   width: number = 800,
   height: number = 600,
-  data: AssetValueType[]
+  data: BacktestAssetValueType[]
 ): Promise<Buffer<ArrayBufferLike>> {
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
     width,
@@ -226,6 +221,5 @@ async function generateAssetChart(
 
   // Render the chart as a buffer
   const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration);
-  //require('fs').writeFileSync('asset-value-chart.png', imageBuffer);
   return imageBuffer;
 }

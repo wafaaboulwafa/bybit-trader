@@ -1,8 +1,10 @@
-import { CandleType, OnStrategyType } from "./types";
+import { BacktestAssetValueType, CandleType, OnStrategyType } from "./types";
 import strategies from "../strategies";
 import WalletRepo from "../repository/walletRepo";
 import MarketRepo from "../repository/marketRepo";
 import BacktestRepo from "../repository/backtestRepo";
+import { generateAssetChart } from "./charts";
+import { saveBuffer } from "./misc";
 
 const startBalance = 1000;
 
@@ -15,6 +17,8 @@ async function startTradingBot() {
   const wallet = new WalletRepo();
   wallet.setCoinAmount("USDT", startBalance);
   backtestRepo.rest();
+
+  const assetValueDataset: BacktestAssetValueType[] = [];
 
   let buyTrades = 0;
   let sellTrades = 0;
@@ -31,6 +35,12 @@ async function startTradingBot() {
     const timeFrame = backtestCandle.timeFrame;
 
     const candle = backtestCandle.candle;
+
+    if (assetValueDataset.length === 0)
+      assetValueDataset.push({
+        value: startBalance,
+        time: candle.startTime,
+      });
 
     const ohlc = [
       candle.openPrice,
@@ -81,8 +91,9 @@ async function startTradingBot() {
 
         if (baseCoinBalanace > 0) {
           const sellAmount = baseCoinBalanace * percentage;
+          const sellValue = sellAmount * price;
           baseCoinBalanace = baseCoinBalanace - sellAmount;
-          quoteCoinBalanace = quoteCoinBalanace + sellAmount * price;
+          quoteCoinBalanace = quoteCoinBalanace + sellValue;
 
           wallet.setCoinAmount(pairRepo.quotationCoin, quoteCoinBalanace);
           wallet.setCoinAmount(pairRepo.baseCoin, baseCoinBalanace);
@@ -90,6 +101,10 @@ async function startTradingBot() {
           const message = `[Sell] Price: ${price}, Qty: ${sellAmount}, Wallet: ${quoteCoinBalanace}, Date: ${printCandle.startTime}`;
           console.log(message);
           sellTrades++;
+          assetValueDataset.push({
+            value: sellValue,
+            time: printCandle.startTime,
+          });
         }
       };
 
@@ -123,6 +138,14 @@ async function startTradingBot() {
 
   //Print backtest result
   const finalBalance = wallet.getCoinAmount("USDT") || 0;
+  const assetschartBuffer = await generateAssetChart(
+    600,
+    800,
+    assetValueDataset
+  );
+
+  //Save asset value growth
+  saveBuffer("asset.svg", assetschartBuffer);
 
   console.log("---------------------------------------------");
   console.log("Sell trades", sellTrades);
