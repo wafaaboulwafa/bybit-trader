@@ -279,7 +279,8 @@ class PairRepo {
 
     if (!positions) return;
 
-    for (let postion of positions) {
+    for (const postion of positions) {
+      if (postion.side !== "Sell" && postion.side !== "Buy") continue;
       if (!closeSell && postion.side === "Sell") continue;
       if (!closeBuy && postion.side === "Buy") continue;
 
