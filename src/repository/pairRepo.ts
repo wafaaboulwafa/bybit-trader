@@ -89,10 +89,14 @@ class PairRepo {
 
   async initPairInfo() {
     if (this.#maxQty > 0) return;
+    if (this.#isFuture) this.initFuturePairInfo();
+    else this.initSpotPairInfo();
+  }
 
+  async initSpotPairInfo() {
     await restClient
       .getFeeRate({
-        category: !this.#isFuture ? "spot" : "linear",
+        category: "spot",
         symbol: this.#pair,
       })
       .then((r) => {
@@ -110,7 +114,6 @@ class PairRepo {
 
     await restClient
       .getInstrumentsInfo({
-        //category: !this.#isFuture ? "spot" : "linear",
         category: "spot",
         symbol: this.pair,
       })
@@ -124,6 +127,32 @@ class PairRepo {
           );
           this.#qtyDigits = countDecimalDigits(
             symboleInfo?.lotSizeFilter?.basePrecision
+          );
+          this.#maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
+          this.#minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
+          this.#priceDigits = countDecimalDigits(
+            symboleInfo?.priceFilter?.tickSize
+          );
+        }
+      })
+      .catch((e) => {
+        console.warn(e);
+      });
+  }
+
+  async initFuturePairInfo() {
+    await restClient
+      .getInstrumentsInfo({
+        category: "linear",
+        symbol: this.pair,
+      })
+      .then((r) => {
+        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+        if (r.result.list.length > 0) {
+          const symboleInfo = r.result.list[0];
+          this.#precision = parseFloat(symboleInfo?.lotSizeFilter?.qtyStep);
+          this.#qtyDigits = countDecimalDigits(
+            symboleInfo?.lotSizeFilter?.qtyStep
           );
           this.#maxQty = parseFloat(symboleInfo?.lotSizeFilter.maxOrderQty);
           this.#minQty = parseFloat(symboleInfo?.lotSizeFilter.minOrderQty);
@@ -161,9 +190,13 @@ class PairRepo {
   ): Promise<boolean | void> {
     await this.initPairInfo();
     await this.cancelOrders();
+    await walletLiveInstance.init();
 
     const balance =
-      (await walletLiveInstance.getCoinAmount(this.#baseCoin)) || 0;
+      (this.#isFuture
+        ? walletLiveInstance.margin
+        : walletLiveInstance.getCoinAmount(this.baseCoin)) || 0;
+
     const fullQty = balance / price;
     let buyQty = fullQty * percentage;
 
@@ -210,8 +243,13 @@ class PairRepo {
   ): Promise<boolean | void> {
     await this.initPairInfo();
     await this.cancelOrders();
+    await walletLiveInstance.init();
+
     const fullQty =
-      (await walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
+      (this.#isFuture
+        ? walletLiveInstance.margin
+        : walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
+
     let sellQty = fullQty * percentage;
 
     const rate = price > 0 ? this.#makerRate : this.#takerRate;
