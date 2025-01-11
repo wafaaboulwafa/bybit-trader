@@ -16,7 +16,8 @@ const strategy: OnStrategyType = (
   candle,
   buyPosition,
   sellPosition,
-  closePositions,
+  closeBuyPosition,
+  closeSellPostion,
   pairData
 ) => {
   let timeRepo = pairData.getTimeFrame(timeFrame);
@@ -32,11 +33,13 @@ const strategy: OnStrategyType = (
   const emaPrice = calcEma(timeRepo.closePrice, 5);
 
   if (buySignal && emaPrice) {
-    buyPosition(emaPrice, 0.5);
+    closeSellPostion(0);
+    buyPosition(emaPrice, 0.1);
   }
 
   if (sellSignal && emaPrice) {
-    closePositions(emaPrice);
+    closeBuyPosition(0);
+    sellPosition(emaPrice, 0.1);
   }
 };
 

@@ -17,7 +17,8 @@ export type OnStrategyType = (
   candle: CandleType,
   buyPosition: (price: number, percentage: number) => void,
   sellPosition: (price: number, percentage: number) => void,
-  closePositions: (price: number) => void,
+  closeBuyPosition: (price: number) => void,
+  closeSellPosition: (price: number) => void,
   pairData: PairRepo
 ) => void;
 

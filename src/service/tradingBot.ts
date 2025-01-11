@@ -80,10 +80,15 @@ export default async function startTradingBot() {
           };
 
           //Liquidate all positions
-          const closePositions = (price: number) => {
+          const closeBuyPosition = async (price: number) => {
             if (pairData.isFuture)
-              pairData.closeOpenFuturePositions(price, true, true);
-            else pairData.postSellOrder(price, 1);
+              await pairData.closeOpenFuturePositions(price, false, true);
+            else await pairData.postSellOrder(price, 1);
+          };
+
+          const closeSellPosition = async (price: number) => {
+            if (pairData.isFuture)
+              await pairData.closeOpenFuturePositions(price, true, false);
           };
 
           //Call strategy method
@@ -100,7 +105,8 @@ export default async function startTradingBot() {
               candle,
               buyPosition,
               sellPosition,
-              closePositions,
+              closeBuyPosition,
+              closeSellPosition,
               pairData
             );
           }

@@ -1,6 +1,6 @@
-import { notifyChart } from "../service/telgramClient";
 import { CandleType, OnStrategyType } from "../service/types";
 import { SMA, RSI } from "technicalindicators";
+//import { notifyChart } from "../service/telgramClient";
 
 type AnalysesType =
   | "NoSignal"
@@ -120,7 +120,8 @@ const strategy: OnStrategyType = (
   candle,
   buyPosition,
   sellPosition,
-  closePositions,
+  closeBuyPosition,
+  closeSellPostion,
   pairData
 ) => {
   //"1h", "4h", "1d" : Timeframes to analyze
@@ -135,11 +136,12 @@ const strategy: OnStrategyType = (
 
     if (prevAnalyses != newAnalyses.analyses) {
       lastAnalyses.set(pair + "." + timeFrame, newAnalyses.analyses);
+      /*
       notifyChart(
         "Wychoff stage change\r\nPair: ${pair}\r\nTimeFrame: ${timeFrame}",
         pair,
         data
-      );
+      );*/
     }
 
     if (timeFrameRepo?.candle.length > rsiPeriod) {
@@ -166,10 +168,18 @@ const strategy: OnStrategyType = (
 
   const lastSignalValue = lastSignal.get(pair) || "None";
   const buySignal = signal !== lastSignalValue && signal === "Buy";
-  const sellSignal = signal !== lastSignalValue && signal === "Sell";
+  const sellSignal =
+    signal !== lastSignalValue && signal === "Sell"; /*&& crossDownValue*/
 
-  if (buySignal) buyPosition(price, 0.5);
-  if (sellSignal) closePositions(price);
+  if (buySignal) {
+    closeSellPostion(0);
+    buyPosition(price, 0.1);
+  }
+
+  if (sellSignal) {
+    closeBuyPosition(price);
+    sellPosition(price, 0.1);
+  }
 
   lastSignal.set(pair, signal);
 };

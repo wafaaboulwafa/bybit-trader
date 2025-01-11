@@ -108,8 +108,12 @@ async function startTradingBot() {
         }
       };
 
-      const closePositions = (price: number) => {
+      const closeBuyPosition = (price: number) => {
         sellPosition(price, 1);
+      };
+
+      const closeSellPosition = (price: number) => {
+        //sellPosition(price, 1);
       };
 
       //Strategy method
@@ -126,13 +130,17 @@ async function startTradingBot() {
           printCandle,
           buyPosition,
           sellPosition,
-          closePositions,
+          closeBuyPosition,
+          closeSellPosition,
           pairRepo
         );
       }
 
       //Close all positions at the end
-      if (!backtestRepo.more) closePositions(price);
+      if (!backtestRepo.more && index === 3) {
+        closeBuyPosition(price);
+        closeSellPosition(price);
+      }
     }
   }
 

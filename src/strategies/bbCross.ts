@@ -1,9 +1,5 @@
 import { OnStrategyType } from "../service/types";
 import {
-  calcRsi,
-  calcEma,
-  calcSma,
-  calcMacd,
   calcbollingerbands,
   isEmaCrossUp,
   isEmaCrossDown,
@@ -11,7 +7,8 @@ import {
 } from "../service/indicators";
 //import { notifyChart } from "../service/telgramClient";
 
-const lastSignal = new Map<string, "overbought" | "oversold">();
+const priceLevel = new Map<string, "overbought" | "oversold">();
+const hasOrder = new Map<string, "buy" | "sell" | "none">();
 
 const strategy: OnStrategyType = (
   pair,
@@ -20,7 +17,8 @@ const strategy: OnStrategyType = (
   candle,
   buyPosition,
   sellPosition,
-  closePositions,
+  closeBuyPosition,
+  closeSellPostion,
   pairData
 ) => {
   const period = 5;
@@ -34,35 +32,42 @@ const strategy: OnStrategyType = (
 
   if (!bb) return;
 
+  const pairKey = pair + "." + timeFrame;
+
   // Check for crossing
   if (price > bb.upper) {
-    lastSignal.set(pair + "." + timeFrame, "overbought");
+    priceLevel.set(pairKey, "overbought");
   } else if (price < bb.lower) {
-    lastSignal.set(pair + "." + timeFrame, "oversold");
+    priceLevel.set(pairKey, "oversold");
   }
 
-  const signal = lastSignal.get(pair + "." + timeFrame);
-  const buySignal =
-    signal === "overbought" &&
-    isEmaCrossDown(timeRepo.closePrice) &&
-    trend === "downtrend";
-  ////
+  const isOverbought = priceLevel.get(pairKey) === "overbought" || false;
+  const isOversold = priceLevel.get(pairKey) === "oversold" || false;
 
-  const sellSignal =
-    signal === "oversold" &&
-    isEmaCrossUp(timeRepo.closePrice) &&
-    trend === "uptrend";
+  const hasBuyOrder = hasOrder.get(pair) === "buy" || false;
+  const hasSellOrder = hasOrder.get(pair) === "sell" || false;
 
-  if (buySignal) {
-    buyPosition(bb.lower, 0.5);
+  const crossDown = isEmaCrossDown(timeRepo.closePrice);
+  const crossUp = isEmaCrossUp(timeRepo.closePrice);
+
+  const trendingDown = trend === "downtrend";
+  const trendingUp = trend === "uptrend";
+
+  if (!hasSellOrder && trendingDown && crossDown && isOverbought) {
+    hasOrder.set(pair, "sell");
+    closeBuyPosition(0);
+    sellPosition(price, 0.1);
+    priceLevel.delete(pairKey);
     //notifyChart("bbCross buy signal", pair, timeRepo.candle);
   }
-  if (sellSignal) {
-    closePositions(bb.upper);
-    //notifyChart("bbCross sell signal", pair, timeRepo.candle);
-  }
 
-  if (buySignal || sellSignal) lastSignal.delete(pair + "." + timeFrame);
+  if (!hasBuyOrder && trendingUp && crossUp && isOversold) {
+    hasOrder.set(pair, "buy");
+    closeSellPostion(0);
+    buyPosition(price, 0.1);
+    priceLevel.delete(pairKey);
+    //notifyChart("bbCross buy signal", pair, timeRepo.candle);
+  }
 };
 
 export default strategy;

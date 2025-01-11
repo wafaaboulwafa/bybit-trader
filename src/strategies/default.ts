@@ -7,7 +7,8 @@ const strategy: OnStrategyType = (
   candle,
   buyPosition,
   sellPosition,
-  closePositions,
+  closeBuyPosition,
+  closeSellPostion,
   pairData
 ) => {
   console.log(`Pair: ${pair},Timeframe: ${timeFrame}, Price: ${price}`);

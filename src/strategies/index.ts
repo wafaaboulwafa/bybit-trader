@@ -7,8 +7,8 @@ import defaultStrategy from "./default";
 
 export default new Map<string, OnStrategyType>([
   ["default", defaultStrategy],
-  ["emaCross", emaCrossStrategy],
-  ["rsiEmaCross", rsiEmaCrossStrategy],
   ["bbCross", bbCrossStrategy],
   ["wychoff", wychoffStrategy],
+  // ["emaCross", emaCrossStrategy],
+  // ["rsiEmaCross", rsiEmaCrossStrategy],
 ]);

@@ -16,7 +16,8 @@ const strategy: OnStrategyType = (
   candle,
   buyPosition,
   sellPosition,
-  closePositions,
+  closeBuyPosition,
+  closeSellPostion,
   pairData
 ) => {
   let timeRepo = pairData.getTimeFrame(timeFrame);
@@ -41,13 +42,13 @@ const strategy: OnStrategyType = (
     macdValue.histogram > 0; /*&& crossDownValue*/
 
   if (buySignal) {
-    closePositions(price);
-    buyPosition(price, 0.25);
+    closeSellPostion(0);
+    buyPosition(price, 0.1);
   }
 
   if (sellSignal) {
-    closePositions(price);
-    sellPosition(price, 0.25);
+    closeBuyPosition(price);
+    sellPosition(price, 0.1);
   }
 };
 
