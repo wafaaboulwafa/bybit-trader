@@ -15,7 +15,7 @@
         //"--esm"
       ],
       // "program": "${file}",
-      "program": "./src/service/app.ts",
+      "program": "./src/test/test.ts",
       "cwd": "${workspaceRoot}",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": ["<node_internals>/**", "node_modules/**"]

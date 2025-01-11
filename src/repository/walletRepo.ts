@@ -30,8 +30,6 @@ class WalletRepo {
             this.setCoinAmount(coinRec.coin, parseFloat(coinRec.equity));
           }
         }
-
-        return 0;
       })
       .catch((e) => {
         console.warn(e);

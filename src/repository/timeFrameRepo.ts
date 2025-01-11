@@ -51,37 +51,16 @@ class TimeFrameRepo {
     );
   }
 
-  #candlesProxy: any = null;
   get candle(): CandleType[] {
-    if (this.#candlesProxy === null)
-      this.#candlesProxy = new Proxy(this, {
-        get: (target, prop: string) => this.#candles,
-        set: (target, prop) => true,
-      });
-
-    return this.#candlesProxy;
+    return this.#candles;
   }
 
-  #closePriceProxy: any = null;
   get closePrice(): number[] {
-    if (this.#closePriceProxy === null)
-      this.#closePriceProxy = new Proxy(this, {
-        get: (target, prop: string) => this.#closePrices,
-        set: (target, prop) => true,
-      });
-
-    return this.#closePriceProxy;
+    return this.#closePrices;
   }
 
-  #ohlc4Proxy: any = null;
   get ohlc4(): number[] {
-    if (this.#ohlc4Proxy === null)
-      this.#ohlc4Proxy = new Proxy(this, {
-        get: (target, prop: string) => this.#ohlc4,
-        set: (target, prop) => true,
-      });
-
-    return this.#ohlc4Proxy;
+    return this.#ohlc4;
   }
 
   get length() {

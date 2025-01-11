@@ -2,7 +2,7 @@ import { BacktestAssetValueType, CandleType } from "./types";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import { RSI, EMA, BollingerBands } from "technicalindicators";
 import { ChartConfiguration } from "chart.js";
-import "chartjs-chart-financial"; // Import the financial chart plugin
+import {} from "chartjs-chart-financial"; // Import the financial chart plugin
 
 // Generate Candlestick Chart with Indicators
 async function generateChartWithIndicators(
