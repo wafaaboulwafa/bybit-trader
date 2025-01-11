@@ -9,7 +9,7 @@ import strategies from "../strategies";
 import {
   walletLiveInstance as wallet,
   marketLiveInstance as marketInfo,
-} from "../repository/index";
+} from "../repository/instances";
 import { createSocketClient } from "./bybitClient";
 
 export default async function startTradingBot() {
