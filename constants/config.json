@@ -1,10 +1,10 @@
 [
   {
     "pairName": "DOGEUSDT",
-    "timeFrames": [1, 60],
+    "timeFrames": [1],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
-    "strategy": "default",
+    "strategy": "bbCross",
     "isFuture": true
   }
 ]
