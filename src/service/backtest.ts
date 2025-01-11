@@ -3,8 +3,6 @@ import strategies from "../strategies";
 import WalletRepo from "../repository/walletRepo";
 import MarketRepo from "../repository/marketRepo";
 import BacktestRepo from "../repository/backtestRepo";
-import { generateAssetChart } from "./charts";
-import { saveBuffer } from "./misc";
 
 const startBalance = 1000;
 
@@ -146,14 +144,6 @@ async function startTradingBot() {
 
   //Print backtest result
   const finalBalance = wallet.getCoinAmount("USDT") || 0;
-  const assetschartBuffer = await generateAssetChart(
-    600,
-    800,
-    assetValueDataset
-  );
-
-  //Save asset value growth
-  saveBuffer("asset.svg", assetschartBuffer);
 
   console.log("---------------------------------------------");
   console.log("Sell trades", sellTrades);

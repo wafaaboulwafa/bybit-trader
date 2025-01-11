@@ -5,7 +5,6 @@ import {
   isEmaCrossDown,
   getTrend,
 } from "../service/indicators";
-//import { notifyChart } from "../service/telgramClient";
 
 const priceLevel = new Map<string, "overbought" | "oversold">();
 const hasOrder = new Map<string, "buy" | "sell" | "none">();
@@ -58,7 +57,6 @@ const strategy: OnStrategyType = (
     closeBuyPosition(0);
     sellPosition(price, 0.1);
     priceLevel.delete(pairKey);
-    //notifyChart("bbCross buy signal", pair, timeRepo.candle);
   }
 
   if (!hasBuyOrder && trendingUp && crossUp && isOversold) {
@@ -66,7 +64,6 @@ const strategy: OnStrategyType = (
     closeSellPostion(0);
     buyPosition(price, 0.1);
     priceLevel.delete(pairKey);
-    //notifyChart("bbCross buy signal", pair, timeRepo.candle);
   }
 };
 

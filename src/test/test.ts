@@ -8,7 +8,6 @@ import backtestTradingBot from "./../service/backtest";
 import fs from "fs";
 import path from "path";
 import { BacktestDataType } from "../service/types";
-import { generateChart } from "../service/charts";
 import { saveBuffer } from "../service/misc";
 
 function getCandles() {
@@ -36,7 +35,5 @@ setTimeout(async () => {
   const data = getCandles();
   if (data) {
     const candles = data[0].timeFrames[0].data;
-    const buffer = await generateChart(800, 600, "DOGEUSDT", candles);
-    saveBuffer("chart.svg", buffer);
   }
 }, 1000 * 5);

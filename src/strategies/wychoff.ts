@@ -1,6 +1,5 @@
 import { CandleType, OnStrategyType } from "../service/types";
 import { SMA, RSI } from "technicalindicators";
-//import { notifyChart } from "../service/telgramClient";
 
 type AnalysesType =
   | "NoSignal"
@@ -136,12 +135,6 @@ const strategy: OnStrategyType = (
 
     if (prevAnalyses != newAnalyses.analyses) {
       lastAnalyses.set(pair + "." + timeFrame, newAnalyses.analyses);
-      /*
-      notifyChart(
-        "Wychoff stage change\r\nPair: ${pair}\r\nTimeFrame: ${timeFrame}",
-        pair,
-        data
-      );*/
     }
 
     if (timeFrameRepo?.candle.length > rsiPeriod) {
