@@ -23,7 +23,7 @@ class PairRepo {
 
   constructor(
     pair: string,
-    timeFrames: string[] = [],
+    timeFrames: string[],
     strategy: string,
     baseCoin: string,
     quotationCoin: string,
@@ -40,9 +40,9 @@ class PairRepo {
     }
   }
 
-  init() {
-    this.#timeFrames.forEach((value, key) => {
-      value.init(this.#pair, key, this.#isFuture);
+  async init() {
+    this.#timeFrames.forEach(async (value, key) => {
+      await value.init(this.#pair, key, this.#isFuture);
     });
   }
 

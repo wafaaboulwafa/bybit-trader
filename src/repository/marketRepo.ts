@@ -6,14 +6,14 @@ class MarketRepo {
 
   constructor() {}
 
-  init(loadHistory: boolean) {
+  async init(loadHistory: boolean) {
     this.#pairs.clear();
     const pairs: PairConfigType[] = require("../../constants/config.json");
 
     for (let pairInfo of pairs)
       if (!this.#pairs.has(pairInfo.pairName)) {
         const pairRepo = this.addPair(pairInfo);
-        if (pairRepo && loadHistory) pairRepo.init();
+        if (pairRepo && loadHistory) await pairRepo.init();
       }
   }
 
@@ -23,16 +23,16 @@ class MarketRepo {
 
   addPair(pairInfo: PairConfigType): PairRepo | undefined {
     if (!this.#pairs.has(pairInfo.pairName)) {
-      const pairRepo = new PairRepo(
+      const p = new PairRepo(
         pairInfo.pairName,
-        pairInfo.timeFrames,
+        pairInfo.timeFrames as string[],
         pairInfo.strategy,
         pairInfo.baseCoin,
         pairInfo.quotationCoin,
         pairInfo.isFuture
       );
-      this.#pairs.set(pairInfo.pairName, pairRepo);
-      return pairRepo;
+      this.#pairs.set(pairInfo.pairName, p);
+      return p;
     }
   }
 
