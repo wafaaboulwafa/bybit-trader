@@ -64,7 +64,7 @@ class BacktestRepo {
 
       for (const timeFrame of pairRepo.timeFrames) {
         const timeFrameRepo = pairRepo.getTimeFrame(timeFrame);
-        timeFrameRepo?.loadPairBacktestHistoryCandles(
+        await timeFrameRepo?.loadPairBacktestHistoryCandles(
           pairRepo.pair,
           timeFrame,
           pairRepo.isFuture
@@ -77,6 +77,8 @@ class BacktestRepo {
 
         backtestPair.timeFrames.push(backTestTimeFrame);
       }
+
+      data.push(backtestPair);
     }
     const filePath = path.resolve(__dirname, backtestFilePath);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);

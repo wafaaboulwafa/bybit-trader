@@ -122,7 +122,7 @@ class TimeFrameRepo {
     let endDate: DateTime | null = end === null ? DateTime.now() : null;
     let startDate: DateTime | null =
       start === null && endDate !== null
-        ? endDate.minus({ years: 2 })
+        ? endDate.minus({ month: 1 })
         : start !== null
         ? DateTime.fromJSDate(start)
         : null;
