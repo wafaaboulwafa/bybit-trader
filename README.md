@@ -20,7 +20,7 @@ This guide provides instructions for installing, configuring, and managing the B
 ```bash
 cd /opt
 sudo git clone https://github.com/wafaaboulwafa/bybit-trader
-cd bybit-trading-bot
+cd bybit-trading-trader
 ```
 
 ---
@@ -60,7 +60,7 @@ Save and exit (CTRL + O, CTRL + X).
 ### Create Service File
 
 ```bash
-sudo nano /etc/systemd/system/bybit-bot.service
+sudo nano /etc/systemd/system/bybit-trader.service
 ```
 
 Add the following configuration:
@@ -95,8 +95,8 @@ Save and exit.
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable bybit-bot
-sudo systemctl start bybit-bot
+sudo systemctl enable bybit-trader
+sudo systemctl start bybit-trader
 ```
 
 ---
@@ -106,7 +106,7 @@ sudo systemctl start bybit-bot
 ### Start Service
 
 ```bash
-sudo systemctl start bybit-bot
+sudo systemctl start bybit-trader
 ```
 
 ---
@@ -114,7 +114,7 @@ sudo systemctl start bybit-bot
 ### Stop Service
 
 ```bash
-sudo systemctl stop bybit-bot
+sudo systemctl stop bybit-trader
 ```
 
 ---
@@ -122,7 +122,7 @@ sudo systemctl stop bybit-bot
 ### Restart Service
 
 ```bash
-sudo systemctl restart bybit-bot
+sudo systemctl restart bybit-trader
 ```
 
 ---
@@ -130,7 +130,7 @@ sudo systemctl restart bybit-bot
 ### Check Service Status
 
 ```bash
-sudo systemctl status bybit-bot
+sudo systemctl status bybit-trader
 ```
 
 ---
@@ -140,8 +140,8 @@ sudo systemctl status bybit-bot
 ### Stop and Disable Service
 
 ```bash
-sudo systemctl stop bybit-bot
-sudo systemctl disable bybit-bot
+sudo systemctl stop bybit-trader
+sudo systemctl disable bybit-trader
 ```
 
 ---
@@ -149,8 +149,8 @@ sudo systemctl disable bybit-bot
 ### Remove Files
 
 ```bash
-sudo rm /etc/systemd/system/bybit-bot.service
-sudo rm -r /opt/bybit-trading-bot
+sudo rm /etc/systemd/system/bybit-trader.service
+sudo rm -r /opt/bybit-trading-trader
 ```
 
 ---
@@ -160,7 +160,7 @@ sudo rm -r /opt/bybit-trading-bot
 - Ensure to regularly monitor logs:
 
 ```bash
-sudo journalctl -u bybit-bot -f
+sudo journalctl -u bybit-trader -f
 ```
 
 - Update bot by pulling changes from GitHub and restarting the service.
