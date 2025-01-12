@@ -88,7 +88,7 @@ const strategy: OnStrategyType = (
   }
 
   if (lastRsi > 65) {
-    rsiCross.set(pairkey, "oversold");
+    rsiCross.set(pairkey, "overbought");
   }
 
   const isTrendUp = trend === "uptrend";
