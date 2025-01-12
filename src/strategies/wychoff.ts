@@ -165,13 +165,13 @@ const strategy: OnStrategyType = (
     signal !== lastSignalValue && signal === "Sell"; /*&& crossDownValue*/
 
   if (buySignal) {
-    closeSellPostion(0);
-    buyPosition(price, 0.1);
+    //closeSellPostion(0);
+    //buyPosition(price, 0.1);
   }
 
   if (sellSignal) {
-    closeBuyPosition(price);
-    sellPosition(price, 0.1);
+    //closeBuyPosition(price);
+    //sellPosition(price, 0.1);
   }
 
   lastSignal.set(pair, signal);

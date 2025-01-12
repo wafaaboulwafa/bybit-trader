@@ -62,7 +62,11 @@ const strategy: OnStrategyType = (
       6
     )}, Slow EMA: ${slowEma.toFixed(6)}, Upper: ${bb.upper.toFixed(
       6
-    )}, Middle: ${bb.middle.toFixed(6)}, Lower: ${bb.lower.toFixed(6)}`
+    )}, Middle: ${bb.middle.toFixed(6)}, Lower: ${bb.lower.toFixed(
+      6
+    )}, bbCross: ${bbCross.get(pairkey) || "none"}, rsiCross: ${
+      rsiCross.get(pairkey) || "none"
+    }, lastOrderSignal: ${lastOrderSignal.get(pair) || "none"}`
   );
 
   //Close buy orders
