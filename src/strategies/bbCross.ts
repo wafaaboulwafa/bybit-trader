@@ -1,13 +1,24 @@
 import { OnStrategyType } from "../service/types";
-import {
-  calcbollingerbands,
-  isEmaCrossUp,
-  isEmaCrossDown,
-  getTrend,
-} from "../service/indicators";
+import { calcRsi } from "../service/indicators";
+import { bollingerbands } from "technicalindicators";
+import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
 
-const priceLevel = new Map<string, "overbought" | "oversold">();
-const hasOrder = new Map<string, "buy" | "sell" | "none">();
+const getTrendDirection = (
+  bb: BollingerBandsOutput[]
+): "uptrend" | "downtrend" | "sideways" => {
+  const middleBands = bb.map((b) => b.middle);
+
+  const recentSlope =
+    middleBands[middleBands.length - 1] - middleBands[middleBands.length - 2];
+
+  if (recentSlope > 0) return "uptrend";
+  else if (recentSlope < 0) return "downtrend";
+  else return "sideways";
+};
+
+const bbCross = new Map<string, "upper" | "lower">();
+const rsiCross = new Map<string, "overbought" | "oversold">();
+const lastOrderSignal = new Map<string, "buy" | "sell">();
 
 const strategy: OnStrategyType = (
   pair,
@@ -20,69 +31,81 @@ const strategy: OnStrategyType = (
   closeSellPostion,
   pairData
 ) => {
-  const period = 5;
-  const stdDev = 2;
+  const timeFrameRepo = pairData.getTimeFrame(timeFrame);
+  if (!timeFrameRepo) return;
 
-  let timeRepo = pairData.getTimeFrame(timeFrame);
-  if (!timeRepo) return;
+  const prices = timeFrameRepo?.closePrice || [];
+  if (prices.length < 100) return;
 
-  let trend = getTrend(timeRepo?.closePrice);
-  let bb = calcbollingerbands(timeRepo.closePrice, stdDev, period);
-
-  if (!bb) return;
-
-  const pairKey = pair + "." + timeFrame;
-
-  // Check for crossing
-  if (price > bb.upper) {
-    priceLevel.set(pairKey, "overbought");
-  } else if (price < bb.lower) {
-    priceLevel.set(pairKey, "oversold");
-  }
-
-  const isOverbought = priceLevel.get(pairKey) === "overbought" || false;
-  const isOversold = priceLevel.get(pairKey) === "oversold" || false;
-
-  const hasBuyOrder = hasOrder.get(pair) === "buy" || false;
-  const hasSellOrder = hasOrder.get(pair) === "sell" || false;
-
-  const crossDown = isEmaCrossDown(timeRepo.closePrice);
-  const crossUp = isEmaCrossUp(timeRepo.closePrice);
-
-  const trendingDown = trend === "downtrend";
-  const trendingUp = trend === "uptrend";
-
-  if (!hasSellOrder && trendingDown && crossDown && isOverbought) {
-    hasOrder.set(pair, "sell");
-    closeBuyPosition(0);
-    sellPosition(price, 0.1);
-    priceLevel.delete(pairKey);
-  }
-
-  if (!hasBuyOrder && trendingUp && crossUp && isOversold) {
-    hasOrder.set(pair, "buy");
-    closeSellPostion(0);
-    buyPosition(price, 0.1);
-    priceLevel.delete(pairKey);
-  }
-
-  console.log({
-    pairKey,
-    timeFrame,
-    date: new Date(),
-    sellSignal: {
-      hasSellOrder,
-      trendingDown,
-      crossDown,
-      isOverbought,
-    },
-    buySignal: {
-      hasBuyOrder,
-      trendingUp,
-      crossUp,
-      isOversold,
-    },
+  const bbArray = bollingerbands({
+    values: prices,
+    stdDev: 2,
+    period: 100,
   });
+
+  const lastRsi = calcRsi(prices, 14);
+  const fastEma = calcRsi(prices, 1);
+  const slowEma = calcRsi(prices, 2);
+  const bb = bbArray[bbArray.length - 1];
+  const trend = getTrendDirection(bbArray);
+
+  if (!lastRsi || !fastEma || !slowEma) return;
+
+  const pairkey = pair + "." + timeFrame;
+
+  console.log(
+    `Trend: ${trend}, RSI: ${lastRsi}, Upper: ${bb.upper}, Middle: ${bb.middle}, Lower: ${bb.lower}`
+  );
+
+  //Close buy orders
+  if (price > bb.upper) {
+    closeBuyPosition(0);
+    bbCross.set(pairkey, "upper");
+  }
+
+  //Close buy orders
+  if (price < bb.lower) {
+    closeSellPostion(0);
+    bbCross.set(pairkey, "lower");
+  }
+
+  if (lastRsi < 35) {
+    rsiCross.set(pairkey, "oversold");
+  }
+
+  if (lastRsi > 65) {
+    rsiCross.set(pairkey, "oversold");
+  }
+
+  const isTrendUp = trend === "uptrend";
+  const isTrendDown = trend === "downtrend";
+
+  const isCrossUp = fastEma > slowEma;
+  const isCrosDown = fastEma < slowEma;
+
+  const isOversold = rsiCross.get(pairkey) === "oversold" || false;
+  const isOverbought = rsiCross.get(pairkey) === "overbought" || false;
+
+  const hasBuyOrder = lastOrderSignal.get(pair) === "buy" || false;
+  const hasSellOrder = lastOrderSignal.get(pair) === "sell" || false;
+
+  if (isTrendUp && isOversold && isCrossUp && !hasBuyOrder) {
+    console.log(`BUY signal at price: ${price}`);
+    //Buy signal
+    buyPosition(price, 0.1);
+    lastOrderSignal.set(pair, "buy");
+    bbCross.delete(pairkey);
+    rsiCross.delete(pairkey);
+  }
+
+  if (isTrendDown && isOverbought && isCrosDown && !hasSellOrder) {
+    console.log(`SELL signal at price: ${price}`);
+    //Sell signal
+    buyPosition(price, 0.1);
+    lastOrderSignal.set(pair, "sell");
+    bbCross.delete(pairkey);
+    rsiCross.delete(pairkey);
+  }
 };
 
 export default strategy;
