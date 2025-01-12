@@ -65,6 +65,24 @@ const strategy: OnStrategyType = (
     buyPosition(price, 0.1);
     priceLevel.delete(pairKey);
   }
+
+  console.log({
+    pairKey,
+    timeFrame,
+    date: new Date(),
+    sellSignal: {
+      hasSellOrder,
+      trendingDown,
+      crossDown,
+      isOverbought,
+    },
+    buySignal: {
+      hasBuyOrder,
+      trendingUp,
+      crossUp,
+      isOversold,
+    },
+  });
 };
 
 export default strategy;
