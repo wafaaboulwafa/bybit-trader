@@ -69,17 +69,22 @@ const strategy: OnStrategyType = (
     }, lastOrderSignal: ${lastOrderSignal.get(pair) || "none"}`
   );
 
+  const hasBuyOrder = lastOrderSignal.get(pair) === "buy" || false;
+  const hasSellOrder = lastOrderSignal.get(pair) === "sell" || false;
+
   //Close buy orders
-  if (price > bb.upper) {
+  if (price > bb.upper && hasBuyOrder) {
     console.log(`Close all BUY orders at price: ${price.toFixed(6)}`);
     closeBuyPosition(0);
+    lastOrderSignal.delete(pair);
     bbCross.set(pairkey, "upper");
   }
 
   //Close sell orders
-  if (price < bb.lower) {
+  if (price < bb.lower && hasSellOrder) {
     console.log(`Close all SELL orders at price: ${price.toFixed(6)}`);
     closeSellPostion(0);
+    lastOrderSignal.delete(pair);
     bbCross.set(pairkey, "lower");
   }
 
@@ -99,9 +104,6 @@ const strategy: OnStrategyType = (
 
   const isOversold = rsiCross.get(pairkey) === "oversold" || false;
   const isOverbought = rsiCross.get(pairkey) === "overbought" || false;
-
-  const hasBuyOrder = lastOrderSignal.get(pair) === "buy" || false;
-  const hasSellOrder = lastOrderSignal.get(pair) === "sell" || false;
 
   if (isTrendUp && isOversold && isCrossUp && !hasBuyOrder) {
     //Buy signal
