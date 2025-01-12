@@ -24,4 +24,7 @@ echo "Starting the service: $SERVICE_NAME"
 sudo systemctl enable "$SERVICE_NAME" || { echo "Failed to install service $SERVICE_NAME. Exiting."; exit 1; }
 sudo systemctl start "$SERVICE_NAME" || { echo "Failed to start service $SERVICE_NAME. Exiting."; exit 1; }
 
+# allow to run scripts
+chmod +x *.sh
+
 sudo journalctl -u "$SERVICE_NAME" -f
