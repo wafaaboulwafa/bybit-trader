@@ -94,8 +94,9 @@ const strategy: OnStrategyType = (
   const hasSellOrder = lastOrderSignal.get(pair) === "sell" || false;
 
   if (isTrendUp && isOversold && isCrossUp && !hasBuyOrder) {
-    console.log(`BUY signal at price: ${price.toFixed(6)}`);
     //Buy signal
+    console.log(`BUY signal at price: ${price.toFixed(6)}`);
+    closeSellPostion(0);
     buyPosition(price, 0.1);
     lastOrderSignal.set(pair, "buy");
     bbCross.delete(pairkey);
@@ -103,9 +104,10 @@ const strategy: OnStrategyType = (
   }
 
   if (isTrendDown && isOverbought && isCrosDown && !hasSellOrder) {
-    console.log(`SELL signal at price: ${price.toFixed(6)}`);
     //Sell signal
-    buyPosition(price, 0.1);
+    console.log(`SELL signal at price: ${price.toFixed(6)}`);
+    closeBuyPosition(0);
+    sellPosition(price, 0.1);
     lastOrderSignal.set(pair, "sell");
     bbCross.delete(pairkey);
     rsiCross.delete(pairkey);
