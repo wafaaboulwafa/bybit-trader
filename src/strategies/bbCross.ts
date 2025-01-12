@@ -34,7 +34,7 @@ const strategy: OnStrategyType = (
   const timeFrameRepo = pairData.getTimeFrame(timeFrame);
   if (!timeFrameRepo) return;
 
-  const prices = timeFrameRepo?.closePrice || [];
+  const prices = timeFrameRepo?.ohlc4 || [];
   if (prices.length < 100) return;
 
   const bbArray = bollingerbands({
@@ -54,7 +54,7 @@ const strategy: OnStrategyType = (
   const pairkey = pair + "." + timeFrame;
 
   console.log(
-    `Trend: ${trend}, RSI: ${lastRsi}, Fast EMA: ${fastEma.toFixed(
+    `Price: ${price}, Trend: ${trend}, RSI: ${lastRsi}, Fast EMA: ${fastEma.toFixed(
       6
     )}, Slow EMA: ${slowEma.toFixed(6)}, Upper: ${bb.upper.toFixed(
       6
@@ -63,12 +63,14 @@ const strategy: OnStrategyType = (
 
   //Close buy orders
   if (price > bb.upper) {
+    console.log(`Close all BUY orders at price: ${price.toFixed(6)}`);
     closeBuyPosition(0);
     bbCross.set(pairkey, "upper");
   }
 
-  //Close buy orders
+  //Close sell orders
   if (price < bb.lower) {
+    console.log(`Close all SELL orders at price: ${price.toFixed(6)}`);
     closeSellPostion(0);
     bbCross.set(pairkey, "lower");
   }
