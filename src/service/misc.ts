@@ -28,3 +28,12 @@ export function saveBuffer(filePath: string, buffer: Buffer) {
   if (fs.existsSync(fileAbsPath)) fs.unlinkSync(fileAbsPath);
   fs.writeFileSync(fileAbsPath, buffer, { flush: true });
 }
+
+export function takeLast<T>(
+  data: Array<T>,
+  size: number,
+  shift: number
+): Array<T> {
+  const takeSize = Math.min(data.length, size);
+  return data.slice(data.length - (takeSize + shift), data.length - shift);
+}

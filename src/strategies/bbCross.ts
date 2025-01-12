@@ -1,7 +1,8 @@
 import { OnStrategyType } from "../service/types";
-import { calcRsi } from "../service/indicators";
+import { calcEma, calcRsi } from "../service/indicators";
 import { bollingerbands } from "technicalindicators";
 import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
+import { takeLast } from "../service/misc";
 
 const getTrendDirection = (
   bb: BollingerBandsOutput[]
@@ -34,7 +35,10 @@ const strategy: OnStrategyType = (
   const timeFrameRepo = pairData.getTimeFrame(timeFrame);
   if (!timeFrameRepo) return;
 
-  const prices = timeFrameRepo?.ohlc4 || [];
+  const originalPrices = timeFrameRepo?.ohlc4 || [];
+
+  const prices = takeLast(originalPrices, 200, 0);
+
   if (prices.length < 100) return;
 
   const bbArray = bollingerbands({
@@ -44,8 +48,8 @@ const strategy: OnStrategyType = (
   });
 
   const lastRsi = calcRsi(prices, 14);
-  const fastEma = calcRsi(prices, 1);
-  const slowEma = calcRsi(prices, 2);
+  const fastEma = calcEma(prices, 1);
+  const slowEma = calcEma(prices, 2);
   const bb = bbArray[bbArray.length - 1];
   const trend = getTrendDirection(bbArray);
 
