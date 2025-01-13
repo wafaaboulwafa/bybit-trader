@@ -1,7 +1,7 @@
 [
   {
     "pairName": "DOGEUSDT",
-    "timeFrames": [1],
+    "timeFrames": [15],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
     "strategy": "bbCross",

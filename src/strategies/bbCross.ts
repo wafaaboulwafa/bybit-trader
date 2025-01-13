@@ -102,8 +102,10 @@ const strategy: OnStrategyType = (
   const isCrossUp = fastEma > slowEma;
   const isCrosDown = fastEma < slowEma;
 
-  const isOversold = rsiCross.get(pairkey) === "oversold" || false;
-  const isOverbought = rsiCross.get(pairkey) === "overbought" || false;
+  const isOversold =
+    (price < bb.middle && rsiCross.get(pairkey) === "oversold") || false;
+  const isOverbought =
+    (price > bb.middle && rsiCross.get(pairkey) === "overbought") || false;
 
   if (isTrendUp && isOversold && isCrossUp && !hasBuyOrder) {
     //Buy signal
