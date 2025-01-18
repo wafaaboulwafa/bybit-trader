@@ -56,7 +56,7 @@ const strategy: OnStrategyType = (
   if (!lastRsi || !fastEma || !slowEma) return;
 
   const pairkey = pair + "." + timeFrame;
-
+  /*
   console.log(
     `Price: ${price}, Trend: ${trend}, RSI: ${lastRsi}, Fast EMA: ${fastEma.toFixed(
       6
@@ -68,7 +68,7 @@ const strategy: OnStrategyType = (
       rsiCross.get(pairkey) || "none"
     }, lastOrderSignal: ${lastOrderSignal.get(pair) || "none"}`
   );
-
+  */
   const hasBuyOrder = lastOrderSignal.get(pair) === "buy" || false;
   const hasSellOrder = lastOrderSignal.get(pair) === "sell" || false;
 
