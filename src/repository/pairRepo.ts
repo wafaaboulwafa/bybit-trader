@@ -13,6 +13,7 @@ class PairRepo {
   #quotationCoin: string = "";
   #isFuture: boolean = false;
   #invert: boolean = false;
+  #risk: number = 0.1;
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -29,7 +30,8 @@ class PairRepo {
     baseCoin: string,
     quotationCoin: string,
     isFuture: boolean,
-    invert: boolean
+    invert: boolean,
+    risk: number
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
@@ -37,6 +39,7 @@ class PairRepo {
     this.#quotationCoin = quotationCoin;
     this.#isFuture = isFuture;
     this.#invert = invert;
+    this.#risk = risk;
 
     for (let timeframe of timeFrames) {
       this.#timeFrames.set(
@@ -74,6 +77,10 @@ class PairRepo {
 
   get invert() {
     return this.#invert;
+  }
+
+  get risk() {
+    return this.#risk;
   }
 
   getTimeFrame(timeFrame: string) {

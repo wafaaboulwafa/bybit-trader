@@ -111,7 +111,7 @@ const strategy: OnStrategyType = (
     //Buy signal
     console.log(`BUY signal at price: ${price.toFixed(6)}`);
     closeSellPostion(0);
-    buyPosition(price, 0.1);
+    buyPosition(price);
     lastOrderSignal.set(pair, "buy");
     bbCross.delete(pairkey);
     rsiCross.delete(pairkey);
@@ -121,7 +121,7 @@ const strategy: OnStrategyType = (
     //Sell signal
     console.log(`SELL signal at price: ${price.toFixed(6)}`);
     closeBuyPosition(0);
-    sellPosition(price, 0.1);
+    sellPosition(price);
     lastOrderSignal.set(pair, "sell");
     bbCross.delete(pairkey);
     rsiCross.delete(pairkey);

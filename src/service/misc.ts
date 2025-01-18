@@ -1,4 +1,4 @@
-import { CandleType } from "./types";
+import { CandleType, PairConfigType } from "./types";
 import fs from "fs";
 import path from "path";
 
@@ -36,4 +36,13 @@ export function takeLast<T>(
 ): Array<T> {
   const takeSize = Math.min(data.length, size);
   return data.slice(data.length - (takeSize + shift), data.length - shift);
+}
+
+export function getPairsConfig(): PairConfigType[] {
+  let filePath = process.env.CONFIG_PATH || "../../config.json";
+  if (filePath.startsWith("./") || filePath.startsWith("../"))
+    filePath = path.resolve(__dirname, filePath);
+  if (!fs.existsSync(filePath)) return [];
+  const result: PairConfigType[] = require(filePath);
+  return result;
 }

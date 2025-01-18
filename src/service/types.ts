@@ -15,8 +15,8 @@ export type OnStrategyType = (
   timeFrame: string,
   closePrice: number,
   candle: CandleType,
-  buyPosition: (price: number, percentage: number) => void,
-  sellPosition: (price: number, percentage: number) => void,
+  buyPosition: (price: number) => void,
+  sellPosition: (price: number) => void,
   closeBuyPosition: (price: number) => void,
   closeSellPosition: (price: number) => void,
   pairData: PairRepo
@@ -30,6 +30,7 @@ export type PairConfigType = {
   quotationCoin: string;
   isFuture: boolean;
   invert: boolean;
+  risk: number;
 };
 
 export type BacktestTimeFrameType = {

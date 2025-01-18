@@ -1,3 +1,4 @@
+import { getPairsConfig } from "../service/misc";
 import { PairConfigType } from "../service/types";
 import PairRepo from "./pairRepo";
 
@@ -8,7 +9,7 @@ class MarketRepo {
 
   async init(loadHistory: boolean) {
     this.#pairs.clear();
-    const pairs: PairConfigType[] = require("../../constants/config.json");
+    const pairs: PairConfigType[] = getPairsConfig();
 
     for (let pairInfo of pairs)
       if (!this.#pairs.has(pairInfo.pairName)) {
@@ -30,7 +31,8 @@ class MarketRepo {
         pairInfo.baseCoin,
         pairInfo.quotationCoin,
         pairInfo.isFuture,
-        pairInfo.invert
+        pairInfo.invert,
+        pairInfo.risk
       );
       this.#pairs.set(pairInfo.pairName, p);
       return p;

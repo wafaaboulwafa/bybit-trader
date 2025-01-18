@@ -4,7 +4,7 @@ import {
   notifyOrderUpdate,
   notifyExecutionUpdate,
 } from "./telgramClient";
-import { getMinutesBetweenDates } from "./misc";
+import { getMinutesBetweenDates, getPairsConfig } from "./misc";
 import strategies from "../strategies";
 import {
   walletLiveInstance as wallet,
@@ -54,7 +54,7 @@ export default async function startTradingBot() {
           pairData.addCandle(timeFrame, candle);
 
           //Create buy position
-          const buyPosition = (price: number, percentage: number) => {
+          const buyPosition = (price: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastBuyTransTime
@@ -63,11 +63,11 @@ export default async function startTradingBot() {
 
             console.log("Buy position ...");
             lastBuyTransTime = new Date();
-            pairData.postBuyOrder(price, percentage);
+            pairData.postBuyOrder(price, pairData.risk);
           };
 
           //Create sell position
-          const sellPosition = (price: number, percentage: number) => {
+          const sellPosition = (price: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastSellTransTime
@@ -76,7 +76,7 @@ export default async function startTradingBot() {
 
             console.log("Sell position ...");
             lastSellTransTime = new Date();
-            pairData.postSellOrder(price, percentage);
+            pairData.postSellOrder(price, pairData.risk);
           };
 
           //Liquidate all positions
@@ -129,13 +129,13 @@ export default async function startTradingBot() {
 
   //Create socket subscriptions
   const topics = [];
-  const pairs: PairConfigType[] = require("../../constants/config.json");
+  const pairs: PairConfigType[] = getPairsConfig();
   for (let p of pairs) {
     for (let t of p.timeFrames) {
       topics.push("kline." + t + "." + p.pairName);
     }
   }
   wsClient
-    .subscribeV5([...topics, "order", "execution", "wallet"], "spot")
+    .subscribeV5([...topics, "order", "execution", "wallet"], "linear")
     .catch((e) => console.warn(e));
 }
