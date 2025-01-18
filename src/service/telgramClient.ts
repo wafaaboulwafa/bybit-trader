@@ -1,18 +1,21 @@
 import TelegramBot from "node-telegram-bot-api";
-import { CandleType } from "./types";
 
-const token = process.env.TELEGRAM_BOT_TOKEN || "";
-const chatId = process.env.TELEGRAM_CHAT_ID || "";
+const token = process.env.TELEGRAM_BOT_TOKEN || null;
+const chatId = process.env.TELEGRAM_CHAT_ID || null;
 
-const telegramBot = new TelegramBot(token, { polling: true });
+const telegramBot =
+  token && chatId ? new TelegramBot(token, { polling: true }) : null;
 
 //Telegram send message
-const notifyTelegram = (message: string) =>
-  telegramBot.sendMessage(chatId, message);
+export const notifyTelegram = (message: string) => {
+  if (telegramBot && chatId) telegramBot.sendMessage(chatId, message);
+};
 
 //Telegram send image
-const notifyTelegramWithImage = (caption: string, imageBuffer: Buffer) =>
-  telegramBot.sendPhoto(chatId, imageBuffer, { caption });
+const notifyTelegramWithImage = (caption: string, imageBuffer: Buffer) => {
+  if (telegramBot && chatId)
+    telegramBot.sendPhoto(chatId, imageBuffer, { caption });
+};
 
 //Send telegram message when wallet is updated
 export function notifyWalletUpdate(rec: any) {

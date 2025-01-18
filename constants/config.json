@@ -5,7 +5,8 @@
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
     "strategy": "bbCross",
-    "isFuture": true
+    "isFuture": true,
+    "invert": false
   },
   {
     "pairName": "ETHUSDT",
@@ -13,6 +14,7 @@
     "quotationCoin": "USDT",
     "baseCoin": "ETH",
     "strategy": "wychoff",
-    "isFuture": true
+    "isFuture": true,
+    "invert": false
   }
 ]

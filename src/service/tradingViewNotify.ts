@@ -3,8 +3,10 @@ import bodyParser from "body-parser";
 import { marketLiveInstance as marketInfo } from "../repository/instances";
 
 export default function startHttpServer() {
+  const port = process.env.HTTP_PORT ? parseInt(process.env.HTTP_PORT) : 0;
+  if (port === 0) return;
+
   const app = express();
-  const port = process.env.HTTP_PORT || 3000;
 
   app.use(bodyParser.json());
 

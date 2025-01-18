@@ -12,6 +12,7 @@ class PairRepo {
   #baseCoin: string = "";
   #quotationCoin: string = "";
   #isFuture: boolean = false;
+  #invert: boolean = false;
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -27,13 +28,15 @@ class PairRepo {
     strategy: string,
     baseCoin: string,
     quotationCoin: string,
-    isFuture: boolean
+    isFuture: boolean,
+    invert: boolean
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
     this.#baseCoin = baseCoin;
     this.#quotationCoin = quotationCoin;
     this.#isFuture = isFuture;
+    this.#invert = invert;
 
     for (let timeframe of timeFrames) {
       this.#timeFrames.set(
@@ -69,6 +72,10 @@ class PairRepo {
     return this.#isFuture;
   }
 
+  get invert() {
+    return this.#invert;
+  }
+
   getTimeFrame(timeFrame: string) {
     return this.#timeFrames.get(timeFrame.toString().toLocaleLowerCase());
   }
@@ -87,13 +94,13 @@ class PairRepo {
     this.#timeFrames.forEach((value, key) => value.cleanup());
   }
 
-  async initPairInfo() {
+  async #initPairInfo() {
     if (this.#maxQty > 0) return;
-    if (this.#isFuture) this.initFuturePairInfo();
-    else this.initSpotPairInfo();
+    if (this.#isFuture) this.#initFuturePairInfo();
+    else this.#initSpotPairInfo();
   }
 
-  async initSpotPairInfo() {
+  async #initSpotPairInfo() {
     await restClient
       .getFeeRate({
         category: "spot",
@@ -140,7 +147,7 @@ class PairRepo {
       });
   }
 
-  async initFuturePairInfo() {
+  async #initFuturePairInfo() {
     await restClient
       .getInstrumentsInfo({
         category: "linear",
@@ -166,7 +173,7 @@ class PairRepo {
       });
   }
 
-  async cancelOrders(): Promise<boolean | void> {
+  async #cancelOrders(): Promise<boolean | void> {
     const response = await restClient
       .cancelAllOrders({
         category: !this.#isFuture ? "spot" : "linear",
@@ -188,13 +195,22 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
-    return await this.postOrder(
-      price,
-      percentage,
-      walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
-      price,
-      "Buy"
-    );
+    if (!this.#invert)
+      return await this.#postOrder(
+        price,
+        percentage,
+        walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
+        price,
+        "Buy"
+      );
+    else
+      return await this.#postOrder(
+        price,
+        percentage,
+        walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
+        1,
+        "Sell"
+      );
   }
 
   //Create a spot sell order
@@ -202,24 +218,33 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
-    return await this.postOrder(
-      price,
-      percentage,
-      walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
-      1,
-      "Sell"
-    );
+    if (!this.#invert)
+      return await this.#postOrder(
+        price,
+        percentage,
+        walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
+        1,
+        "Sell"
+      );
+    else
+      return await this.#postOrder(
+        price,
+        percentage,
+        walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
+        price,
+        "Buy"
+      );
   }
 
-  async postOrder(
+  async #postOrder(
     price: number,
     percentage: number,
     coinBalance: number,
     coinUnitPrice: number,
     side: "Buy" | "Sell"
   ): Promise<boolean | void> {
-    await this.initPairInfo();
-    await this.cancelOrders();
+    await this.#initPairInfo();
+    await this.#cancelOrders();
     await walletLiveInstance.init();
 
     let fullQty = 0;
@@ -294,7 +319,7 @@ class PairRepo {
     closeSell = true,
     closeBuy = true
   ) {
-    await this.initPairInfo();
+    await this.#initPairInfo();
     const positions = await this.getOpenFuturePositions();
 
     if (!positions) return;
@@ -312,6 +337,7 @@ class PairRepo {
         qty: postion.size,
         side: postion.side === "Buy" ? "Sell" : "Buy",
         timeInForce: "GTC",
+        reduceOnly: true,
       };
 
       await restClient

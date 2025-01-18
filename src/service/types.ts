@@ -29,6 +29,7 @@ export type PairConfigType = {
   baseCoin: string;
   quotationCoin: string;
   isFuture: boolean;
+  invert: boolean;
 };
 
 export type BacktestTimeFrameType = {
