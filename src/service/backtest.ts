@@ -62,13 +62,13 @@ async function startTradingBot() {
       const timeRepo = pairRepo.getTimeFrame(timeFrame);
       if (timeRepo) timeRepo.addCandle(printCandle);
 
-      const buyPosition = (price: number, percentage: number) => {
+      const buyPosition = (price: number) => {
         let quoteCoinBalanace =
           wallet.getCoinAmount(pairRepo.quotationCoin) || 0;
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
 
         if (quoteCoinBalanace > 0) {
-          const buyAmount = quoteCoinBalanace * percentage;
+          const buyAmount = quoteCoinBalanace * pairRepo.risk;
           quoteCoinBalanace = quoteCoinBalanace - buyAmount;
           const qty = buyAmount / price;
           baseCoinBalanace = baseCoinBalanace + qty;
@@ -82,13 +82,13 @@ async function startTradingBot() {
         }
       };
 
-      const sellPosition = (price: number, percentage: number) => {
+      const sellPosition = (price: number) => {
         let quoteCoinBalanace =
           wallet.getCoinAmount(pairRepo.quotationCoin) || 0;
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
 
         if (baseCoinBalanace > 0) {
-          const sellAmount = baseCoinBalanace * percentage;
+          const sellAmount = baseCoinBalanace * pairRepo.risk;
           const sellValue = sellAmount * price;
           baseCoinBalanace = baseCoinBalanace - sellAmount;
           quoteCoinBalanace = quoteCoinBalanace + sellValue;
@@ -107,7 +107,7 @@ async function startTradingBot() {
       };
 
       const closeBuyPosition = (price: number) => {
-        sellPosition(price, 1);
+        sellPosition(price);
       };
 
       const closeSellPosition = (price: number) => {
