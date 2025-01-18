@@ -188,52 +188,13 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
-    await this.initPairInfo();
-    await this.cancelOrders();
-    await walletLiveInstance.init();
-
-    const balance =
-      (this.#isFuture
-        ? walletLiveInstance.margin
-        : walletLiveInstance.getCoinAmount(this.baseCoin)) || 0;
-
-    const fullQty = balance / price;
-    let buyQty = fullQty * percentage;
-
-    const rate = price > 0 ? this.#makerRate : this.#takerRate;
-
-    buyQty = buyQty - buyQty * rate; //Cut the fees
-
-    if (this.#precision && this.#precision !== 0)
-      buyQty = Math.floor(buyQty / this.#precision) * this.#precision;
-
-    if (buyQty > this.#maxQty) buyQty = this.#maxQty;
-
-    if (buyQty < this.#minQty) {
-      console.warn("Insufficient balance");
-      return false;
-    }
-
-    const request: OrderParamsV5 = {
-      category: !this.#isFuture ? "spot" : "linear",
-      symbol: this.#pair,
-      orderType: price > 0 ? "Limit" : "Market",
-      price: price > 0 ? price.toFixed(this.#priceDigits) : undefined,
-      qty: buyQty.toFixed(this.#qtyDigits),
-      side: "Buy",
-      timeInForce: "GTC",
-    };
-
-    const response = await restClient
-      .submitOrder(request)
-      .then((r) => {
-        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
-        return r.retCode === 0;
-      })
-      .catch((e) => {
-        console.warn(e);
-      });
-    return response;
+    return await this.postOrder(
+      price,
+      percentage,
+      walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
+      price,
+      "Buy"
+    );
   }
 
   //Create a spot sell order
@@ -241,26 +202,47 @@ class PairRepo {
     price: number,
     percentage: number = 1
   ): Promise<boolean | void> {
+    return await this.postOrder(
+      price,
+      percentage,
+      walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
+      1,
+      "Sell"
+    );
+  }
+
+  async postOrder(
+    price: number,
+    percentage: number,
+    coinBalance: number,
+    coinUnitPrice: number,
+    side: "Buy" | "Sell"
+  ): Promise<boolean | void> {
     await this.initPairInfo();
     await this.cancelOrders();
     await walletLiveInstance.init();
 
-    const fullQty =
-      (this.#isFuture
-        ? walletLiveInstance.margin
-        : walletLiveInstance.getCoinAmount(this.quotationCoin)) || 0;
+    let fullQty = 0;
 
-    let sellQty = fullQty * percentage;
+    if (!this.#isFuture) {
+      const balance = coinBalance;
+      fullQty = balance / coinUnitPrice;
+    } else {
+      const balance = walletLiveInstance.margin;
+      fullQty = balance / price;
+    }
+
+    let qty = fullQty * percentage;
 
     const rate = price > 0 ? this.#makerRate : this.#takerRate;
-    sellQty = sellQty - sellQty * rate;
+    qty = qty - qty * rate;
 
     if (this.#precision && this.#precision !== 0)
-      sellQty = Math.floor(sellQty / this.#precision) * this.#precision;
+      qty = Math.floor(qty / this.#precision) * this.#precision;
 
-    if (sellQty > this.#maxQty) sellQty = this.#maxQty;
+    if (qty > this.#maxQty) qty = this.#maxQty;
 
-    if (sellQty < this.#minQty) {
+    if (qty < this.#minQty) {
       console.warn("Insufficient balance");
       return false;
     }
@@ -270,8 +252,8 @@ class PairRepo {
       symbol: this.#pair,
       orderType: price > 0 ? "Limit" : "Market",
       price: price > 0 ? price.toFixed(this.#priceDigits) : undefined,
-      qty: sellQty.toFixed(this.#qtyDigits),
-      side: "Sell",
+      qty: qty.toFixed(this.#qtyDigits),
+      side: side as "Buy" | "Sell",
       timeInForce: "GTC",
     };
 
