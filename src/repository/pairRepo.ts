@@ -302,7 +302,7 @@ class PairRepo {
     return response;
   }
 
-  async getOpenFuturePositions(): Promise<PositionV5[] | void> {
+  async #getOpenFuturePositions(): Promise<PositionV5[] | void> {
     const request: PositionInfoParamsV5 = {
       category: "linear",
       symbol: this.#pair,
@@ -326,8 +326,28 @@ class PairRepo {
     closeSell = true,
     closeBuy = true
   ) {
+    if (!this.#invert) {
+      return await this.#internalCloseOpenFuturePositions(
+        price,
+        closeSell,
+        closeBuy
+      );
+    } else {
+      return await this.#internalCloseOpenFuturePositions(
+        price,
+        closeBuy,
+        closeSell
+      );
+    }
+  }
+
+  async #internalCloseOpenFuturePositions(
+    price: number = 0,
+    closeSell = true,
+    closeBuy = true
+  ) {
     await this.#initPairInfo();
-    const positions = await this.getOpenFuturePositions();
+    const positions = await this.#getOpenFuturePositions();
 
     if (!positions) return;
 
