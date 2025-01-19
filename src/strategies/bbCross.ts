@@ -21,7 +21,7 @@ const bbCross = new Map<string, "upper" | "lower">();
 const rsiCross = new Map<string, "overbought" | "oversold">();
 const lastOrderSignal = new Map<string, "buy" | "sell">();
 
-const strategy: OnStrategyType = (
+const strategy: OnStrategyType = async (
   pair,
   timeFrame,
   price,
@@ -75,7 +75,7 @@ const strategy: OnStrategyType = (
   //Close buy orders
   if (price > bb.upper && hasBuyOrder) {
     console.log(`Close all BUY orders at price: ${price.toFixed(6)}`);
-    closeBuyPosition(0);
+    await closeBuyPosition(0);
     lastOrderSignal.delete(pair);
     bbCross.set(pairkey, "upper");
   }
@@ -83,7 +83,7 @@ const strategy: OnStrategyType = (
   //Close sell orders
   if (price < bb.lower && hasSellOrder) {
     console.log(`Close all SELL orders at price: ${price.toFixed(6)}`);
-    closeSellPostion(0);
+    await closeSellPostion(0);
     lastOrderSignal.delete(pair);
     bbCross.set(pairkey, "lower");
   }
@@ -110,8 +110,8 @@ const strategy: OnStrategyType = (
   if (isTrendUp && isOversold && isCrossUp && !hasBuyOrder) {
     //Buy signal
     console.log(`BUY signal at price: ${price.toFixed(6)}`);
-    closeSellPostion(0);
-    buyPosition(price);
+    await closeSellPostion(0);
+    await buyPosition(price);
     lastOrderSignal.set(pair, "buy");
     bbCross.delete(pairkey);
     rsiCross.delete(pairkey);
@@ -120,8 +120,8 @@ const strategy: OnStrategyType = (
   if (isTrendDown && isOverbought && isCrosDown && !hasSellOrder) {
     //Sell signal
     console.log(`SELL signal at price: ${price.toFixed(6)}`);
-    closeBuyPosition(0);
-    sellPosition(price);
+    await closeBuyPosition(0);
+    await sellPosition(price);
     lastOrderSignal.set(pair, "sell");
     bbCross.delete(pairkey);
     rsiCross.delete(pairkey);

@@ -62,7 +62,7 @@ async function startTradingBot() {
       const timeRepo = pairRepo.getTimeFrame(timeFrame);
       if (timeRepo) timeRepo.addCandle(printCandle);
 
-      const buyPosition = (price: number) => {
+      const buyPosition = async (price: number) => {
         let quoteCoinBalanace =
           wallet.getCoinAmount(pairRepo.quotationCoin) || 0;
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
@@ -82,7 +82,7 @@ async function startTradingBot() {
         }
       };
 
-      const sellPosition = (price: number) => {
+      const sellPosition = async (price: number) => {
         let quoteCoinBalanace =
           wallet.getCoinAmount(pairRepo.quotationCoin) || 0;
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
@@ -106,11 +106,11 @@ async function startTradingBot() {
         }
       };
 
-      const closeBuyPosition = (price: number) => {
-        sellPosition(price);
+      const closeBuyPosition = async (price: number) => {
+        await sellPosition(price);
       };
 
-      const closeSellPosition = (price: number) => {
+      const closeSellPosition = async (price: number) => {
         //sellPosition(price, 1);
       };
 

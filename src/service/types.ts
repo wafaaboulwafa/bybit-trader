@@ -15,10 +15,10 @@ export type OnStrategyType = (
   timeFrame: string,
   closePrice: number,
   candle: CandleType,
-  buyPosition: (price: number) => void,
-  sellPosition: (price: number) => void,
-  closeBuyPosition: (price: number) => void,
-  closeSellPosition: (price: number) => void,
+  buyPosition: (price: number) => Promise<void>,
+  sellPosition: (price: number) => Promise<void>,
+  closeBuyPosition: (price: number) => Promise<void>,
+  closeSellPosition: (price: number) => Promise<void>,
   pairData: PairRepo
 ) => void;
 

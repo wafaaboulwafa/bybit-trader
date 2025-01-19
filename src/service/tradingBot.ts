@@ -54,7 +54,7 @@ export default async function startTradingBot() {
           pairData.addCandle(timeFrame, candle);
 
           //Create buy position
-          const buyPosition = (price: number) => {
+          const buyPosition = async (price: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastBuyTransTime
@@ -63,11 +63,11 @@ export default async function startTradingBot() {
 
             console.log("Buy position ...");
             lastBuyTransTime = new Date();
-            pairData.postBuyOrder(price, pairData.risk);
+            await pairData.postBuyOrder(price, pairData.risk);
           };
 
           //Create sell position
-          const sellPosition = (price: number) => {
+          const sellPosition = async (price: number) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastSellTransTime
@@ -76,7 +76,7 @@ export default async function startTradingBot() {
 
             console.log("Sell position ...");
             lastSellTransTime = new Date();
-            pairData.postSellOrder(price, pairData.risk);
+            await pairData.postSellOrder(price, pairData.risk);
           };
 
           //Liquidate all positions
