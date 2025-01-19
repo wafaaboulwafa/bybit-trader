@@ -155,6 +155,13 @@ class PairRepo {
   }
 
   async #initFuturePairInfo() {
+    //Disable hedging
+    await restClient.switchPositionMode({
+      category: "linear",
+      symbol: this.#pair,
+      mode: 0,
+    });
+
     await restClient
       .getInstrumentsInfo({
         category: "linear",
