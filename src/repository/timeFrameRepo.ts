@@ -8,7 +8,7 @@ class TimeFrameRepo {
   #candles: CandleType[] = [];
   #closePrices: number[] = [];
   #ohlc4: number[] = [];
-  #maxSize = 1000;
+  #maxSize = 500;
 
   constructor() {}
 
@@ -82,7 +82,7 @@ class TimeFrameRepo {
       interval: timeFrame.toString() as KlineIntervalV3,
       end: now.valueOf(),
       start: now.minus({ months: 1 }).valueOf(),
-      limit: 1000,
+      limit: this.#maxSize,
     });
 
     if (pairResponse.retCode > 0) {
