@@ -15,8 +15,16 @@ export type OnStrategyType = (
   timeFrame: string,
   closePrice: number,
   candle: CandleType,
-  buyPosition: (price: number) => Promise<void>,
-  sellPosition: (price: number) => Promise<void>,
+  buyPosition: (
+    price: number,
+    takeProfit?: number | undefined,
+    stopLoss?: number | undefined
+  ) => Promise<void>,
+  sellPosition: (
+    price: number,
+    takeProfit?: number | undefined,
+    stopLoss?: number | undefined
+  ) => Promise<void>,
   closeBuyPosition: (price: number) => Promise<void>,
   closeSellPosition: (price: number) => Promise<void>,
   pairData: PairRepo

@@ -18,7 +18,7 @@ export default async function startTradingBot() {
   let lastSellTransTime: Date = new Date(0);
 
   //ByBit Socket client
-  const wsClient = createSocketClient();
+  const wsClient = createSocketClient("PRICES");
   //Close all socket connection when application shutdown
   process.once("SIGINT", () => wsClient.closeAll(true));
   process.once("SIGTERM", () => wsClient.closeAll(true));
@@ -54,7 +54,11 @@ export default async function startTradingBot() {
           pairData.addCandle(timeFrame, candle);
 
           //Create buy position
-          const buyPosition = async (price: number) => {
+          const buyPosition = async (
+            price: number,
+            takeProfit: number | undefined,
+            stopLoss: number | undefined
+          ) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastBuyTransTime
@@ -63,11 +67,15 @@ export default async function startTradingBot() {
 
             console.log("Buy position ...");
             lastBuyTransTime = new Date();
-            await pairData.postBuyOrder(price, pairData.risk);
+            await pairData.postBuyOrder(price, takeProfit, stopLoss);
           };
 
           //Create sell position
-          const sellPosition = async (price: number) => {
+          const sellPosition = async (
+            price: number,
+            takeProfit: number | undefined,
+            stopLoss: number | undefined
+          ) => {
             const diffInMinutes = getMinutesBetweenDates(
               new Date(),
               lastSellTransTime
@@ -76,7 +84,7 @@ export default async function startTradingBot() {
 
             console.log("Sell position ...");
             lastSellTransTime = new Date();
-            await pairData.postSellOrder(price, pairData.risk);
+            await pairData.postSellOrder(price, takeProfit, stopLoss);
           };
 
           //Liquidate all positions
@@ -112,30 +120,17 @@ export default async function startTradingBot() {
           }
         }
       }
-    } else if (data.topic === "execution") {
-      //Telegram notification for order executed
-      if (data.data.length > 0) notifyExecutionUpdate(data.data[0]);
-    } else if (data.topic === "order") {
-      //Telegram notification for order created
-      if (data.data.length > 0) notifyOrderUpdate(data.data[0]);
-    } else if (data.topic === "wallet") {
-      //Telegram notification for wallet update
-      if (data.data.length > 0) {
-        wallet.setCoinAmount(data.data[0].coin, data.data[0].totalEquity);
-        notifyWalletUpdate(data.data[0]);
-      }
     }
   });
 
   //Create socket subscriptions
-  const topics = [];
-  const pairs: PairConfigType[] = getPairsConfig();
+  const pairs = getPairsConfig();
+
   for (let p of pairs) {
     for (let t of p.timeFrames) {
-      topics.push("kline." + t + "." + p.pairName);
+      const topic = "kline." + t + "." + p.pairName;
+      const category = p.isFuture ? "linear" : "spot";
+      wsClient.subscribeV5(topic, category).catch((e) => console.warn(e));
     }
   }
-  wsClient
-    .subscribeV5([...topics, "order", "execution", "wallet"], "linear")
-    .catch((e) => console.warn(e));
 }

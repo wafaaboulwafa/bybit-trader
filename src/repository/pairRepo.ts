@@ -204,50 +204,110 @@ class PairRepo {
     return response;
   }
 
+  #invertTPSL(
+    price: number,
+    takeProfit: number | undefined,
+    stopLoss: number | undefined
+  ):
+    | {
+        price: number;
+        takeProfit: number | undefined;
+        stopLoss: number | undefined;
+      }
+    | undefined {
+    if (!this.#invert) return { price, takeProfit, stopLoss };
+    else {
+      if (!takeProfit || !stopLoss) return;
+
+      if (takeProfit > price && price > stopLoss) {
+        //Buy
+
+        const slPoints = takeProfit - price;
+        const invertedStopLoss = price + slPoints;
+
+        const tpPoints = price - stopLoss;
+        const invertedTakePorfit = price - tpPoints;
+
+        return {
+          price,
+          takeProfit: invertedTakePorfit,
+          stopLoss: invertedStopLoss,
+        };
+      } else if (stopLoss > price && price > takeProfit) {
+        //Sell
+        const slPoints = price - takeProfit;
+        const invertedStopLoss = price - slPoints;
+
+        const tpPoints = stopLoss - price;
+        const invertedTakePorfit = price + tpPoints;
+        return {
+          price,
+          takeProfit: invertedTakePorfit,
+          stopLoss: invertedStopLoss,
+        };
+      }
+    }
+  }
   //Create a spot buy order
   async postBuyOrder(
     price: number,
-    percentage: number = 1
+    takeProfit: number | undefined = undefined,
+    stopLoss: number | undefined = undefined
   ): Promise<boolean | void> {
     if (!this.#invert)
       return await this.#postOrder(
         price,
-        percentage,
+        this.#risk,
         walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
         price,
-        "Buy"
+        "Buy",
+        takeProfit,
+        stopLoss
       );
-    else
+    else {
+      const invertedPrices = this.#invertTPSL(price, takeProfit, stopLoss);
+
       return await this.#postOrder(
         price,
-        percentage,
+        this.#risk,
         walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
         1,
-        "Sell"
+        "Sell",
+        invertedPrices?.takeProfit || undefined,
+        invertedPrices?.stopLoss || undefined
       );
+    }
   }
 
   //Create a spot sell order
   async postSellOrder(
     price: number,
-    percentage: number = 1
+    takeProfit: number | undefined = undefined,
+    stopLoss: number | undefined = undefined
   ): Promise<boolean | void> {
     if (!this.#invert)
       return await this.#postOrder(
         price,
-        percentage,
+        this.#risk,
         walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
         1,
-        "Sell"
+        "Sell",
+        takeProfit,
+        stopLoss
       );
-    else
+    else {
+      const invertedPrices = this.#invertTPSL(price, takeProfit, stopLoss);
+
       return await this.#postOrder(
         price,
-        percentage,
+        this.#risk,
         walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
         price,
-        "Buy"
+        "Buy",
+        invertedPrices?.takeProfit || undefined,
+        invertedPrices?.stopLoss || undefined
       );
+    }
   }
 
   async #postOrder(
@@ -255,7 +315,9 @@ class PairRepo {
     percentage: number,
     coinBalance: number,
     coinUnitPrice: number,
-    side: "Buy" | "Sell"
+    side: "Buy" | "Sell",
+    takeProfit: number | undefined = undefined,
+    stopLoss: number | undefined = undefined
   ): Promise<boolean | void> {
     await this.#initPairInfo();
     await this.#cancelOrders();
@@ -295,6 +357,9 @@ class PairRepo {
       side: side as "Buy" | "Sell",
       timeInForce: "GTC",
     };
+
+    if (takeProfit) request.takeProfit = takeProfit.toFixed(this.#priceDigits);
+    if (stopLoss) request.stopLoss = stopLoss.toFixed(this.#priceDigits);
 
     const response = await restClient
       .submitOrder(request)

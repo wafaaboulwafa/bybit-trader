@@ -13,6 +13,10 @@ const strategy: OnStrategyType = async (
   closeSellPostion,
   pairData
 ) => {
+  /*Requrements:
+    has open postions?
+    SL and TP    
+  */
   const isSmallTimeframe = timeFrame === "15";
   const isLargeTimeframe = timeFrame === "240"; //4 hour
 

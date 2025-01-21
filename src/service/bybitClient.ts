@@ -22,25 +22,35 @@ const createApiClient = () => {
   });
 };
 
-const createSocketClient = () => {
+const createSocketClient = (settings: "PRICES" | "WALLET") => {
   return new WebsocketClient({
     market: "v5",
     testnet:
       (
-        process.env.SOCKET_BYBIT_API_TESTNET ||
+        (settings === "PRICES"
+          ? process.env.SOCKET_BYBIT_API_TESTNET
+          : process.env.REST_BYBIT_API_TESTNET) ||
         process.env.BYBIT_API_TESTNET ||
         ""
       ).toLowerCase() == "true",
     demoTrading:
       (
-        process.env.SOCKET_BYBIT_API_DEMO ||
+        (settings === "PRICES"
+          ? process.env.SOCKET_BYBIT_API_DEMO
+          : process.env.REST_BYBIT_API_DEMO) ||
         process.env.BYBIT_API_DEMO ||
         ""
       ).toLowerCase() === "true"
         ? true
         : undefined,
-    key: process.env.SOCKET_BYBIT_API_KEY || process.env.BYBIT_API_KEY,
-    secret: process.env.SOCKET_BYBIT_API_SECRET || process.env.BYBIT_API_SECRET,
+    key:
+      (settings === "PRICES"
+        ? process.env.SOCKET_BYBIT_API_KEY
+        : process.env.REST_BYBIT_API_KEY) || process.env.BYBIT_API_KEY,
+    secret:
+      (settings === "PRICES"
+        ? process.env.SOCKET_BYBIT_API_SECRET
+        : process.env.REST_BYBIT_API_SECRET) || process.env.BYBIT_API_SECRET,
   });
 };
 

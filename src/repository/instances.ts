@@ -1,4 +1,5 @@
 import MarketRepo from "./marketRepo";
+import PositionsRepo from "./positionsRepo";
 import WalletRepo from "./walletRepo";
 
 function getMarketInstance() {
@@ -17,7 +18,16 @@ function getWalletInstance() {
   return result;
 }
 
+function getPositionsInstance() {
+  const result = new PositionsRepo();
+  (async () => {
+    await result.refresh();
+  })();
+  return result;
+}
+
 const marketLiveInstance: MarketRepo = getMarketInstance();
 const walletLiveInstance: WalletRepo = getWalletInstance();
+const positionsLiveInstance: PositionsRepo = getPositionsInstance();
 
-export { marketLiveInstance, walletLiveInstance };
+export { marketLiveInstance, walletLiveInstance, positionsLiveInstance };

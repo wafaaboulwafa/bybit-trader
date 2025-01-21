@@ -4,6 +4,7 @@ import startTradingBot from "./tradingBot";
 import backtestTradingBot from "./backtest";
 import startHttpServer from "./tradingViewNotify";
 import BacktestRepo from "../repository/backtestRepo";
+import startNotificationBot from "./notificationBot";
 
 //Run backtest
 const isBacktest =
@@ -21,6 +22,7 @@ if (isGenerateBacktestMarketData) {
   backtestTradingBot();
 } else {
   // Run socket bot
+  startNotificationBot();
   startTradingBot();
   startHttpServer();
 }
