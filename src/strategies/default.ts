@@ -9,7 +9,9 @@ const strategy: OnStrategyType = (
   sellPosition,
   closeBuyPosition,
   closeSellPostion,
-  pairData
+  pairData,
+  hasSellPositions,
+  hasBuyPositions
 ) => {
   console.log(`Pair: ${pair},Timeframe: ${timeFrame}, Price: ${price}`);
 };

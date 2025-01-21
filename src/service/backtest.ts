@@ -130,7 +130,9 @@ async function startTradingBot() {
           sellPosition,
           closeBuyPosition,
           closeSellPosition,
-          pairRepo
+          pairRepo,
+          false,
+          false
         );
       }
 

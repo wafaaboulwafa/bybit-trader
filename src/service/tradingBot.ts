@@ -9,6 +9,7 @@ import strategies from "../strategies";
 import {
   walletLiveInstance as wallet,
   marketLiveInstance as marketInfo,
+  positionsLiveInstance,
 } from "../repository/instances";
 import { createSocketClient } from "./bybitClient";
 
@@ -105,6 +106,11 @@ export default async function startTradingBot() {
             strategies.get("default") ||
             null;
 
+          const hasBuyPositions =
+            positionsLiveInstance.hasOpenBuyPosition(pairName);
+          const hasSellPositions =
+            positionsLiveInstance.hasOpenSellPosition(pairName);
+
           if (onStrategy) {
             onStrategy(
               pairName,
@@ -115,7 +121,9 @@ export default async function startTradingBot() {
               sellPosition,
               closeBuyPosition,
               closeSellPosition,
-              pairData
+              pairData,
+              hasSellPositions,
+              hasBuyPositions
             );
           }
         }

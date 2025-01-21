@@ -27,7 +27,9 @@ export type OnStrategyType = (
   ) => Promise<void>,
   closeBuyPosition: (price: number) => Promise<void>,
   closeSellPosition: (price: number) => Promise<void>,
-  pairData: PairRepo
+  pairData: PairRepo,
+  hasSellPositions: boolean,
+  hasBuyPositions: boolean
 ) => void;
 
 export type PairConfigType = {

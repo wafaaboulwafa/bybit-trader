@@ -121,7 +121,9 @@ const strategy: OnStrategyType = (
   sellPosition,
   closeBuyPosition,
   closeSellPostion,
-  pairData
+  pairData,
+  hasSellPositions,
+  hasBuyPositions
 ) => {
   //"1h", "4h", "1d" : Timeframes to analyze
   const analyses = new Map<string, AnalysesWithSignalType>();

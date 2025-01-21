@@ -11,7 +11,9 @@ const strategy: OnStrategyType = async (
   sellPosition,
   closeBuyPosition,
   closeSellPostion,
-  pairData
+  pairData,
+  hasSellPositions,
+  hasBuyPositions
 ) => {
   /*Requrements:
     has open postions?
