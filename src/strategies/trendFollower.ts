@@ -1,7 +1,8 @@
 import { OnStrategyType } from "../service/types";
-import { calcEma, calcRsi } from "../service/indicators";
-import { takeLast } from "../service/misc";
+import { calcEma, calcRsi, calcSma, getLastValue } from "../service/indicators";
 import { SMA } from "technicalindicators";
+import { takeLast } from "../service/misc";
+import PairRepo from "../repository/pairRepo";
 
 function analyzeTrendBySlope(
   prices: number[]
@@ -38,6 +39,167 @@ function analyzeTrendBySlope(
   }
 }
 
+interface HighTimeFrameAnalysesType {
+  trend:
+    | "Uptrend"
+    | "Downtrend"
+    | "Sideways"
+    | "StrongUptrend"
+    | "StrongDowntrend"
+    | undefined;
+  crossState: "CrossUp" | "CrossDown" | undefined;
+  fastMa: number;
+  slowMa: number;
+}
+
+interface LowTimeFrameAnalysesType {
+  crossState: "CrossUp" | "CrossDown" | undefined;
+  touchedMa: boolean;
+}
+
+const highTimeFrameAnalyses = new Map<string, HighTimeFrameAnalysesType>();
+const lowTimeFrameAnalyses = new Map<string, LowTimeFrameAnalysesType>();
+
+const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
+  /*Find:
+    MA cross
+    trend direction
+    trend strength
+    high or low areas 
+    */
+  const fastMa = calcSma(prices, 15);
+  const slowMa = calcSma(prices, 20);
+
+  if (!fastMa || !slowMa) return;
+
+  const analyses: HighTimeFrameAnalysesType = highTimeFrameAnalyses.get(
+    pair
+  ) || {
+    trend: undefined,
+    crossState: undefined,
+    fastMa: fastMa,
+    slowMa: slowMa,
+  };
+
+  analyses.crossState =
+    fastMa > slowMa ? "CrossUp" : slowMa > fastMa ? "CrossDown" : undefined;
+  analyses.trend = analyzeTrendBySlope(prices);
+  analyses.fastMa = fastMa;
+  analyses.slowMa = slowMa;
+
+  highTimeFrameAnalyses.set(pair, analyses);
+
+  //Find last candle high and low and relative price
+  //calculateZigZag()
+};
+
+const calcLowTimeFrameAnalyses = (
+  price: number,
+  pair: string,
+  prices: number[]
+) => {
+  /*Find:
+    Trade ratio 1 : 2
+    Entry on touch of MA 20
+    Top loss on last ziazag high
+    TP based on ratio between last high and entry when EA cross
+    Only take trade if no trades are open
+    */
+  const highTimeframeAnalyses: HighTimeFrameAnalysesType | undefined =
+    highTimeFrameAnalyses.get(pair);
+
+  if (
+    highTimeframeAnalyses === undefined ||
+    highTimeframeAnalyses.crossState === undefined ||
+    highTimeframeAnalyses.trend === undefined ||
+    highTimeframeAnalyses.trend === "Sideways"
+  )
+    return;
+
+  const fastEma = calcEma(prices, 1);
+  const slowEma = calcEma(prices, 2);
+
+  if (!fastEma || !slowEma) return;
+
+  const lowAnalyses: LowTimeFrameAnalysesType = lowTimeFrameAnalyses.get(
+    pair
+  ) || {
+    crossState: undefined,
+    touchedMa: false,
+  };
+
+  if (fastEma > slowEma) lowAnalyses.crossState = "CrossUp";
+  if (fastEma < slowEma) lowAnalyses.crossState = "CrossDown";
+
+  if (
+    highTimeframeAnalyses.trend === "StrongUptrend" &&
+    highTimeframeAnalyses.crossState === "CrossUp" &&
+    (price <= highTimeframeAnalyses.fastMa ||
+      price <= highTimeframeAnalyses.slowMa)
+  ) {
+    lowAnalyses.touchedMa = true;
+  }
+
+  if (
+    highTimeframeAnalyses.trend === "StrongDowntrend" &&
+    highTimeframeAnalyses.crossState === "CrossDown" &&
+    (price <= highTimeframeAnalyses.fastMa ||
+      price <= highTimeframeAnalyses.slowMa)
+  ) {
+    lowAnalyses.touchedMa = true;
+  }
+
+  lowTimeFrameAnalyses.set(pair, lowAnalyses);
+};
+
+const checkTrades = async (
+  pair: string,
+  pairData: PairRepo,
+  lowtimeFrame: string,
+  price: number,
+  hasBuyPositions: boolean,
+  hasSellPositions: boolean,
+  buyPosition: (price: number, takeProfit: number, stopLoss: number) => void,
+  sellPosition: (price: number, takeProfit: number, stopLoss: number) => void
+) => {
+  const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
+  if (!timeFrameRepo) return;
+
+  const ht = highTimeFrameAnalyses.get(pair);
+  const lt = lowTimeFrameAnalyses.get(pair);
+
+  if (!ht || !lt || price === 0) return;
+
+  const candles = timeFrameRepo.candle;
+  const lastCandles = takeLast(candles, 3, 0);
+
+  const htBuySignal =
+    ht.crossState === "CrossUp" && ht.trend === "StrongUptrend";
+  const htSellSignal =
+    ht.crossState === "CrossUp" && ht.trend === "StrongDowntrend";
+
+  const ltBuySignal = lt.touchedMa && lt.crossState === "CrossUp";
+  const ltSellSignal = lt.touchedMa && lt.crossState === "CrossDown";
+
+  if (htBuySignal && ltBuySignal && !hasBuyPositions) {
+    console.log(`Buy signal on ${pair} at price: ${price}`);
+    const lowPrices = lastCandles.map((c) => c.lowPrice);
+    const stopLoss = Math.min(...lowPrices);
+    const points = price - stopLoss;
+    const takeProfit = price + points * 2;
+    await buyPosition(price, takeProfit, stopLoss);
+  }
+
+  if (htSellSignal && ltSellSignal && !hasSellPositions) {
+    console.log(`Sell signal on ${pair} at price: ${price}`);
+    const highPrices = lastCandles.map((c) => c.highPrice);
+    const stopLoss = Math.max(...highPrices);
+    const points = stopLoss - price;
+    const takeProfit = price - points * 2;
+    await sellPosition(price, takeProfit, stopLoss);
+  }
+};
+
 const strategy: OnStrategyType = async (
   pair,
   timeFrame,
@@ -51,10 +213,6 @@ const strategy: OnStrategyType = async (
   hasSellPositions,
   hasBuyPositions
 ) => {
-  /*Requrements:
-    has open postions?
-    SL and TP    
-  */
   const isSmallTimeframe = timeFrame === "15";
   const isLargeTimeframe = timeFrame === "240"; //4 hour
 
@@ -67,24 +225,19 @@ const strategy: OnStrategyType = async (
   if (prices.length < 100) return;
 
   if (isLargeTimeframe) {
-    /*Find:
-    MA cross
-    trend direction
-    trend strength
-    high or low areas 
-    */
-    const fastMa = SMA.calculate({ period: 15, values: prices });
-    const slowMa = SMA.calculate({ period: 20, values: prices });
-
-    const trend = analyzeTrendBySlope(prices);
+    calcHighTimeFrameAnalyses(pair, prices);
   } else if (isSmallTimeframe) {
-    /*Find:
-    Trade ratio 1 : 2
-    Entry on touch of MA 20
-    Top loss on last ziazag high
-    TP based on ratio between last high and entry when EA cross
-    Only take trade if no trades are open
-    */
+    calcLowTimeFrameAnalyses(price, pair, prices);
+    checkTrades(
+      pair,
+      pairData,
+      timeFrame,
+      price,
+      hasBuyPositions,
+      hasSellPositions,
+      buyPosition,
+      sellPosition
+    );
   }
 };
 

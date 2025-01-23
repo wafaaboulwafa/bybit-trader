@@ -8,9 +8,11 @@ import {
   bollingerbands,
   crossUp,
   crossDown,
+  CandleData,
 } from "technicalindicators";
+import { CandleType } from "./types";
 
-function getLastValue(values: number[]): number | undefined {
+export function getLastValue(values: number[]): number | undefined {
   return (values.length > 0 && values[values.length - 1]) || undefined;
 }
 
@@ -143,4 +145,75 @@ export function getTrend(
   }
 
   return trend;
+}
+
+type ZigZagPoint = {
+  value: number;
+  type: "High" | "Low";
+  index: number;
+};
+
+export function calculateZigZag(
+  candles: CandleType[],
+  depth: number = 2,
+  deviation: number = 5
+): ZigZagPoint[] {
+  const zigzagPoints: ZigZagPoint[] = [];
+  let trend = 0; // 1: uptrend, -1: downtrend, 0: no trend
+  let lastHigh = candles[0].highPrice;
+  let lastLow = candles[0].lowPrice;
+  let lastPeakIndex = 0;
+
+  for (let i = candles.length - 2; i >= 0; i++) {
+    const high = candles[i].highPrice;
+    const low = candles[i].lowPrice;
+
+    if (trend === 0) {
+      if (high > lastHigh) {
+        trend = 1;
+        lastPeakIndex = i;
+        zigzagPoints.push({ index: i, value: high, type: "High" });
+      } else if (low < lastLow) {
+        trend = -1;
+        lastPeakIndex = i;
+        zigzagPoints.push({ index: i, value: low, type: "Low" });
+      }
+    } else if (trend === 1) {
+      if (high > lastHigh) {
+        lastHigh = high;
+        lastPeakIndex = i;
+        zigzagPoints[zigzagPoints.length - 1] = {
+          index: i,
+          value: high,
+          type: "High",
+        };
+      } else if (lastHigh - low >= (deviation / 100) * lastHigh) {
+        trend = -1;
+        lastLow = low;
+        zigzagPoints.push({ index: i, value: low, type: "Low" });
+        lastPeakIndex = i;
+      }
+    } else if (trend === -1) {
+      if (low < lastLow) {
+        lastLow = low;
+        lastPeakIndex = i;
+        zigzagPoints[zigzagPoints.length - 1] = {
+          index: i,
+          value: low,
+          type: "Low",
+        };
+      } else if (high - lastLow >= (deviation / 100) * lastLow) {
+        trend = 1;
+        lastHigh = high;
+        zigzagPoints.push({ index: i, value: high, type: "High" });
+        lastPeakIndex = i;
+      }
+    }
+
+    if (i - lastPeakIndex >= depth) {
+      trend = 0;
+    }
+  }
+
+  return zigzagPoints;
 }
