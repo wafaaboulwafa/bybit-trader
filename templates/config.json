@@ -4,10 +4,10 @@
     "timeFrames": [15, 240],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
-    "strategy": "bbCross",
+    "strategy": "trendFollower",
     "isFuture": true,
     "invert": false,
-    "riskAmount": 0.01,
+    "riskAmount": 0.02,
     "riskMethod": "percentOfEquity"
   }
 ]

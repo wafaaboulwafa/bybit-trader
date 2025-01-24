@@ -179,23 +179,26 @@ const checkTrades = async (
 
   const ltBuySignal = lt.touchedMa && lt.crossState === "CrossUp";
   const ltSellSignal = lt.touchedMa && lt.crossState === "CrossDown";
+  const hasOpenPosition = hasBuyPositions || hasSellPositions;
 
-  if (htBuySignal && ltBuySignal && !hasBuyPositions) {
+  if (htBuySignal && ltBuySignal && !hasOpenPosition) {
     console.log(`Buy signal on ${pair} at price: ${price}`);
     const lowPrices = lastCandles.map((c) => c.lowPrice);
     const stopLoss = Math.min(...lowPrices);
     const points = price - stopLoss;
     const takeProfit = price + points * 2;
-    await buyPosition(price, takeProfit, stopLoss);
+    //await buyPosition(price, takeProfit, stopLoss);
+    console.log("Buy", { price, takeProfit, stopLoss });
   }
 
-  if (htSellSignal && ltSellSignal && !hasSellPositions) {
+  if (htSellSignal && ltSellSignal && !hasOpenPosition) {
     console.log(`Sell signal on ${pair} at price: ${price}`);
     const highPrices = lastCandles.map((c) => c.highPrice);
     const stopLoss = Math.max(...highPrices);
     const points = stopLoss - price;
     const takeProfit = price - points * 2;
-    await sellPosition(price, takeProfit, stopLoss);
+    //await sellPosition(price, takeProfit, stopLoss);
+    console.log("Sell", { price, takeProfit, stopLoss });
   }
 };
 
