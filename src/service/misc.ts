@@ -38,6 +38,15 @@ export function takeLast<T>(
   return data.slice(data.length - (takeSize + shift), data.length - shift);
 }
 
+export function takeFirst<T>(
+  data: Array<T>,
+  size: number,
+  shift: number
+): Array<T> {
+  const takeSize = Math.min(data.length, size);
+  return data.slice(shift, takeSize);
+}
+
 export function getPairsConfig(): PairConfigType[] {
   let filePath = process.env.CONFIG_PATH || "../../config.json";
   if (filePath.startsWith("./") || filePath.startsWith("../"))

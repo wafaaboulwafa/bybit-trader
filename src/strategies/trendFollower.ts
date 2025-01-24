@@ -1,43 +1,12 @@
 import { OnStrategyType } from "../service/types";
-import { calcEma, getLastValue } from "../service/indicators";
-import { takeLast } from "../service/misc";
+import {
+  analyzeTrendBySlope,
+  calcEma,
+  getLastValue,
+} from "../service/indicators";
+import { takeFirst, takeLast } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
-
-function analyzeTrendBySlope(
-  prices: number[]
-): "Uptrend" | "Downtrend" | "Sideways" | "StrongUptrend" | "StrongDowntrend" {
-  const mediumThreshold = 0.01;
-  const strongThreshold = 0.05;
-
-  if (!Array.isArray(prices) || prices.length < 2) {
-    throw new Error("Input must be an array with at least two prices.");
-  }
-
-  // Calculate the slope using least squares regression
-  const n = prices.length;
-  const x = Array.from({ length: n }, (_, i) => i + 1); // x values: [1, 2, 3, ..., n]
-  const sumX = x.reduce((sum, xi) => sum + xi, 0);
-  const sumY = prices.reduce((sum, yi) => sum + yi, 0);
-  const sumXY = prices.reduce((sum, yi, i) => sum + yi * x[i], 0);
-  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-  // Calculate the slope (m)
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-
-  // Determine trend based on slope and thresholds
-  if (slope > strongThreshold) {
-    return "StrongUptrend";
-  } else if (slope > mediumThreshold) {
-    return "Uptrend";
-  } else if (slope < -strongThreshold) {
-    return "StrongDowntrend";
-  } else if (slope < -mediumThreshold) {
-    return "Downtrend";
-  } else {
-    return "Sideways";
-  }
-}
 
 interface HighTimeFrameAnalysesType {
   trend:
@@ -159,8 +128,7 @@ const checkTrades = async (
 
   if (!ht || !lt || price === 0) return;
 
-  const candles = timeFrameRepo.candle;
-  const lastCandles = takeLast(candles, 3, 0);
+  const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
 
   const htBuySignal =
     ht.crossState === "CrossUp" &&
@@ -175,22 +143,22 @@ const checkTrades = async (
 
   if (htBuySignal && ltBuySignal && !hasOpenPosition) {
     console.log(`Buy signal on ${pair} at price: ${price}`);
-    const lowPrices = lastCandles.map((c) => c.lowPrice);
+    const lowPrices = recentCandles.map((c) => c.lowPrice);
     const stopLoss = Math.min(...lowPrices);
     const points = price - stopLoss;
     const takeProfit = price + points * 2;
-    //await buyPosition(price, takeProfit, stopLoss);
-    console.log("Buy", { price, takeProfit, stopLoss });
+    await buyPosition(price, takeProfit, stopLoss);
+    //console.log("Buy", { price, takeProfit, stopLoss });
   }
 
   if (htSellSignal && ltSellSignal && !hasOpenPosition) {
     console.log(`Sell signal on ${pair} at price: ${price}`);
-    const highPrices = lastCandles.map((c) => c.highPrice);
+    const highPrices = recentCandles.map((c) => c.highPrice);
     const stopLoss = Math.max(...highPrices);
     const points = stopLoss - price;
     const takeProfit = price - points * 2;
-    //await sellPosition(price, takeProfit, stopLoss);
-    console.log("Sell", { price, takeProfit, stopLoss });
+    await sellPosition(price, takeProfit, stopLoss);
+    //console.log("Sell", { price, takeProfit, stopLoss });
   }
 };
 
