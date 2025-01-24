@@ -1,4 +1,4 @@
-import { PositionInfoParamsV5, PositionV5 } from "bybit-api";
+import { GetAccountOrdersParamsV5, PositionInfoParamsV5 } from "bybit-api";
 import { restClient } from "../service/bybitClient";
 import { PositionType } from "../service/types";
 
@@ -8,19 +8,20 @@ class PositionsRepo {
   constructor() {}
 
   async refresh(): Promise<void> {
-    const request: PositionInfoParamsV5 = {
+    const positionsRequest: PositionInfoParamsV5 = {
       category: "linear",
       settleCoin: "USDT",
     };
     await restClient
-      .getPositionInfo(request)
+      .getPositionInfo(positionsRequest)
       .then((r) => {
         if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
-        this.#positions = r.result.list
+
+        const openPositions = r.result.list
           .filter((r) => r.side === "Buy" || r.side === "Sell")
           .map((r) => {
             const res: PositionType = {
-              id: r.seq,
+              id: r.seq.toString(),
               symbol: r.symbol,
               side: r.side === "Buy" ? "Buy" : "Sell",
               qty: (r.size && parseFloat(r.size)) || 0,
@@ -30,9 +31,48 @@ class PositionsRepo {
               pnl: parseFloat(r.unrealisedPnl),
               createdTime: new Date(parseInt(r.createdTime)),
               entryPrice: parseFloat(r.avgPrice),
+              pending: false,
             };
             return res;
           });
+
+        this.#positions.push(...openPositions);
+      })
+      .catch((e) => {
+        console.warn(e);
+      });
+
+    const ordersRequest: GetAccountOrdersParamsV5 = {
+      category: "linear",
+      settleCoin: "USDT",
+      openOnly: 0, //New and partial filled
+    };
+
+    await restClient
+      .getActiveOrders(ordersRequest)
+      .then((r) => {
+        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+
+        const pendingOrders = r.result.list
+          .filter((r) => r.side === "Buy" || r.side === "Sell")
+          .map((r) => {
+            const res: PositionType = {
+              id: r.orderId,
+              symbol: r.symbol,
+              side: r.side === "Buy" ? "Buy" : "Sell",
+              qty: (r.qty && parseFloat(r.qty)) || 0,
+              takeProfit:
+                (r.takeProfit && parseFloat(r.takeProfit)) || undefined,
+              stopLoss: (r.stopLoss && parseFloat(r.stopLoss)) || undefined,
+              pnl: 0,
+              createdTime: new Date(parseInt(r.createdTime)),
+              entryPrice: parseFloat(r.price),
+              pending: true,
+            };
+            return res;
+          });
+
+        this.#positions.push(...pendingOrders);
       })
       .catch((e) => {
         console.warn(e);

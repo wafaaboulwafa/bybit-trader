@@ -79,7 +79,7 @@ export type ZigZagPoint = {
 };
 
 export type PositionType = {
-  id: number;
+  id: string;
   symbol: string;
   side: "Buy" | "Sell";
   qty: number;
@@ -88,6 +88,7 @@ export type PositionType = {
   pnl: number;
   createdTime: Date;
   entryPrice: number;
+  pending: boolean;
 };
 
 export type NotifyRequestType = {
