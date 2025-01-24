@@ -28,15 +28,15 @@ export default function startHttpServer() {
 
       const pairData = marketInfo.getPair(reqBody.pair);
       if (!pairData) {
-        res.status(400);
+        res.status(400).send();
         return;
       }
 
       if (
-        reqBody.price <= 0 &&
+        (!reqBody.price || reqBody.price <= 0) &&
         (reqBody.action === "buy" || reqBody.action === "sell")
       ) {
-        res.status(400);
+        res.status(400).send();
         return;
       }
 
@@ -53,14 +53,14 @@ export default function startHttpServer() {
       if (closeSell || closeBuy)
         await pairData.closeOpenFuturePositions(0, closeSell, closeBuy);
 
-      if (reqBody.action === "buy") {
+      if (reqBody.action === "buy" && reqBody.price) {
         //Create buy order
         await pairData.postBuyOrder(
           reqBody.price,
           reqBody.takeProfit,
           reqBody.stopLoss
         );
-      } else if (reqBody.action === "sell") {
+      } else if (reqBody.action === "sell" && reqBody.price) {
         //Create sell order
         await pairData.postSellOrder(
           reqBody.price,
@@ -69,7 +69,7 @@ export default function startHttpServer() {
         );
       }
 
-      res.status(200);
+      res.status(200).send();
     }
   );
 

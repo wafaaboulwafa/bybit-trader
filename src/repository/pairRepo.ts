@@ -418,6 +418,7 @@ class PairRepo {
     closeBuy = true
   ) {
     await this.#initPairInfo();
+    await this.#cancelOrders();
     const positions = await this.#getOpenFuturePositions();
 
     if (!positions) return;

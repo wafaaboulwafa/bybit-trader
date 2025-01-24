@@ -92,7 +92,7 @@ export type PositionType = {
 
 export type NotifyRequestType = {
   pair: string;
-  price: number;
+  price: number | undefined;
   action: "buy" | "sell" | "closeBuy" | "closeSell" | "closeAll";
   takeProfit: number | undefined;
   stopLoss: number | undefined;
