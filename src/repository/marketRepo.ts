@@ -32,7 +32,8 @@ class MarketRepo {
         pairInfo.quotationCoin,
         pairInfo.isFuture,
         pairInfo.invert,
-        pairInfo.risk
+        pairInfo.riskAmount,
+        pairInfo.riskMethod
       );
       this.#pairs.set(pairInfo.pairName, p);
       return p;

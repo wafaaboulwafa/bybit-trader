@@ -68,7 +68,7 @@ async function startTradingBot() {
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
 
         if (quoteCoinBalanace > 0) {
-          const buyAmount = quoteCoinBalanace * pairRepo.risk;
+          const buyAmount = quoteCoinBalanace * pairRepo.riskAmount;
           quoteCoinBalanace = quoteCoinBalanace - buyAmount;
           const qty = buyAmount / price;
           baseCoinBalanace = baseCoinBalanace + qty;
@@ -88,7 +88,7 @@ async function startTradingBot() {
         let baseCoinBalanace = wallet.getCoinAmount(pairRepo.baseCoin) || 0;
 
         if (baseCoinBalanace > 0) {
-          const sellAmount = baseCoinBalanace * pairRepo.risk;
+          const sellAmount = baseCoinBalanace * pairRepo.riskAmount;
           const sellValue = sellAmount * price;
           baseCoinBalanace = baseCoinBalanace - sellAmount;
           quoteCoinBalanace = quoteCoinBalanace + sellValue;

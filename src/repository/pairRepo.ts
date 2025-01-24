@@ -1,9 +1,9 @@
 import { OrderParamsV5, PositionInfoParamsV5, PositionV5 } from "bybit-api";
 import { restClient } from "../service/bybitClient";
-import { CandleType } from "../service/types";
+import { CandleType, RiskMethodType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
 import { walletLiveInstance } from "./instances";
-import { countDecimalDigits } from "../service/misc";
+import { countDecimalDigits, getRoadToMillionRisk } from "../service/misc";
 
 class PairRepo {
   #pair: string = "";
@@ -13,7 +13,8 @@ class PairRepo {
   #quotationCoin: string = "";
   #isFuture: boolean = false;
   #invert: boolean = false;
-  #risk: number = 0.1;
+  #riskAmount: number = 0.1;
+  #riskMethod: RiskMethodType = "percentOfEquity";
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -31,7 +32,8 @@ class PairRepo {
     quotationCoin: string,
     isFuture: boolean,
     invert: boolean,
-    risk: number
+    riskAmount: number,
+    riskMethod: RiskMethodType
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
@@ -39,7 +41,8 @@ class PairRepo {
     this.#quotationCoin = quotationCoin;
     this.#isFuture = isFuture;
     this.#invert = invert;
-    this.#risk = risk;
+    this.#riskAmount = riskAmount;
+    this.#riskMethod = riskMethod;
 
     for (let timeframe of timeFrames) {
       this.#timeFrames.set(
@@ -79,8 +82,12 @@ class PairRepo {
     return this.#invert;
   }
 
-  get risk() {
-    return this.#risk;
+  get riskAmount() {
+    return this.#riskAmount;
+  }
+
+  get riskMethod() {
+    return this.#riskMethod;
   }
 
   getTimeFrame(timeFrame: string) {
@@ -257,7 +264,6 @@ class PairRepo {
     if (!this.#invert)
       return await this.#postOrder(
         price,
-        this.#risk,
         walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
         price,
         "Buy",
@@ -269,7 +275,6 @@ class PairRepo {
 
       return await this.#postOrder(
         price,
-        this.#risk,
         walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
         1,
         "Sell",
@@ -288,7 +293,6 @@ class PairRepo {
     if (!this.#invert)
       return await this.#postOrder(
         price,
-        this.#risk,
         walletLiveInstance.getCoinAmount(this.#baseCoin) || 0,
         1,
         "Sell",
@@ -300,7 +304,6 @@ class PairRepo {
 
       return await this.#postOrder(
         price,
-        this.#risk,
         walletLiveInstance.getCoinAmount(this.#quotationCoin) || 0,
         price,
         "Buy",
@@ -312,7 +315,6 @@ class PairRepo {
 
   async #postOrder(
     price: number,
-    percentage: number,
     coinBalance: number,
     coinUnitPrice: number,
     side: "Buy" | "Sell",
@@ -322,18 +324,15 @@ class PairRepo {
     await this.#initPairInfo();
     await this.#cancelOrders();
     await walletLiveInstance.init();
-
-    let fullQty = 0;
+    let qty = 0;
 
     if (!this.#isFuture) {
       const balance = coinBalance;
-      fullQty = balance / coinUnitPrice;
+      let fullQty = balance / coinUnitPrice;
+      qty = fullQty * this.riskAmount;
     } else {
-      const balance = walletLiveInstance.margin;
-      fullQty = balance / price;
+      qty = this.#getFutureRiskQty(price, stopLoss);
     }
-
-    let qty = fullQty * percentage;
 
     const rate = price > 0 ? this.#makerRate : this.#takerRate;
     qty = qty - qty * rate;
@@ -449,6 +448,33 @@ class PairRepo {
           console.warn(e);
         });
     }
+  }
+
+  #getFutureRiskQty(entryPrice: number, stopLossPrice: number | undefined) {
+    if (this.#riskMethod === "fixedQty") return this.#riskAmount;
+    if (stopLossPrice === undefined) return 0;
+
+    const balance = walletLiveInstance.margin;
+    let amount = 0;
+
+    if (this.#riskMethod === "percentOfEquity") {
+      amount = balance * this.#riskAmount;
+    } else if (this.#riskMethod === "fixedAmount") {
+      amount = this.#riskAmount;
+    } else if (this.#riskMethod === "roadToMillion") {
+      amount = getRoadToMillionRisk(balance);
+    }
+
+    const riskPerOne = Math.abs(entryPrice - stopLossPrice);
+    let qty = amount / riskPerOne;
+
+    if (this.#precision && this.#precision !== 0)
+      qty = Math.floor(qty / this.#precision) * this.#precision;
+
+    if (qty > this.#maxQty) qty = this.#maxQty;
+    if (qty < this.#minQty) qty = this.#minQty;
+
+    return qty;
   }
 }
 

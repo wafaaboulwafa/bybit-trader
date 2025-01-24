@@ -32,6 +32,12 @@ export type OnStrategyType = (
   hasBuyPositions: boolean
 ) => void;
 
+export type RiskMethodType =
+  | "percentOfEquity"
+  | "fixedAmount"
+  | "fixedQty"
+  | "roadToMillion";
+
 export type PairConfigType = {
   pairName: string;
   strategy: string;
@@ -40,7 +46,8 @@ export type PairConfigType = {
   quotationCoin: string;
   isFuture: boolean;
   invert: boolean;
-  risk: number;
+  riskAmount: number;
+  riskMethod: RiskMethodType;
 };
 
 export type BacktestTimeFrameType = {
