@@ -89,3 +89,11 @@ export type PositionType = {
   createdTime: Date;
   entryPrice: number;
 };
+
+export type NotifyRequestType = {
+  pair: string;
+  price: number;
+  action: "buy" | "sell" | "closeBuy" | "closeSell" | "closeAll";
+  takeProfit: number | undefined;
+  stopLoss: number | undefined;
+};

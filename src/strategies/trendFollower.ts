@@ -1,6 +1,5 @@
 import { OnStrategyType } from "../service/types";
-import { calcEma, calcRsi, calcSma, getLastValue } from "../service/indicators";
-import { SMA } from "technicalindicators";
+import { calcEma, calcSma } from "../service/indicators";
 import { takeLast } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
 
