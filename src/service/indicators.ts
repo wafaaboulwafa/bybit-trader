@@ -149,7 +149,7 @@ export function calculateZigZag(
   let lastLow = candles[0].lowPrice;
   let lastPeakIndex = 0;
 
-  for (let i = candles.length - 2; i >= 0; i++) {
+  for (let i = candles.length - 2; i >= 0; i--) {
     const high = candles[i].highPrice;
     const low = candles[i].lowPrice;
 
@@ -199,6 +199,8 @@ export function calculateZigZag(
       trend = 0;
     }
   }
+
+  zigzagPoints.sort((a, b) => a.index - b.index);
 
   return zigzagPoints;
 }
