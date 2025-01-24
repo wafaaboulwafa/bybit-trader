@@ -1,13 +1,7 @@
-import { OnStrategyType, PairConfigType } from "./types";
-import {
-  notifyWalletUpdate,
-  notifyOrderUpdate,
-  notifyExecutionUpdate,
-} from "./telgramClient";
+import { OnStrategyType } from "./types";
 import { getMinutesBetweenDates, getPairsConfig } from "./misc";
 import strategies from "../strategies";
 import {
-  walletLiveInstance as wallet,
   marketLiveInstance as marketInfo,
   positionsLiveInstance,
 } from "../repository/instances";
@@ -33,8 +27,8 @@ export default async function startTradingBot() {
       if (matches && matches.length > 2) {
         const pairName = matches[2].toUpperCase();
         const timeFrame: string = matches[1];
-        //Find if we are allowed to trade this pair
 
+        //Find if we are allowed to trade this pair
         const pairData = marketInfo.getPair(pairName);
 
         if (!pairData) return;

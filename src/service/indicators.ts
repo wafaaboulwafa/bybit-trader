@@ -1,16 +1,7 @@
 import { MACDOutput } from "technicalindicators/declarations/moving_averages/MACD";
 import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
-import {
-  rsi,
-  macd,
-  sma,
-  ema,
-  bollingerbands,
-  crossUp,
-  crossDown,
-  CandleData,
-} from "technicalindicators";
-import { CandleType } from "./types";
+import { rsi, macd, sma, ema, bollingerbands } from "technicalindicators";
+import { CandleType, ZigZagPoint } from "./types";
 
 export function getLastValue(values: number[]): number | undefined {
   return (values.length > 0 && values[values.length - 1]) || undefined;
@@ -146,12 +137,6 @@ export function getTrend(
 
   return trend;
 }
-
-type ZigZagPoint = {
-  value: number;
-  type: "High" | "Low";
-  index: number;
-};
 
 export function calculateZigZag(
   candles: CandleType[],

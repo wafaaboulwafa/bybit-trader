@@ -151,5 +151,5 @@ export function getRoadToMillionRisk(amount: number): number {
     if (amount >= rec.balance) return rec.risk;
   }
 
-  return 5;
+  return 2;
 }

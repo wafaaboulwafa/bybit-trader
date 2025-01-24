@@ -71,3 +71,9 @@ export type BacktestAssetValueType = {
   time: Date;
   value: number;
 };
+
+export type ZigZagPoint = {
+  value: number;
+  type: "High" | "Low";
+  index: number;
+};
