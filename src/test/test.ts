@@ -1,39 +1,28 @@
 require("dotenv").config();
-import {
-  marketLiveInstance,
-  walletLiveInstance,
-} from "../repository/instances";
-import BacktestRepo from "../repository/backtestRepo";
-import backtestTradingBot from "./../service/backtest";
-import fs from "fs";
-import path from "path";
-import { BacktestDataType } from "../service/types";
-import { saveBuffer } from "../service/misc";
 
-function getCandles() {
-  const backtestFilePath = "../../constants/backtestData.json";
-  const filePath = path.resolve(__dirname, backtestFilePath);
-  if (!fs.existsSync(filePath)) return undefined;
-  const data = require(filePath) as BacktestDataType;
-  return data;
-}
+import startHttpServer from "./../service/tradingViewNotify";
+import startNotificationBot from "./../service/notificationBot";
+
+import {
+  marketLiveInstance as marketRepo,
+  walletLiveInstance as walletRepo,
+  positionsLiveInstance as positionRepo,
+} from "../repository/instances";
+import { calculateZigZag } from "../service/indicators";
+import { takeLast } from "../service/misc";
+
+// Run socket bot
+startNotificationBot();
+startHttpServer();
 
 setTimeout(async () => {
-  //const pair = marketLiveInstance.getPair("DOGEUSDT");
-  /*
-  console.log(walletLiveInstance.getCoinAmount("USDT"));
-  console.log(
-    marketLiveInstance.getPair("DOGEUSDT")?.getTimeFrame("1")?.closePrice[0]
-  );
-*/
-  //pair?.closeOpenFuturePositions();
-  //pair?.cancelOrders();
-  //pair?.postBuyOrder(0.33395, 0.1).then((r) => console.log(r));
-  //pair?.postSellOrder(0.33623, 0.1).then((r) => console.log(r));
-  //BacktestRepo.generateBacktestFile();
+  const pairName = "DOGEUSDT";
 
-  const data = getCandles();
-  if (data) {
-    const candles = data[0].timeFrames[0].data;
-  }
-}, 1000 * 5);
+  const pair = marketRepo.getPair(pairName);
+  const timeFrame = pair?.getTimeFrame("240");
+  const zigzag = calculateZigZag(timeFrame?.candle || []);
+
+  console.log(zigzag.slice(0, 4));
+
+  //console.log(takeLast(zigzag, 5, 0));
+}, 3000);
