@@ -473,7 +473,6 @@ class PairRepo {
       qty = Math.floor(qty / this.#precision) * this.#precision;
 
     if (qty > this.#maxQty) qty = this.#maxQty;
-    if (qty < this.#minQty) qty = this.#minQty;
 
     return qty;
   }
