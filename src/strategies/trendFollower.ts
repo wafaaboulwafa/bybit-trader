@@ -1,7 +1,8 @@
 import { OnStrategyType } from "../service/types";
-import { calcEma, calcSma } from "../service/indicators";
+import { calcEma, getLastValue } from "../service/indicators";
 import { takeLast } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
+import { sma } from "technicalindicators";
 
 function analyzeTrendBySlope(
   prices: number[]
@@ -28,7 +29,7 @@ function analyzeTrendBySlope(
   if (slope > strongThreshold) {
     return "StrongUptrend";
   } else if (slope > mediumThreshold) {
-    return "StrongUptrend";
+    return "Uptrend";
   } else if (slope < -strongThreshold) {
     return "StrongDowntrend";
   } else if (slope < -mediumThreshold) {
@@ -60,14 +61,11 @@ const highTimeFrameAnalyses = new Map<string, HighTimeFrameAnalysesType>();
 const lowTimeFrameAnalyses = new Map<string, LowTimeFrameAnalysesType>();
 
 const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
-  /*Find:
-    MA cross
-    trend direction
-    trend strength
-    high or low areas 
-    */
-  const fastMa = calcSma(prices, 15);
-  const slowMa = calcSma(prices, 20);
+  const fastMaArray = sma({ values: prices, period: 15 });
+  const slowMaArray = sma({ values: prices, period: 20 });
+
+  const fastMa = getLastValue(fastMaArray);
+  const slowMa = getLastValue(slowMaArray);
 
   if (!fastMa || !slowMa) return;
 
@@ -82,14 +80,11 @@ const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
 
   analyses.crossState =
     fastMa > slowMa ? "CrossUp" : slowMa > fastMa ? "CrossDown" : undefined;
-  analyses.trend = analyzeTrendBySlope(prices);
+  analyses.trend = analyzeTrendBySlope(takeLast(slowMaArray, 5, 0));
   analyses.fastMa = fastMa;
   analyses.slowMa = slowMa;
 
   highTimeFrameAnalyses.set(pair, analyses);
-
-  //Find last candle high and low and relative price
-  //calculateZigZag()
 };
 
 const calcLowTimeFrameAnalyses = (
@@ -97,13 +92,6 @@ const calcLowTimeFrameAnalyses = (
   pair: string,
   prices: number[]
 ) => {
-  /*Find:
-    Trade ratio 1 : 2
-    Entry on touch of MA 20
-    Top loss on last ziazag high
-    TP based on ratio between last high and entry when EA cross
-    Only take trade if no trades are open
-    */
   const highTimeframeAnalyses: HighTimeFrameAnalysesType | undefined =
     highTimeFrameAnalyses.get(pair);
 
@@ -131,7 +119,8 @@ const calcLowTimeFrameAnalyses = (
   if (fastEma < slowEma) lowAnalyses.crossState = "CrossDown";
 
   if (
-    highTimeframeAnalyses.trend === "StrongUptrend" &&
+    (highTimeframeAnalyses.trend === "StrongUptrend" ||
+      highTimeframeAnalyses.trend === "Uptrend") &&
     highTimeframeAnalyses.crossState === "CrossUp" &&
     (price <= highTimeframeAnalyses.fastMa ||
       price <= highTimeframeAnalyses.slowMa)
@@ -140,10 +129,11 @@ const calcLowTimeFrameAnalyses = (
   }
 
   if (
-    highTimeframeAnalyses.trend === "StrongDowntrend" &&
+    (highTimeframeAnalyses.trend === "StrongDowntrend" ||
+      highTimeframeAnalyses.trend === "Downtrend") &&
     highTimeframeAnalyses.crossState === "CrossDown" &&
-    (price <= highTimeframeAnalyses.fastMa ||
-      price <= highTimeframeAnalyses.slowMa)
+    (price >= highTimeframeAnalyses.fastMa ||
+      price >= highTimeframeAnalyses.slowMa)
   ) {
     lowAnalyses.touchedMa = true;
   }
@@ -173,9 +163,11 @@ const checkTrades = async (
   const lastCandles = takeLast(candles, 3, 0);
 
   const htBuySignal =
-    ht.crossState === "CrossUp" && ht.trend === "StrongUptrend";
+    ht.crossState === "CrossUp" &&
+    (ht.trend === "StrongUptrend" || ht.trend === "Uptrend");
   const htSellSignal =
-    ht.crossState === "CrossUp" && ht.trend === "StrongDowntrend";
+    ht.crossState === "CrossDown" &&
+    (ht.trend === "StrongDowntrend" || ht.trend === "Downtrend");
 
   const ltBuySignal = lt.touchedMa && lt.crossState === "CrossUp";
   const ltSellSignal = lt.touchedMa && lt.crossState === "CrossDown";
