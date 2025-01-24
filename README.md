@@ -44,11 +44,19 @@ sudo nano /etc/environment
 Add the following:
 
 ```
-BYBIT_API_TESTNET=false
-BYBIT_API_KEY=your_bybit_api_key
-BYBIT_API_SECRET=your_bybit_api_secret
+HTTP_PORT=3000
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
+REST_BYBIT_API_TESTNET=false
+REST_BYBIT_API_DEMO=true
+REST_BYBIT_API_KEY=your_bybit_api_key
+REST_BYBIT_API_SECRET=your_bybit_api_secret
+SOCKET_BYBIT_API_TESTNET=false
+SOCKET_BYBIT_API_DEMO=false
+SOCKET_BYBIT_API_KEY=your_bybit_api_key
+SOCKET_BYBIT_API_SECRET=your_bybit_api_secret
+CONFIG_PATH=/path/to/bybit-trader/config.json
+NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
 Save and exit (CTRL + O, CTRL + X).

@@ -1,21 +1,10 @@
 [
   {
     "pairName": "DOGEUSDT",
-    "timeFrames": [1],
+    "timeFrames": [15, 240],
     "quotationCoin": "USDT",
     "baseCoin": "DOGE",
     "strategy": "bbCross",
-    "isFuture": true,
-    "invert": false,
-    "riskAmount": 0.01,
-    "riskMethod": "percentOfEquity"
-  },
-  {
-    "pairName": "ETHUSDT",
-    "timeFrames": [1, 60, 240],
-    "quotationCoin": "USDT",
-    "baseCoin": "ETH",
-    "strategy": "wychoff",
     "isFuture": true,
     "invert": false,
     "riskAmount": 0.01,
