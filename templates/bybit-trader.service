@@ -8,12 +8,25 @@ WorkingDirectory=/path/to/bybit-trader
 Restart=always
 RestartSec=10
 User=bybit-user
-Environment=NODE_ENV=production
+#EnvironmentFile=/etc/environment
 LimitNOFILE=4096
 StandardOutput=journal
 StandardError=journal
 #StandardOutput=append:/var/log/bybit-trader.log
 #StandardError=append:/var/log/bybit-trader.log
+Environment="TELEGRAM_BOT_TOKEN=###"
+Environment="TELEGRAM_CHAT_ID=###"
+Environment="NODE_TLS_REJECT_UNAUTHORIZED=0"
+Environment="HTTP_PORT=3000"
+Environment="REST_BYBIT_API_TESTNET=false"
+Environment="REST_BYBIT_API_DEMO=false"
+Environment="REST_BYBIT_API_KEY=#####"
+Environment="REST_BYBIT_API_SECRET=#####"
+Environment="SOCKET_BYBIT_API_TESTNET=false"
+Environment="SOCKET_BYBIT_API_DEMO=false"
+Environment="SOCKET_BYBIT_API_KEY=#####"
+Environment="SOCKET_BYBIT_API_SECRET=#####"
+Environment="CONFIG_PATH=/path/to/bybit-trader/config.json"
 
 [Install]
 WantedBy=multi-user.target
