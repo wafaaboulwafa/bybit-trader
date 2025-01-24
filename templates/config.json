@@ -6,7 +6,9 @@
     "baseCoin": "DOGE",
     "strategy": "bbCross",
     "isFuture": true,
-    "invert": false
+    "invert": false,
+    "riskAmount": 0.01,
+    "riskMethod": "percentOfEquity"
   },
   {
     "pairName": "ETHUSDT",
@@ -15,6 +17,8 @@
     "baseCoin": "ETH",
     "strategy": "wychoff",
     "isFuture": true,
-    "invert": false
+    "invert": false,
+    "riskAmount": 0.01,
+    "riskMethod": "percentOfEquity"
   }
 ]
