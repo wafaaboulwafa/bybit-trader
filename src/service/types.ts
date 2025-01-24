@@ -77,3 +77,15 @@ export type ZigZagPoint = {
   type: "High" | "Low";
   index: number;
 };
+
+export type PositionType = {
+  id: number;
+  symbol: string;
+  side: "Buy" | "Sell";
+  qty: number;
+  takeProfit: number | undefined;
+  stopLoss: number | undefined;
+  pnl: number;
+  createdTime: Date;
+  entryPrice: number;
+};

@@ -2,6 +2,7 @@ import { getPairsConfig } from "../service/misc";
 import { PairConfigType } from "../service/types";
 import PairRepo from "./pairRepo";
 
+//All pairs and time frames memory repository
 class MarketRepo {
   #pairs = new Map<string, PairRepo>();
 
