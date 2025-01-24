@@ -331,7 +331,13 @@ class PairRepo {
       let fullQty = balance / coinUnitPrice;
       qty = fullQty * this.riskAmount;
     } else {
-      qty = this.#getFutureRiskQty(price, stopLoss);
+      if (price && stopLoss) qty = this.#getFutureRiskQty(price, stopLoss);
+      else {
+        //No stop loss
+        const balance = walletLiveInstance.margin;
+        let fullQty = balance / price;
+        qty = fullQty * this.riskAmount;
+      }
     }
 
     const rate = price > 0 ? this.#makerRate : this.#takerRate;
