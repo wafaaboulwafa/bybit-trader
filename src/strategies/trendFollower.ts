@@ -122,7 +122,7 @@ const calcLowTimeFrameAnalyses = (
 
   pairAnalyses.set(pair, analyses);
 
-  console.log(pair, analyses);
+  //console.log(pair, analyses);
 };
 
 const checkTrades = async (
@@ -159,7 +159,7 @@ const checkTrades = async (
     const points = price - stopLoss;
     const takeProfit = price + points * 2;
     await buyPosition(price, takeProfit, stopLoss);
-    //console.log("Buy", { price, takeProfit, stopLoss });
+    //console.log("Buy Order", { price, takeProfit, stopLoss });
   }
 
   if (
@@ -174,7 +174,7 @@ const checkTrades = async (
     const points = stopLoss - price;
     const takeProfit = price - points * 2;
     await sellPosition(price, takeProfit, stopLoss);
-    //console.log("Sell", { price, takeProfit, stopLoss });
+    //console.log("Sell Order", { price, takeProfit, stopLoss });
   }
 };
 

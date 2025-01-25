@@ -5,7 +5,7 @@ import {
 } from "./telgramClient";
 import {
   walletLiveInstance as wallet,
-  positionsLiveInstance,
+  positionsLiveInstance as positions,
 } from "../repository/instances";
 import { createSocketClient } from "./bybitClient";
 
@@ -30,7 +30,7 @@ export default async function startNotificationBot() {
         notifyWalletUpdate(data.data[0]);
       }
     } else if (data.topic === "position") {
-      positionsLiveInstance.refresh();
+      //
     }
   });
 

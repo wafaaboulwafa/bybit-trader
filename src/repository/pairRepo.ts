@@ -2,7 +2,7 @@ import { OrderParamsV5, PositionInfoParamsV5, PositionV5 } from "bybit-api";
 import { restClient } from "../service/bybitClient";
 import { CandleType, RiskMethodType } from "../service/types";
 import TimeFrameRepo from "./timeFrameRepo";
-import { walletLiveInstance } from "./instances";
+import { positionsLiveInstance, walletLiveInstance } from "./instances";
 import { countDecimalDigits, getRoadToMillionRisk } from "../service/misc";
 
 //Pair memory cache
@@ -369,8 +369,9 @@ class PairRepo {
 
     const response = await restClient
       .submitOrder(request)
-      .then((r) => {
+      .then(async (r) => {
         if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+        await positionsLiveInstance.refresh();
         return r.retCode === 0;
       })
       .catch((e) => {
@@ -448,8 +449,9 @@ class PairRepo {
 
       await restClient
         .submitOrder(request)
-        .then((r) => {
+        .then(async (r) => {
           if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+          await positionsLiveInstance.refresh();
           return r.retCode === 0;
         })
         .catch((e) => {
