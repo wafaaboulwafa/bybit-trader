@@ -20,8 +20,8 @@ interface TimeFrameAnalysesType {
   highFastMa: number | undefined;
   highSlowMa: number | undefined;
   lowCrossState: "CrossUp" | "CrossDown" | undefined;
-  lowOverbough: boolean | undefined;
-  lowOversold: boolean | undefined;
+  lowOverbough: boolean;
+  lowOversold: boolean;
 }
 
 const pairAnalyses = new Map<string, TimeFrameAnalysesType>();
@@ -41,8 +41,8 @@ const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
     highFastMa: undefined,
     highSlowMa: undefined,
     lowCrossState: undefined,
-    lowOverbough: undefined,
-    lowOversold: undefined,
+    lowOverbough: false,
+    lowOversold: false,
   };
 
   //Find high timeframe trend direction using MA cross
@@ -90,6 +90,7 @@ const calcLowTimeFrameAnalyses = (
     (price <= analyses.highFastMa || price <= analyses.highSlowMa)
   ) {
     analyses.lowOversold = true;
+    analyses.lowOverbough = false;
   }
 
   if (
@@ -99,6 +100,7 @@ const calcLowTimeFrameAnalyses = (
     (price >= analyses.highFastMa || price >= analyses.highSlowMa)
   ) {
     analyses.lowOverbough = true;
+    analyses.lowOversold = false;
   }
 
   pairAnalyses.set(pair, analyses);
@@ -120,6 +122,8 @@ const checkTrades = async (
   const analyses = pairAnalyses.get(pair);
 
   if (!analyses || price === 0) return;
+
+  //console.log("Pair: " + pair, analyses);
 
   const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
 
