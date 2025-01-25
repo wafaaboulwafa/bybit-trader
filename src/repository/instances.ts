@@ -26,6 +26,7 @@ function getPositionsInstance() {
   return result;
 }
 
+//Initalize memory cache
 const marketLiveInstance: MarketRepo = getMarketInstance();
 const walletLiveInstance: WalletRepo = getWalletInstance();
 const positionsLiveInstance: PositionsRepo = getPositionsInstance();

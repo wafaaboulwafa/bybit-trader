@@ -47,8 +47,11 @@ const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
     slowMa: slowMa,
   };
 
+  //Find high timeframe trend direction using MA cross
   analyses.crossState =
     fastMa > slowMa ? "CrossUp" : slowMa > fastMa ? "CrossDown" : undefined;
+
+  //Trend slope degree
   analyses.trend = analyzeTrendBySlope(takeLast(slowMaArray, 5, 0));
   analyses.fastMa = fastMa;
   analyses.slowMa = slowMa;
@@ -64,6 +67,7 @@ const calcLowTimeFrameAnalyses = (
   const highTimeframeAnalyses: HighTimeFrameAnalysesType | undefined =
     highTimeFrameAnalyses.get(pair);
 
+  //Skip trading sideways
   if (
     highTimeframeAnalyses === undefined ||
     highTimeframeAnalyses.crossState === undefined ||
@@ -84,9 +88,11 @@ const calcLowTimeFrameAnalyses = (
     touchedMa: false,
   };
 
+  //Find low timeframe MA cross
   if (fastEma > slowEma) lowAnalyses.crossState = "CrossUp";
   if (fastEma < slowEma) lowAnalyses.crossState = "CrossDown";
 
+  //Find MA touch points
   if (
     (highTimeframeAnalyses.trend === "StrongUptrend" ||
       highTimeframeAnalyses.trend === "Uptrend") &&
@@ -130,6 +136,7 @@ const checkTrades = async (
 
   const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
 
+  //High timeframe signals
   const htBuySignal =
     ht.crossState === "CrossUp" &&
     (ht.trend === "StrongUptrend" || ht.trend === "Uptrend");
@@ -137,11 +144,15 @@ const checkTrades = async (
     ht.crossState === "CrossDown" &&
     (ht.trend === "StrongDowntrend" || ht.trend === "Downtrend");
 
+  //Low timeframe signals
   const ltBuySignal = lt.touchedMa && lt.crossState === "CrossUp";
   const ltSellSignal = lt.touchedMa && lt.crossState === "CrossDown";
+
+  //Any previous open positions
   const hasOpenPosition = hasBuyPositions || hasSellPositions;
 
   if (htBuySignal && ltBuySignal && !hasOpenPosition) {
+    //Buy signal
     console.log(`Buy signal on ${pair} at price: ${price}`);
     const lowPrices = recentCandles.map((c) => c.lowPrice);
     const stopLoss = Math.min(...lowPrices);
@@ -152,6 +163,7 @@ const checkTrades = async (
   }
 
   if (htSellSignal && ltSellSignal && !hasOpenPosition) {
+    //Sell signal
     console.log(`Sell signal on ${pair} at price: ${price}`);
     const highPrices = recentCandles.map((c) => c.highPrice);
     const stopLoss = Math.max(...highPrices);
@@ -187,9 +199,12 @@ const strategy: OnStrategyType = async (
   if (prices.length < 100) return;
 
   if (isLargeTimeframe) {
+    //High timeframe analysis
     calcHighTimeFrameAnalyses(pair, prices);
   } else if (isSmallTimeframe) {
+    //Low timeframe analysis
     calcLowTimeFrameAnalyses(price, pair, prices);
+    //Check for trade signals
     checkTrades(
       pair,
       pairData,

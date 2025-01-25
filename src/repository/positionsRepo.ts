@@ -2,6 +2,7 @@ import { GetAccountOrdersParamsV5, PositionInfoParamsV5 } from "bybit-api";
 import { restClient } from "../service/bybitClient";
 import { PositionType } from "../service/types";
 
+//Open positions cache
 class PositionsRepo {
   #positions: PositionType[] = [];
 

@@ -1,5 +1,6 @@
 import { restClient } from "../service/bybitClient";
 
+//Wallet cache
 class WalletRepo {
   #coins: Map<string, number> = new Map<string, number>();
   #margin: number = 0;

@@ -3,6 +3,7 @@ import { CandleType } from "../service/types";
 import { restClient } from "../service/bybitClient";
 import { KlineIntervalV3 } from "bybit-api";
 
+//Timeframe cache
 class TimeFrameRepo {
   #candlesMap: Map<number, CandleType> = new Map<number, CandleType>();
   #candles: CandleType[] = [];

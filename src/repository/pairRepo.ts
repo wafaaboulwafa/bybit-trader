@@ -5,6 +5,7 @@ import TimeFrameRepo from "./timeFrameRepo";
 import { walletLiveInstance } from "./instances";
 import { countDecimalDigits, getRoadToMillionRisk } from "../service/misc";
 
+//Pair memory cache
 class PairRepo {
   #pair: string = "";
   #timeFrames: Map<string, TimeFrameRepo> = new Map<string, TimeFrameRepo>();
