@@ -192,7 +192,7 @@ const strategy: OnStrategyType = async (
   hasBuyPositions
 ) => {
   const highTimeframe = "240"; //4 hour
-  const lowTimeframe = "3";
+  const lowTimeframe = "5"; //5 Minutes
 
   const isSmallTimeframe = timeFrame === lowTimeframe;
   const isLargeTimeframe = timeFrame === highTimeframe;
