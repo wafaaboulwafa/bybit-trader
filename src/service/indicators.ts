@@ -239,3 +239,13 @@ export function analyzeTrendBySlope(
     return "Sideways";
   }
 }
+
+export const getTrendDirection = (
+  prices: number[]
+): "Uptrend" | "Downtrend" | "Sideways" => {
+  const recentSlope = prices[prices.length - 1] - prices[prices.length - 3];
+
+  if (recentSlope > 0) return "Uptrend";
+  else if (recentSlope < 0) return "Downtrend";
+  else return "Sideways";
+};

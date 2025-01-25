@@ -1,33 +1,30 @@
 import { OnStrategyType } from "../service/types";
 import {
-  analyzeTrendBySlope,
   calcEma,
   getLastValue,
+  getTrendDirection,
 } from "../service/indicators";
 import { takeFirst, takeLast } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
 
-interface HighTimeFrameAnalysesType {
-  trend:
+interface TimeFrameAnalysesType {
+  highTrend:
     | "Uptrend"
     | "Downtrend"
     | "Sideways"
     | "StrongUptrend"
     | "StrongDowntrend"
     | undefined;
-  crossState: "CrossUp" | "CrossDown" | undefined;
-  fastMa: number;
-  slowMa: number;
+  highCrossState: "CrossUp" | "CrossDown" | undefined;
+  highFastMa: number | undefined;
+  highSlowMa: number | undefined;
+  lowCrossState: "CrossUp" | "CrossDown" | undefined;
+  lowOverbough: boolean | undefined;
+  lowOversold: boolean | undefined;
 }
 
-interface LowTimeFrameAnalysesType {
-  crossState: "CrossUp" | "CrossDown" | undefined;
-  touchedMa: boolean;
-}
-
-const highTimeFrameAnalyses = new Map<string, HighTimeFrameAnalysesType>();
-const lowTimeFrameAnalyses = new Map<string, LowTimeFrameAnalysesType>();
+const pairAnalyses = new Map<string, TimeFrameAnalysesType>();
 
 const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
   const fastMaArray = sma({ values: prices, period: 15 });
@@ -38,25 +35,26 @@ const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
 
   if (!fastMa || !slowMa) return;
 
-  const analyses: HighTimeFrameAnalysesType = highTimeFrameAnalyses.get(
-    pair
-  ) || {
-    trend: undefined,
-    crossState: undefined,
-    fastMa: fastMa,
-    slowMa: slowMa,
+  const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
+    highTrend: undefined,
+    highCrossState: undefined,
+    highFastMa: undefined,
+    highSlowMa: undefined,
+    lowCrossState: undefined,
+    lowOverbough: undefined,
+    lowOversold: undefined,
   };
 
   //Find high timeframe trend direction using MA cross
-  analyses.crossState =
+  analyses.highCrossState =
     fastMa > slowMa ? "CrossUp" : slowMa > fastMa ? "CrossDown" : undefined;
 
   //Trend slope degree
-  analyses.trend = analyzeTrendBySlope(takeLast(slowMaArray, 5, 0));
-  analyses.fastMa = fastMa;
-  analyses.slowMa = slowMa;
+  analyses.highTrend = getTrendDirection(slowMaArray);
+  analyses.highFastMa = fastMa;
+  analyses.highSlowMa = slowMa;
 
-  highTimeFrameAnalyses.set(pair, analyses);
+  pairAnalyses.set(pair, analyses);
 };
 
 const calcLowTimeFrameAnalyses = (
@@ -64,15 +62,14 @@ const calcLowTimeFrameAnalyses = (
   pair: string,
   prices: number[]
 ) => {
-  const highTimeframeAnalyses: HighTimeFrameAnalysesType | undefined =
-    highTimeFrameAnalyses.get(pair);
+  const analyses = pairAnalyses.get(pair);
 
-  //Skip trading sideways
+  //Wait fir high timeframe analyses
   if (
-    highTimeframeAnalyses === undefined ||
-    highTimeframeAnalyses.crossState === undefined ||
-    highTimeframeAnalyses.trend === undefined ||
-    highTimeframeAnalyses.trend === "Sideways"
+    analyses === undefined ||
+    analyses.highTrend === undefined ||
+    analyses.highFastMa === undefined ||
+    analyses.highSlowMa === undefined
   )
     return;
 
@@ -81,39 +78,30 @@ const calcLowTimeFrameAnalyses = (
 
   if (!fastEma || !slowEma) return;
 
-  const lowAnalyses: LowTimeFrameAnalysesType = lowTimeFrameAnalyses.get(
-    pair
-  ) || {
-    crossState: undefined,
-    touchedMa: false,
-  };
-
   //Find low timeframe MA cross
-  if (fastEma > slowEma) lowAnalyses.crossState = "CrossUp";
-  if (fastEma < slowEma) lowAnalyses.crossState = "CrossDown";
+  if (fastEma > slowEma) analyses.lowCrossState = "CrossUp";
+  if (fastEma < slowEma) analyses.lowCrossState = "CrossDown";
 
-  //Find MA touch points
+  //Find price cross for MA to define overbought and oversold levels
   if (
-    (highTimeframeAnalyses.trend === "StrongUptrend" ||
-      highTimeframeAnalyses.trend === "Uptrend") &&
-    highTimeframeAnalyses.crossState === "CrossUp" &&
-    (price <= highTimeframeAnalyses.fastMa ||
-      price <= highTimeframeAnalyses.slowMa)
+    (analyses.highTrend === "StrongUptrend" ||
+      analyses.highTrend === "Uptrend") &&
+    analyses.highCrossState === "CrossUp" &&
+    (price <= analyses.highFastMa || price <= analyses.highSlowMa)
   ) {
-    lowAnalyses.touchedMa = true;
+    analyses.lowOversold = true;
   }
 
   if (
-    (highTimeframeAnalyses.trend === "StrongDowntrend" ||
-      highTimeframeAnalyses.trend === "Downtrend") &&
-    highTimeframeAnalyses.crossState === "CrossDown" &&
-    (price >= highTimeframeAnalyses.fastMa ||
-      price >= highTimeframeAnalyses.slowMa)
+    (analyses.highTrend === "StrongDowntrend" ||
+      analyses.highTrend === "Downtrend") &&
+    analyses.highCrossState === "CrossDown" &&
+    (price >= analyses.highFastMa || price >= analyses.highSlowMa)
   ) {
-    lowAnalyses.touchedMa = true;
+    analyses.lowOverbough = true;
   }
 
-  lowTimeFrameAnalyses.set(pair, lowAnalyses);
+  pairAnalyses.set(pair, analyses);
 };
 
 const checkTrades = async (
@@ -129,24 +117,27 @@ const checkTrades = async (
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
 
-  const ht = highTimeFrameAnalyses.get(pair);
-  const lt = lowTimeFrameAnalyses.get(pair);
+  const analyses = pairAnalyses.get(pair);
 
-  if (!ht || !lt || price === 0) return;
+  if (!analyses || price === 0) return;
 
   const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
 
   //High timeframe signals
   const htBuySignal =
-    ht.crossState === "CrossUp" &&
-    (ht.trend === "StrongUptrend" || ht.trend === "Uptrend");
+    analyses.highCrossState === "CrossUp" &&
+    (analyses.highTrend === "StrongUptrend" ||
+      analyses.highTrend === "Uptrend");
   const htSellSignal =
-    ht.crossState === "CrossDown" &&
-    (ht.trend === "StrongDowntrend" || ht.trend === "Downtrend");
+    analyses.highCrossState === "CrossDown" &&
+    (analyses.highTrend === "StrongDowntrend" ||
+      analyses.highTrend === "Downtrend");
 
   //Low timeframe signals
-  const ltBuySignal = lt.touchedMa && lt.crossState === "CrossUp";
-  const ltSellSignal = lt.touchedMa && lt.crossState === "CrossDown";
+  const ltBuySignal =
+    analyses.lowOversold && analyses.lowCrossState === "CrossUp";
+  const ltSellSignal =
+    analyses.lowOverbough && analyses.lowCrossState === "CrossDown";
 
   //Any previous open positions
   const hasOpenPosition = hasBuyPositions || hasSellPositions;
