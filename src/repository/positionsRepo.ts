@@ -9,6 +9,8 @@ class PositionsRepo {
   constructor() {}
 
   async refresh(): Promise<void> {
+    this.#positions = [];
+
     const positionsRequest: PositionInfoParamsV5 = {
       category: "linear",
       settleCoin: "USDT",

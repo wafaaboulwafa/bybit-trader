@@ -23,6 +23,7 @@ export default async function startNotificationBot() {
     } else if (data.topic === "order") {
       //Telegram notification for order created
       if (data.data.length > 0) notifyOrderUpdate(data.data[0]);
+      positions.refresh();
     } else if (data.topic === "wallet") {
       //Telegram notification for wallet update
       if (data.data.length > 0) {
@@ -30,7 +31,7 @@ export default async function startNotificationBot() {
         notifyWalletUpdate(data.data[0]);
       }
     } else if (data.topic === "position") {
-      //
+      positions.refresh();
     }
   });
 
