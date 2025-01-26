@@ -7,6 +7,17 @@ import {
 import { takeFirst } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
+import {
+  clearBuyTrigger,
+  clearPairProcessing,
+  clearSellTrigger,
+  isBuyTriggered,
+  isPairUnderProcessing,
+  isSellTriggered,
+  setBuyTriggered,
+  setPairUnderProcessing,
+  setSellTriggered,
+} from "../repository/tradeProcessing";
 
 interface TimeFrameAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
@@ -127,6 +138,7 @@ const calcLowTimeFrameAnalyses = (
 
 const checkTrades = async (
   pair: string,
+  analyses: TimeFrameAnalysesType,
   pairData: PairRepo,
   lowtimeFrame: string,
   price: number,
@@ -138,21 +150,24 @@ const checkTrades = async (
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
 
-  const analyses = pairAnalyses.get(pair);
-  if (!analyses || price === 0) return;
-
   const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
   //console.log("Pair: " + pair, analyses);
 
   //Any previous open positions
   const hasOpenPosition = hasBuyPositions || hasSellPositions;
+  if (hasOpenPosition) {
+    clearSellTrigger(pair);
+    clearBuyTrigger(pair);
+  }
 
   if (
     analyses.highSignal === "Buy" &&
     analyses.lowSignal === "Buy" &&
-    !hasOpenPosition
+    !hasOpenPosition &&
+    !isBuyTriggered(pair)
   ) {
     //Buy signal
+    setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
     const lowPrices = recentCandles.map((c) => c.lowPrice);
     const stopLoss = Math.min(...lowPrices);
@@ -165,9 +180,11 @@ const checkTrades = async (
   if (
     analyses.highSignal === "Sell" &&
     analyses.lowSignal === "Sell" &&
-    !hasOpenPosition
+    !hasOpenPosition &&
+    !isSellTriggered(pair)
   ) {
     //Sell signal
+    setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
     const highPrices = recentCandles.map((c) => c.highPrice);
     const stopLoss = Math.max(...highPrices);
@@ -191,6 +208,8 @@ const strategy: OnStrategyType = async (
   hasSellPositions,
   hasBuyPositions
 ) => {
+  if (price === 0) return;
+
   const highTimeframe = "240"; //4 hour
   const lowTimeframe = "5"; //5 Minutes
 
@@ -211,18 +230,26 @@ const strategy: OnStrategyType = async (
   } else if (isSmallTimeframe) {
     //Low timeframe analysis
     calcLowTimeFrameAnalyses(price, pair, prices, pairData, lowTimeframe);
+  }
 
-    //Check for trade signals
-    checkTrades(
-      pair,
-      pairData,
-      timeFrame,
-      price,
-      hasBuyPositions,
-      hasSellPositions,
-      buyPosition,
-      sellPosition
-    );
+  //Check for trade signals
+  if (isSmallTimeframe && !isPairUnderProcessing(pair)) {
+    const analyses = pairAnalyses.get(pair);
+    if (analyses) {
+      setPairUnderProcessing(pair);
+      checkTrades(
+        pair,
+        analyses,
+        pairData,
+        timeFrame,
+        price,
+        hasBuyPositions,
+        hasSellPositions,
+        buyPosition,
+        sellPosition
+      );
+      clearPairProcessing(pair);
+    }
   }
 };
 
