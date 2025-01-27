@@ -100,10 +100,8 @@ export default async function startTradingBot() {
             strategies.get("default") ||
             null;
 
-          const hasBuyPositions =
-            positionsLiveInstance.hasOpenBuyPosition(pairName);
-          const hasSellPositions =
-            positionsLiveInstance.hasOpenSellPosition(pairName);
+          const hasBuyPositions = pairData.hasOpenBuyPosition();
+          const hasSellPositions = pairData.hasOpenSellPosition();
 
           if (onStrategy) {
             onStrategy(

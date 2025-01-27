@@ -485,6 +485,18 @@ class PairRepo {
 
     return qty;
   }
+
+  hasOpenSellPosition(): boolean {
+    if (!this.#invert)
+      return positionsLiveInstance.hasOpenSellPosition(this.#pair);
+    else return positionsLiveInstance.hasOpenBuyPosition(this.#pair);
+  }
+
+  hasOpenBuyPosition(): boolean {
+    if (!this.#invert)
+      return positionsLiveInstance.hasOpenBuyPosition(this.#pair);
+    else return positionsLiveInstance.hasOpenSellPosition(this.#pair);
+  }
 }
 
 export default PairRepo;
