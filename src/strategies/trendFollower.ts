@@ -1,10 +1,10 @@
 import { OnStrategyType } from "../service/types";
 import {
   calcEma,
+  getAtr,
   getLastValue,
   getTrendDirection,
 } from "../service/indicators";
-import { takeFirst } from "../service/misc";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
 import {
@@ -18,6 +18,9 @@ import {
   setPairUnderProcessing,
   setSellTriggered,
 } from "../repository/tradeProcessing";
+
+const stopLossRatio: number = 2;
+const takeProfitRatio: number = stopLossRatio * 3;
 
 interface TimeFrameAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
@@ -150,8 +153,8 @@ const checkTrades = async (
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
 
-  const recentCandles = takeFirst(timeFrameRepo.candle, 3, 0);
-  //console.log("Pair: " + pair, analyses);
+  const atr = getAtr(timeFrameRepo.candle, 14);
+  if (!atr) return;
 
   //Any previous open positions
   const hasOpenPosition = hasBuyPositions || hasSellPositions;
@@ -169,12 +172,10 @@ const checkTrades = async (
     //Buy signal
     setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
-    const lowPrices = recentCandles.map((c) => c.lowPrice);
-    const stopLoss = Math.min(...lowPrices);
-    const points = price - stopLoss;
-    const takeProfit = price + points * 2;
+
+    const stopLoss = price - atr * stopLossRatio;
+    const takeProfit = price + atr * takeProfitRatio;
     await buyPosition(price, takeProfit, stopLoss);
-    //console.log("Buy Order", { price, takeProfit, stopLoss });
   }
 
   if (
@@ -186,12 +187,10 @@ const checkTrades = async (
     //Sell signal
     setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
-    const highPrices = recentCandles.map((c) => c.highPrice);
-    const stopLoss = Math.max(...highPrices);
-    const points = stopLoss - price;
-    const takeProfit = price - points * 2;
+
+    const stopLoss = price + atr * stopLossRatio;
+    const takeProfit = price - atr * takeProfitRatio;
     await sellPosition(price, takeProfit, stopLoss);
-    //console.log("Sell Order", { price, takeProfit, stopLoss });
   }
 };
 

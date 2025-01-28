@@ -1,7 +1,8 @@
 import { MACDOutput } from "technicalindicators/declarations/moving_averages/MACD";
 import { BollingerBandsOutput } from "technicalindicators/declarations/volatility/BollingerBands";
-import { rsi, macd, sma, ema, bollingerbands } from "technicalindicators";
+import { rsi, macd, sma, ema, bollingerbands, atr } from "technicalindicators";
 import { CandleType, ZigZagPoint } from "./types";
+import { takeFirst } from "./misc";
 
 export function getLastValue(values: number[]): number | undefined {
   return (values.length > 0 && values[values.length - 1]) || undefined;
@@ -248,4 +249,20 @@ export const getTrendDirection = (
   if (recentSlope > 0) return "Uptrend";
   else if (recentSlope < 0) return "Downtrend";
   else return "Sideways";
+};
+
+export const getAtr = (
+  candles: CandleType[],
+  period: number = 14
+): number | undefined => {
+  const lastCandles = takeFirst(candles, period + 1, 0);
+
+  const values = atr({
+    low: lastCandles.map((r) => r.lowPrice),
+    high: lastCandles.map((r) => r.highPrice),
+    close: lastCandles.map((r) => r.closePrice),
+    period,
+  });
+
+  return getLastValue(values);
 };

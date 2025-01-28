@@ -375,7 +375,7 @@ class PairRepo {
         return r.retCode === 0;
       })
       .catch((e) => {
-        console.warn(e);
+        console.warn(e, request);
       });
 
     return response;
