@@ -1,13 +1,13 @@
 [
   {
-    "pairName": "DOGEUSDT",
+    "pairName": "BTCUSDT",
     "timeFrames": [5, 240],
     "quotationCoin": "USDT",
-    "baseCoin": "DOGE",
+    "baseCoin": "BTC",
     "strategy": "trendFollower",
     "isFuture": true,
     "invert": false,
-    "riskAmount": 0.02,
+    "riskAmount": 0.01,
     "riskMethod": "percentOfEquity"
   }
 ]

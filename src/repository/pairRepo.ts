@@ -362,10 +362,8 @@ class PairRepo {
       qty: qty.toFixed(this.#qtyDigits),
       side: side as "Buy" | "Sell",
       timeInForce: "GTC",
-      tpslMode: "Full",
+      tpslMode: "Partial",
     };
-
-    (request as any).tpSlMode = request.tpslMode;
 
     if (takeProfit) {
       request.takeProfit = takeProfit.toFixed(this.#priceDigits);
@@ -374,6 +372,7 @@ class PairRepo {
     if (stopLoss) {
       request.stopLoss = stopLoss.toFixed(this.#priceDigits);
       request.slOrderType = "Limit";
+      request.slLimitPrice = request.stopLoss;
     }
 
     const response = await restClient
@@ -454,10 +453,7 @@ class PairRepo {
         side: postion.side === "Buy" ? "Sell" : "Buy",
         timeInForce: "GTC",
         reduceOnly: true,
-        tpslMode: "Full",
       };
-
-      (request as any).tpSlMode = request.tpslMode;
 
       await restClient
         .submitOrder(request)
