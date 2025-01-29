@@ -362,6 +362,7 @@ class PairRepo {
       qty: qty.toFixed(this.#qtyDigits),
       side: side as "Buy" | "Sell",
       timeInForce: "GTC",
+      tpslMode: "Full",
     };
 
     if (takeProfit) {
