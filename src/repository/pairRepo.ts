@@ -365,6 +365,8 @@ class PairRepo {
       tpslMode: "Full",
     };
 
+    (request as any).tpSlMode = request.tpslMode;
+
     if (takeProfit) {
       request.takeProfit = takeProfit.toFixed(this.#priceDigits);
       request.tpOrderType = "Market";
@@ -377,7 +379,7 @@ class PairRepo {
     const response = await restClient
       .submitOrder(request)
       .then(async (r) => {
-        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+        if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg, request);
         await positionsLiveInstance.refresh();
         return r.retCode === 0;
       })
@@ -452,12 +454,16 @@ class PairRepo {
         side: postion.side === "Buy" ? "Sell" : "Buy",
         timeInForce: "GTC",
         reduceOnly: true,
+        tpslMode: "Full",
       };
+
+      (request as any).tpSlMode = request.tpslMode;
 
       await restClient
         .submitOrder(request)
         .then(async (r) => {
-          if (r.retCode > 0) console.warn(r.retCode + " - " + r.retMsg);
+          if (r.retCode > 0)
+            console.warn(r.retCode + " - " + r.retMsg, request);
           await positionsLiveInstance.refresh();
           return r.retCode === 0;
         })
