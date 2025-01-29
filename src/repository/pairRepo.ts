@@ -364,8 +364,14 @@ class PairRepo {
       timeInForce: "GTC",
     };
 
-    if (takeProfit) request.takeProfit = takeProfit.toFixed(this.#priceDigits);
-    if (stopLoss) request.stopLoss = stopLoss.toFixed(this.#priceDigits);
+    if (takeProfit) {
+      request.takeProfit = takeProfit.toFixed(this.#priceDigits);
+      request.tpOrderType = "Market";
+    }
+    if (stopLoss) {
+      request.stopLoss = stopLoss.toFixed(this.#priceDigits);
+      request.slOrderType = "Limit";
+    }
 
     const response = await restClient
       .submitOrder(request)
