@@ -20,7 +20,7 @@ import {
 } from "../repository/tradeProcessing";
 
 const stopLossRatio: number = 2;
-const takeProfitRatio: number = stopLossRatio * 3;
+const takeProfitRatio: number = stopLossRatio * 2;
 
 interface TimeFrameAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
