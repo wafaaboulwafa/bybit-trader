@@ -333,6 +333,8 @@ class PairRepo {
       qty = fullQty * this.riskAmount;
     } else {
       if (price && stopLoss) qty = this.#getFutureRiskQty(price, stopLoss);
+      else if (price && takeProfit)
+        qty = this.#getFutureRiskQty(price, takeProfit);
       else {
         //No stop loss
         const balance = walletLiveInstance.margin;
