@@ -147,8 +147,18 @@ const checkTrades = async (
   price: number,
   hasBuyPositions: boolean,
   hasSellPositions: boolean,
-  buyPosition: (price: number, takeProfit: number, stopLoss: number) => void,
-  sellPosition: (price: number, takeProfit: number, stopLoss: number) => void
+  buyPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>,
+  sellPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>,
+  closeBuyPosition: (price: number) => Promise<void>,
+  closeSellPosition: (price: number) => Promise<void>
 ) => {
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
@@ -157,8 +167,7 @@ const checkTrades = async (
   if (!atr) return;
 
   //Any previous open positions
-  const hasOpenPosition = hasBuyPositions || hasSellPositions;
-  if (hasOpenPosition) {
+  if (hasBuyPositions || hasSellPositions) {
     clearSellTrigger(pair);
     clearBuyTrigger(pair);
   }
@@ -166,33 +175,31 @@ const checkTrades = async (
   if (
     analyses.highSignal === "Buy" &&
     analyses.lowSignal === "Buy" &&
-    !hasOpenPosition &&
+    !hasBuyPositions &&
     !isBuyTriggered(pair)
   ) {
     //Buy signal
     setBuyTriggered(pair);
+    await closeSellPosition(0);
     console.log(`Buy signal on ${pair} at price: ${price}`);
 
-    //const stopLoss = price - atr * stopLossRatio;
-    const stopLoss = 0;
     const takeProfit = price + atr * takeProfitRatio;
-    await buyPosition(price, takeProfit, stopLoss);
+    await buyPosition(price, takeProfit, 0);
   }
 
   if (
     analyses.highSignal === "Sell" &&
     analyses.lowSignal === "Sell" &&
-    !hasOpenPosition &&
+    !hasSellPositions &&
     !isSellTriggered(pair)
   ) {
     //Sell signal
     setSellTriggered(pair);
+    await closeBuyPosition(0);
     console.log(`Sell signal on ${pair} at price: ${price}`);
 
-    //const stopLoss = price + atr * stopLossRatio;
-    const stopLoss = 0;
     const takeProfit = price - atr * takeProfitRatio;
-    await sellPosition(price, takeProfit, stopLoss);
+    await sellPosition(price, takeProfit, 0);
   }
 };
 
@@ -247,7 +254,9 @@ const strategy: OnStrategyType = async (
         hasBuyPositions,
         hasSellPositions,
         buyPosition,
-        sellPosition
+        sellPosition,
+        closeBuyPosition,
+        closeSellPostion
       );
       clearPairProcessing(pair);
     }
