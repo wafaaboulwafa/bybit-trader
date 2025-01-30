@@ -173,7 +173,8 @@ const checkTrades = async (
     setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
 
-    const stopLoss = price - atr * stopLossRatio;
+    //const stopLoss = price - atr * stopLossRatio;
+    const stopLoss = 0;
     const takeProfit = price + atr * takeProfitRatio;
     await buyPosition(price, takeProfit, stopLoss);
   }
@@ -188,7 +189,8 @@ const checkTrades = async (
     setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
 
-    const stopLoss = price + atr * stopLossRatio;
+    //const stopLoss = price + atr * stopLossRatio;
+    const stopLoss = 0;
     const takeProfit = price - atr * takeProfitRatio;
     await sellPosition(price, takeProfit, stopLoss);
   }

@@ -362,17 +362,19 @@ class PairRepo {
       qty: qty.toFixed(this.#qtyDigits),
       side: side as "Buy" | "Sell",
       timeInForce: "GTC",
-      tpslMode: "Partial",
+      tpslMode: "Full",
     };
 
     if (takeProfit) {
       request.takeProfit = takeProfit.toFixed(this.#priceDigits);
       request.tpOrderType = "Market";
     }
+
     if (stopLoss) {
       request.stopLoss = stopLoss.toFixed(this.#priceDigits);
-      request.slOrderType = "Limit";
       request.slLimitPrice = request.stopLoss;
+      request.slOrderType = "Limit";
+      request.tpslMode = "Partial"; // Required for limit type
     }
 
     const response = await restClient
