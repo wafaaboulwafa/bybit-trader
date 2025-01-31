@@ -20,8 +20,8 @@ import {
   setSellTriggered,
 } from "../repository/tradeProcessing";
 
-const stopLossRatio: number = 2;
-const takeProfitRatio: number = stopLossRatio * 1.5;
+const stopLossRatio: number = 4;
+const takeProfitRatio: number = stopLossRatio * 4;
 
 interface TimeFrameAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
@@ -184,8 +184,9 @@ const checkTrades = async (
     setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
 
+    const stopLoss = price - atr * stopLossRatio;
     const takeProfit = price + atr * takeProfitRatio;
-    await buyPosition(price, takeProfit, 0);
+    await buyPosition(price, takeProfit, stopLoss);
   }
 
   if (
@@ -198,8 +199,9 @@ const checkTrades = async (
     setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
 
+    const stopLoss = price + atr * stopLossRatio;
     const takeProfit = price - atr * takeProfitRatio;
-    await sellPosition(price, takeProfit, 0);
+    await sellPosition(price, takeProfit, stopLoss);
   }
 };
 
