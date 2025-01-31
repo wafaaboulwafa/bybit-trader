@@ -4,7 +4,7 @@
     "timeFrames": [5, 240],
     "quotationCoin": "USDT",
     "baseCoin": "BTC",
-    "strategy": "trendFollower",
+    "strategy": "trendFollowPullback",
     "isFuture": true,
     "invert": false,
     "riskAmount": 0.01,
