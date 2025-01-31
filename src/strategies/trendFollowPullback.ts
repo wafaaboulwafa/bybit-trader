@@ -125,11 +125,13 @@ const calcLowTimeFrameAnalyses = (
     analyses.lowOverbought = true;
     analyses.lowOversold = false;
   } else {
+    //Clear signal. We might need to change this to be only after taking the trade
     analyses.lowOverbought = false;
     analyses.lowOversold = false;
   }
 
   //Low timeframe signals
+  //Might need to clear the signal once it's taken
   if (analyses.lowOversold && analyses.lowCrossState === "CrossUp")
     analyses.lowSignal = "Buy";
   else if (analyses.lowOverbought && analyses.lowCrossState === "CrossDown")
