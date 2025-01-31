@@ -117,14 +117,15 @@ const calcLowTimeFrameAnalyses = (
   ) {
     analyses.lowOversold = true;
     analyses.lowOverbought = false;
-  }
-
-  if (
+  } else if (
     analyses.highTrend === "Downtrend" &&
     analyses.highCrossState === "CrossDown" &&
     (price >= analyses.highFastMa || price >= analyses.highSlowMa)
   ) {
     analyses.lowOverbought = true;
+    analyses.lowOversold = false;
+  } else {
+    analyses.lowOverbought = false;
     analyses.lowOversold = false;
   }
 
