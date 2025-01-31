@@ -1,3 +1,4 @@
+//trend-following with pullback strategy
 import { OnStrategyType } from "../service/types";
 import {
   calcEma,
@@ -156,9 +157,7 @@ const checkTrades = async (
     price: number,
     takeProfit: number,
     stopLoss: number
-  ) => Promise<void>,
-  closeBuyPosition: (price: number) => Promise<void>,
-  closeSellPosition: (price: number) => Promise<void>
+  ) => Promise<void>
 ) => {
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
@@ -180,7 +179,6 @@ const checkTrades = async (
   ) {
     //Buy signal
     setBuyTriggered(pair);
-    await closeSellPosition(0);
     console.log(`Buy signal on ${pair} at price: ${price}`);
 
     const takeProfit = price + atr * takeProfitRatio;
@@ -195,11 +193,39 @@ const checkTrades = async (
   ) {
     //Sell signal
     setSellTriggered(pair);
-    await closeBuyPosition(0);
     console.log(`Sell signal on ${pair} at price: ${price}`);
 
     const takeProfit = price - atr * takeProfitRatio;
     await sellPosition(price, takeProfit, 0);
+  }
+};
+
+const closeReversingTrades = async (
+  pair: string,
+  analyses: TimeFrameAnalysesType,
+  hasBuyPositions: boolean,
+  hasSellPositions: boolean,
+  closeBuyPosition: (price: number) => Promise<void>,
+  closeSellPosition: (price: number) => Promise<void>
+) => {
+  if (
+    analyses.highSignal === "Sell" &&
+    analyses.lowSignal === "Sell" &&
+    hasBuyPositions
+  ) {
+    console.log(`${pair}: High trend revered. Closing buy orders`);
+    await closeBuyPosition(0);
+    clearBuyTrigger(pair);
+  }
+
+  if (
+    analyses.highSignal === "Buy" &&
+    analyses.lowSignal === "Buy" &&
+    hasSellPositions
+  ) {
+    console.log(`${pair}:  High trend revered. Closing sell orders`);
+    await closeSellPosition(0);
+    clearSellTrigger(pair);
   }
 };
 
@@ -245,6 +271,14 @@ const strategy: OnStrategyType = async (
     const analyses = pairAnalyses.get(pair);
     if (analyses) {
       setPairUnderProcessing(pair);
+      closeReversingTrades(
+        pair,
+        analyses,
+        hasBuyPositions,
+        hasSellPositions,
+        closeBuyPosition,
+        closeSellPostion
+      );
       checkTrades(
         pair,
         analyses,
@@ -254,9 +288,7 @@ const strategy: OnStrategyType = async (
         hasBuyPositions,
         hasSellPositions,
         buyPosition,
-        sellPosition,
-        closeBuyPosition,
-        closeSellPostion
+        sellPosition
       );
       clearPairProcessing(pair);
     }
