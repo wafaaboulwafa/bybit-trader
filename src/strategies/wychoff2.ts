@@ -1,6 +1,7 @@
 import { sma } from "technicalindicators";
 import { getLastValue, getTrendDirection } from "../service/indicators";
 import { OnStrategyType } from "../service/types";
+import { notifyTelegram } from "../service/telgramClient";
 
 type WychoffPhaseType =
   | "Mark-up"
@@ -127,7 +128,7 @@ const lowTimeframeAnalysis = (
 
 const prevState = new Map<string, string>();
 
-const printResult = (pair: string) => {
+const notifyChange = (pair: string) => {
   const analyses = pairAnalyses.get(pair);
   if (!analyses || !analyses.wychoffPahse) return;
 
@@ -135,7 +136,9 @@ const printResult = (pair: string) => {
   const changed = !prevWycoffState || prevWycoffState !== analyses.wychoffPahse;
 
   if (changed) {
-    console.log(pair + ":" + analyses.wychoffPahse);
+    const msg = pair + ":" + analyses.wychoffPahse;
+    notifyTelegram(msg);
+    console.log(msg);
     prevState.set(pair, analyses.wychoffPahse);
   }
 };
@@ -175,7 +178,7 @@ const strategy: OnStrategyType = (
   } else if (isSmallTimeframe) {
     //Low timeframe analysis
     lowTimeframeAnalysis(pair, price, prices);
-    printResult(pair);
+    notifyChange(pair);
   }
 };
 
