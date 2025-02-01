@@ -1,28 +1,52 @@
+import PairRepo from "../repository/pairRepo";
+import wychoff from "../strategies/wychoff2";
+
 require("dotenv").config();
 
-import startHttpServer from "./../service/tradingViewNotify";
-import startNotificationBot from "./../service/notificationBot";
-
-import {
-  marketLiveInstance as marketRepo,
-  walletLiveInstance as walletRepo,
-  positionsLiveInstance as positionRepo,
-} from "../repository/instances";
-import { calculateZigZag } from "../service/indicators";
-import { takeLast } from "../service/misc";
-
-// Run socket bot
-startNotificationBot();
-startHttpServer();
+const timeFrames = ["240", "5"];
+const pairName = "BTCUSDT";
+const baseCoin = "BTC";
+const quoteCoin = "USDT";
 
 setTimeout(async () => {
-  const pairName = "DOGEUSDT";
+  const endDate = new Date();
 
-  const pair = marketRepo.getPair(pairName);
-  const timeFrame = pair?.getTimeFrame("240");
-  const zigzag = calculateZigZag(timeFrame?.candle || []);
+  const pair = new PairRepo(
+    pairName,
+    timeFrames,
+    "wychoff",
+    baseCoin,
+    quoteCoin,
+    true,
+    false,
+    1,
+    "percentOfEquity"
+  );
 
-  console.log(zigzag.slice(0, 4));
+  for (const timeFrmae of timeFrames) {
+    const timeFrameRepo = pair.getTimeFrame(timeFrmae);
+    if (!timeFrameRepo) continue;
+    await timeFrameRepo.init(pair.pair, timeFrmae, pair.isFuture, endDate);
+  }
 
-  //console.log(takeLast(zigzag, 5, 0));
+  for (const timeFrmae of timeFrames) {
+    const timeFrameRepo = pair.getTimeFrame(timeFrmae);
+    if (!timeFrameRepo) continue;
+    const currentPrice =
+      timeFrameRepo.closePrice[timeFrameRepo.closePrice.length - 1];
+    const candle = timeFrameRepo.candle[timeFrameRepo.closePrice.length - 1];
+    wychoff(
+      pair.pair,
+      timeFrmae,
+      currentPrice,
+      candle,
+      async () => {},
+      async () => {},
+      async () => {},
+      async () => {},
+      pair,
+      false,
+      false
+    );
+  }
 }, 3000);

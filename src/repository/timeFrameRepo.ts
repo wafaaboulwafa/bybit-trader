@@ -69,13 +69,19 @@ class TimeFrameRepo {
   }
 
   //Get candles history for spot pair
-  async init(pairName: string, timeFrame: string, isFuture: boolean) {
+  async init(
+    pairName: string,
+    timeFrame: string,
+    isFuture: boolean,
+    end: Date | null = null
+  ) {
     this.#candlesMap.clear();
     this.#candles = [];
     this.#closePrices = [];
     this.#ohlc4 = [];
 
-    const now = DateTime.now();
+    const now: DateTime =
+      end === null ? DateTime.now() : DateTime.fromJSDate(end);
 
     let pairResponse = await restClient.getKline({
       category: !isFuture ? "spot" : "linear",
