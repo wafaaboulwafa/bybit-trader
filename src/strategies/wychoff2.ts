@@ -108,10 +108,19 @@ const lowTimeframeAnalysis = (
   pairAnalyses.set(pair, analyses);
 };
 
+const prevState = new Map<string, string>();
+
 const printResult = (pair: string) => {
   const analyses = pairAnalyses.get(pair);
   if (!analyses || !analyses.wychoffPahse) return;
-  console.log(analyses);
+
+  const prevWycoffState = prevState.get(pair);
+  const changed = !prevWycoffState || prevWycoffState !== analyses.wychoffPahse;
+
+  if (changed) {
+    console.log(pair + ":" + analyses.wychoffPahse);
+    prevState.set(pair, analyses.wychoffPahse);
+  }
 };
 
 const strategy: OnStrategyType = (
