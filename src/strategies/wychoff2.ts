@@ -7,7 +7,9 @@ type WychoffPhaseType =
   | "Mark-down"
   | "Accumulation"
   | "Distribution"
-  | "Consolidation";
+  | "Consolidation"
+  | "Hold-long"
+  | "Hold-short";
 
 interface WychoffAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
@@ -27,7 +29,6 @@ interface WychoffAnalysesType {
 const pairAnalyses = new Map<string, WychoffAnalysesType>();
 
 const highTimeframeAnalysis = (pair: string, prices: number[]) => {
-  //Collect info
   const analyses: WychoffAnalysesType = pairAnalyses.get(pair) || {
     highTrend: undefined,
     highFastSma: undefined,
@@ -60,7 +61,6 @@ const lowTimeframeAnalysis = (
   const analyses = pairAnalyses.get(pair);
   if (analyses === undefined) return;
 
-  //Collect info
   const fastMaArray = sma({ values: prices, period: 15 });
   const slowMaArray = sma({ values: prices, period: 20 });
 
@@ -81,8 +81,6 @@ const lowTimeframeAnalysis = (
   )
     return;
 
-  ////
-  //Analyse
   if (
     price >= Math.min(analyses.highFastSma, analyses.highSlowSma) &&
     price <= Math.max(analyses.highFastSma, analyses.highSlowSma)
@@ -90,26 +88,39 @@ const lowTimeframeAnalysis = (
     analyses.wychoffPahse = "Consolidation";
   } else if (
     analyses.lowFastSma > analyses.lowSlowSma &&
-    analyses.lowFastSma > analyses.highFastSma
+    analyses.lowFastSma > analyses.highFastSma &&
+    price > analyses.lowFastSma
   ) {
     analyses.wychoffPahse = "Mark-up";
   } else if (
     analyses.lowFastSma < analyses.lowSlowSma &&
-    analyses.lowFastSma < analyses.highFastSma
+    analyses.lowFastSma < analyses.highFastSma &&
+    price < analyses.lowFastSma
   ) {
     analyses.wychoffPahse = "Mark-down";
   } else if (
-    analyses.lowFastSma > analyses.lowSlowSma &&
-    analyses.lowFastSma < analyses.highFastSma
-  ) {
-    analyses.wychoffPahse = "Accumulation";
-  } else if (
     analyses.lowFastSma < analyses.lowSlowSma &&
+    analyses.lowFastSma > analyses.highFastSma &&
+    price < analyses.lowFastSma
+  ) {
+    analyses.wychoffPahse = "Hold-short";
+  } else if (
+    analyses.lowFastSma > analyses.lowSlowSma &&
+    analyses.lowFastSma < analyses.highFastSma &&
+    price > analyses.lowFastSma
+  ) {
+    analyses.wychoffPahse = "Hold-long";
+  } else if (
+    price <= analyses.lowFastSma &&
     analyses.lowFastSma > analyses.highFastSma
   ) {
     analyses.wychoffPahse = "Distribution";
-  }
-  //
+  } else if (
+    price >= analyses.lowFastSma &&
+    analyses.lowFastSma < analyses.highFastSma
+  ) {
+    analyses.wychoffPahse = "Accumulation";
+  } else analyses.wychoffPahse = undefined;
 
   pairAnalyses.set(pair, analyses);
 };
