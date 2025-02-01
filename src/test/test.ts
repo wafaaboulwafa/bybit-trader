@@ -32,9 +32,8 @@ setTimeout(async () => {
   for (const timeFrmae of timeFrames) {
     const timeFrameRepo = pair.getTimeFrame(timeFrmae);
     if (!timeFrameRepo) continue;
-    const currentPrice =
-      timeFrameRepo.closePrice[timeFrameRepo.closePrice.length - 1];
-    const candle = timeFrameRepo.candle[timeFrameRepo.closePrice.length - 1];
+    const currentPrice = timeFrameRepo.closePrice[0];
+    const candle = timeFrameRepo.candle[0];
     wychoff(
       pair.pair,
       timeFrmae,

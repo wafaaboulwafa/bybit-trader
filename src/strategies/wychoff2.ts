@@ -29,12 +29,18 @@ const pairAnalyses = new Map<string, WychoffAnalysesType>();
 const highTimeframeAnalysis = (pair: string, prices: number[]) => {
   //Collect info
   const analyses: WychoffAnalysesType = pairAnalyses.get(pair) || {
+    highTrend: undefined,
     highFastSma: undefined,
     highSlowSma: undefined,
     lowFastSma: undefined,
     lowSlowSma: undefined,
     crossFastSma: undefined,
     crossSlowSma: undefined,
+    wychoffPahse: undefined,
+    isBuy: false,
+    isSell: false,
+    closeBuy: false,
+    closeSell: false,
   };
 
   const fastMaArray = sma({ values: prices, period: 15 });
