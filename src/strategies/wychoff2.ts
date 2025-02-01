@@ -23,9 +23,7 @@ type WychoffPhaseType =
   | "Mark-down"
   | "Accumulation"
   | "Distribution"
-  | "Consolidation"
-  | "Hold-long"
-  | "Hold-short";
+  | "Consolidation";
 
 interface WychoffAnalysesType {
   highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
@@ -119,13 +117,13 @@ const lowTimeframeAnalysis = (
     analyses.lowFastSma > analyses.highFastSma &&
     price < analyses.lowFastSma
   ) {
-    wychoffPahse = "Hold-short";
+    wychoffPahse = "Mark-down";
   } else if (
     analyses.lowFastSma > analyses.lowSlowSma &&
     analyses.lowFastSma < analyses.highFastSma &&
     price > analyses.lowFastSma
   ) {
-    wychoffPahse = "Hold-long";
+    wychoffPahse = "Mark-up";
   } else if (
     price <= analyses.lowFastSma &&
     analyses.lowFastSma > analyses.highFastSma
@@ -147,26 +145,16 @@ const lowTimeframeAnalysis = (
     console.log(msg);
 
     if (
-      analyses.prevousWychoffPahse === "Consolidation" &&
+      (analyses.prevousWychoffPahse === "Consolidation" ||
+        analyses.prevousWychoffPahse === "Accumulation") &&
       analyses.wychoffPahse === "Mark-down"
     ) {
       analyses.isSell = true;
       analyses.isBuy = false;
     } else if (
-      analyses.prevousWychoffPahse === "Accumulation" &&
-      analyses.wychoffPahse === "Hold-short"
-    ) {
-      analyses.isSell = true;
-      analyses.isBuy = false;
-    } else if (
-      analyses.prevousWychoffPahse === "Consolidation" &&
+      (analyses.prevousWychoffPahse === "Consolidation" ||
+        analyses.prevousWychoffPahse === "Distribution") &&
       analyses.wychoffPahse === "Mark-up"
-    ) {
-      analyses.isSell = false;
-      analyses.isBuy = true;
-    } else if (
-      analyses.prevousWychoffPahse === "Distribution" &&
-      analyses.wychoffPahse === "Hold-long"
     ) {
       analyses.isSell = false;
       analyses.isBuy = true;
