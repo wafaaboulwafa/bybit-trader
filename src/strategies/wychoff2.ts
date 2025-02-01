@@ -1,7 +1,22 @@
 import { sma } from "technicalindicators";
-import { getLastValue, getTrendDirection } from "../service/indicators";
+import { getAtr, getLastValue, getTrendDirection } from "../service/indicators";
 import { OnStrategyType } from "../service/types";
 import { notifyTelegram } from "../service/telgramClient";
+import {
+  clearBuyTrigger,
+  clearPairProcessing,
+  clearSellTrigger,
+  isBuyTriggered,
+  isPairUnderProcessing,
+  isSellTriggered,
+  setBuyTriggered,
+  setPairUnderProcessing,
+  setSellTriggered,
+} from "../repository/tradeProcessing";
+import PairRepo from "../repository/pairRepo";
+
+const stopLossRatio: number = 3;
+const takeProfitRatio: number = stopLossRatio * 3;
 
 type WychoffPhaseType =
   | "Mark-up"
@@ -21,10 +36,9 @@ interface WychoffAnalysesType {
   crossFastSma: number | undefined;
   crossSlowSma: number | undefined;
   wychoffPahse: WychoffPhaseType | undefined;
-  isBuy: boolean;
+  prevousWychoffPahse: WychoffPhaseType | undefined;
   isSell: boolean;
-  closeBuy: boolean;
-  closeSell: boolean;
+  isBuy: boolean;
 }
 
 const pairAnalyses = new Map<string, WychoffAnalysesType>();
@@ -39,10 +53,9 @@ const highTimeframeAnalysis = (pair: string, prices: number[]) => {
     crossFastSma: undefined,
     crossSlowSma: undefined,
     wychoffPahse: undefined,
-    isBuy: false,
+    prevousWychoffPahse: undefined,
     isSell: false,
-    closeBuy: false,
-    closeSell: false,
+    isBuy: false,
   };
 
   const fastMaArray = sma({ values: prices, period: 15 });
@@ -82,64 +95,136 @@ const lowTimeframeAnalysis = (
   )
     return;
 
+  let wychoffPahse: WychoffPhaseType | undefined = undefined;
+
   if (
     price >= Math.min(analyses.highFastSma, analyses.highSlowSma) &&
     price <= Math.max(analyses.highFastSma, analyses.highSlowSma)
   ) {
-    analyses.wychoffPahse = "Consolidation";
+    wychoffPahse = "Consolidation";
   } else if (
     analyses.lowFastSma > analyses.lowSlowSma &&
     analyses.lowFastSma > analyses.highFastSma &&
     price > analyses.lowFastSma
   ) {
-    analyses.wychoffPahse = "Mark-up";
+    wychoffPahse = "Mark-up";
   } else if (
     analyses.lowFastSma < analyses.lowSlowSma &&
     analyses.lowFastSma < analyses.highFastSma &&
     price < analyses.lowFastSma
   ) {
-    analyses.wychoffPahse = "Mark-down";
+    wychoffPahse = "Mark-down";
   } else if (
     analyses.lowFastSma < analyses.lowSlowSma &&
     analyses.lowFastSma > analyses.highFastSma &&
     price < analyses.lowFastSma
   ) {
-    analyses.wychoffPahse = "Hold-short";
+    wychoffPahse = "Hold-short";
   } else if (
     analyses.lowFastSma > analyses.lowSlowSma &&
     analyses.lowFastSma < analyses.highFastSma &&
     price > analyses.lowFastSma
   ) {
-    analyses.wychoffPahse = "Hold-long";
+    wychoffPahse = "Hold-long";
   } else if (
     price <= analyses.lowFastSma &&
     analyses.lowFastSma > analyses.highFastSma
   ) {
-    analyses.wychoffPahse = "Distribution";
+    wychoffPahse = "Distribution";
   } else if (
     price >= analyses.lowFastSma &&
     analyses.lowFastSma < analyses.highFastSma
   ) {
-    analyses.wychoffPahse = "Accumulation";
-  } else analyses.wychoffPahse = undefined;
+    wychoffPahse = "Accumulation";
+  }
+
+  if (wychoffPahse !== analyses.wychoffPahse) {
+    analyses.prevousWychoffPahse = analyses.wychoffPahse;
+    analyses.wychoffPahse = wychoffPahse;
+
+    const msg = pair + ": " + analyses.wychoffPahse;
+    notifyTelegram(msg);
+    console.log(msg);
+
+    if (
+      analyses.prevousWychoffPahse === "Consolidation" &&
+      analyses.wychoffPahse === "Mark-down"
+    ) {
+      analyses.isSell = true;
+      analyses.isBuy = false;
+    } else if (
+      analyses.prevousWychoffPahse === "Accumulation" &&
+      analyses.wychoffPahse === "Hold-short"
+    ) {
+      analyses.isSell = true;
+      analyses.isBuy = false;
+    } else if (
+      analyses.prevousWychoffPahse === "Consolidation" &&
+      analyses.wychoffPahse === "Mark-up"
+    ) {
+      analyses.isSell = false;
+      analyses.isBuy = true;
+    } else if (
+      analyses.prevousWychoffPahse === "Distribution" &&
+      analyses.wychoffPahse === "Hold-long"
+    ) {
+      analyses.isSell = false;
+      analyses.isBuy = true;
+    }
+  }
 
   pairAnalyses.set(pair, analyses);
 };
 
-const prevState = new Map<string, string>();
+const checkTrades = async (
+  pair: string,
+  analyses: WychoffAnalysesType,
+  pairData: PairRepo,
+  lowtimeFrame: string,
+  price: number,
+  hasBuyPositions: boolean,
+  hasSellPositions: boolean,
+  buyPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>,
+  sellPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>
+) => {
+  const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
+  if (!timeFrameRepo) return;
 
-const notifyChange = (pair: string) => {
-  const analyses = pairAnalyses.get(pair);
-  if (!analyses || !analyses.wychoffPahse) return;
+  const atr = getAtr(timeFrameRepo.candle, 14);
+  if (!atr) return;
 
-  const prevWycoffState = prevState.get(pair);
-  const changed = !prevWycoffState || prevWycoffState !== analyses.wychoffPahse;
+  //Any previous open positions
+  if (hasBuyPositions || hasSellPositions) {
+    clearSellTrigger(pair);
+    clearBuyTrigger(pair);
+  }
 
-  if (changed) {
-    const msg = pair + ":" + analyses.wychoffPahse;
-    notifyTelegram(msg);
-    console.log(msg);
-    prevState.set(pair, analyses.wychoffPahse);
+  if (analyses.isBuy && !hasBuyPositions && !isBuyTriggered(pair)) {
+    //Buy signal
+    setBuyTriggered(pair);
+    console.log(`Buy signal on ${pair} at price: ${price}`);
+
+    const stopLoss = price - atr * stopLossRatio;
+    const takeProfit = price + atr * takeProfitRatio;
+    await buyPosition(price, takeProfit, stopLoss);
+  }
+
+  if (analyses.isSell && !hasSellPositions && !isSellTriggered(pair)) {
+    //Sell signal
+    setSellTriggered(pair);
+    console.log(`Sell signal on ${pair} at price: ${price}`);
+
+    const stopLoss = price + atr * stopLossRatio;
+    const takeProfit = price - atr * takeProfitRatio;
+    await sellPosition(price, takeProfit, stopLoss);
   }
 };
 
@@ -178,7 +263,27 @@ const strategy: OnStrategyType = (
   } else if (isSmallTimeframe) {
     //Low timeframe analysis
     lowTimeframeAnalysis(pair, price, prices);
-    notifyChange(pair);
+  }
+
+  //Check for trade signals
+  if (isSmallTimeframe && !isPairUnderProcessing(pair)) {
+    const analyses = pairAnalyses.get(pair);
+    if (analyses) {
+      setPairUnderProcessing(pair);
+
+      checkTrades(
+        pair,
+        analyses,
+        pairData,
+        timeFrame,
+        price,
+        hasBuyPositions,
+        hasSellPositions,
+        buyPosition,
+        sellPosition
+      );
+      clearPairProcessing(pair);
+    }
   }
 };
 
