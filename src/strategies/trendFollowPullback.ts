@@ -1,14 +1,7 @@
-//
-//
 /*
-trend-following with pullback strategy
-  if 15min fast and slow are parallel and 30min fast and slow are parallel and price just cross down 5 min and rebound then enter
-
-  No need to rebounce. Just open trades for strong trends continusoly. This allows to use with new currencies
-
-
-
-  */
+trend-following with or without pullback strategy
+Strategy allow to use strong trends.
+*/
 
 import { OnStrategyType } from "../service/types";
 import {
@@ -159,9 +152,7 @@ const calcLowTimeFrameAnalyses = (
     analyses.trend = "Up";
   else analyses.trend = "None";
 
-  ////
-
-  //Cross direction change
+  //Price direction change
   let currentMaCross: "Over" | "Under" | undefined;
   let priceDirectionChanged = false;
 
@@ -177,7 +168,30 @@ const calcLowTimeFrameAnalyses = (
     }
   }
 
-  //waitForRebounce
+  //Candle crossing change
+  let currentCandleCross: "Over" | "Under" | undefined = undefined;
+  let candleCrossChanged = false;
+
+  const prevCandle = timeFrameRepo.candle[2];
+  const currentCandle = timeFrameRepo.candle[1];
+
+  if (
+    prevCandle.openPrice > analyses.lowFastMa &&
+    analyses.lowFastMa > currentCandle.closePrice
+  ) {
+    currentCandleCross = "Under";
+  } else if (
+    prevCandle.openPrice < analyses.lowFastMa &&
+    analyses.lowFastMa < currentCandle.closePrice
+  ) {
+    currentCandleCross = "Over";
+  }
+
+  if (currentCandleCross && currentCandleCross !== analyses.currentCandlCross) {
+    if (analyses.currentCandlCross) candleCrossChanged = true;
+    analyses.previousCandleCross = analyses.currentCandlCross;
+    analyses.currentCandlCross = currentCandleCross;
+  }
 
   if (!waitForRebounce) {
     if (
@@ -197,8 +211,26 @@ const calcLowTimeFrameAnalyses = (
       analyses.isBuy = false;
       analyses.isSell = true;
     }
+  } else {
+    if (
+      candleCrossChanged &&
+      analyses.trend === "Up" &&
+      analyses.currentCandlCross === "Over"
+    ) {
+      analyses.isBuy = true;
+      analyses.isSell = false;
+    }
+
+    if (
+      candleCrossChanged &&
+      analyses.trend === "Down" &&
+      analyses.currentCandlCross === "Under"
+    ) {
+      analyses.isBuy = false;
+      analyses.isSell = true;
+    }
   }
-  ///
+
   pairAnalyses.set(pair, analyses);
 };
 
