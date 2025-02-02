@@ -1,4 +1,15 @@
-//trend-following with pullback strategy
+//
+//
+/*
+trend-following with pullback strategy
+  if 15min fast and slow are parallel and 30min fast and slow are parallel and price just cross down 5 min and rebound then enter
+
+  No need to rebounce. Just open trades for strong trends continusoly. This allows to use with new currencies
+
+
+
+  */
+
 import { OnStrategyType } from "../service/types";
 import {
   calcEma,
@@ -22,60 +33,96 @@ import {
 
 const stopLossRatio: number = 4;
 const takeProfitRatio: number = stopLossRatio * 4;
+const waitForRebounce: boolean = true;
 
 interface TimeFrameAnalysesType {
-  highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
-  highCrossState: "CrossUp" | "CrossDown" | undefined;
   highFastMa: number | undefined;
   highSlowMa: number | undefined;
-  highSignal: "Buy" | "Sell" | undefined;
-  lowCrossState: "CrossUp" | "CrossDown" | undefined;
-  lowOverbought: boolean;
-  lowOversold: boolean;
-  lowSignal: "Buy" | "Sell" | undefined;
+  highDirection: "Up" | "Down" | undefined;
+
+  midFastMa: number | undefined;
+  midSlowMa: number | undefined;
+  midDirection: "Up" | "Down" | undefined;
+
+  lowFastMa: number | undefined;
+  lowSlowMa: number | undefined;
+  lowDirection: "Up" | "Down" | undefined;
+
+  trend: "Up" | "Down" | "None";
+
+  crossFastMa: number | undefined;
+  crossSlowMa: number | undefined;
+
+  previousMaCross: "Over" | "Under" | undefined;
+  currentMaCross: "Over" | "Under" | undefined;
+
+  previousCandleCross: "Over" | "Under" | undefined;
+  currentCandlCross: "Over" | "Under" | undefined;
+
+  isBuy: boolean;
+  isSell: boolean;
 }
 
 const pairAnalyses = new Map<string, TimeFrameAnalysesType>();
 
-const calcHighTimeFrameAnalyses = (pair: string, prices: number[]) => {
+const calcHighTimeFrameAnalyses = (
+  pair: string,
+  level: "high" | "mid" | "low",
+  prices: number[]
+) => {
+  const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
+    trend: "None",
+    highFastMa: undefined,
+    highSlowMa: undefined,
+    highDirection: undefined,
+    midFastMa: undefined,
+    midSlowMa: undefined,
+    midDirection: undefined,
+    lowFastMa: undefined,
+    lowSlowMa: undefined,
+    lowDirection: undefined,
+    crossFastMa: undefined,
+    crossSlowMa: undefined,
+    previousMaCross: undefined,
+    currentMaCross: undefined,
+    previousCandleCross: undefined,
+    currentCandlCross: undefined,
+    isBuy: false,
+    isSell: false,
+  };
+
   const fastMaArray = sma({ values: prices, period: 15 });
   const slowMaArray = sma({ values: prices, period: 20 });
 
-  const fastMa = getLastValue(fastMaArray);
-  const slowMa = getLastValue(slowMaArray);
+  const lastFast = getLastValue(fastMaArray);
+  const lastSlow = getLastValue(slowMaArray);
 
-  if (!fastMa || !slowMa) return;
+  if (!lastFast || !lastSlow) return;
 
-  const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
-    highTrend: undefined,
-    highCrossState: undefined,
-    highFastMa: undefined,
-    highSlowMa: undefined,
-    highSignal: undefined,
-    lowCrossState: undefined,
-    lowOverbought: false,
-    lowOversold: false,
-    lowSignal: undefined,
-  };
+  let direction: "Up" | "Down" | undefined = undefined;
 
-  //Find high timeframe trend direction using MA cross
-  analyses.highCrossState =
-    fastMa > slowMa ? "CrossUp" : slowMa > fastMa ? "CrossDown" : undefined;
+  if (lastFast > lastSlow) direction = "Up";
+  else if (lastFast < lastSlow) direction = "Down";
 
-  //Trend slope degree
-  analyses.highTrend = getTrendDirection(slowMaArray);
-  analyses.highFastMa = fastMa;
-  analyses.highSlowMa = slowMa;
+  if (level === "high") {
+    analyses.highFastMa = lastFast;
+    analyses.highSlowMa = lastSlow;
+    analyses.highDirection = direction;
+  } else if (level === "mid") {
+    analyses.midFastMa = lastFast;
+    analyses.midSlowMa = lastSlow;
+    analyses.midDirection = direction;
+  } else if (level === "low") {
+    analyses.lowFastMa = lastFast;
+    analyses.lowSlowMa = lastSlow;
+    analyses.lowDirection = direction;
 
-  //High timeframe signal
-  if (analyses.highCrossState === "CrossUp" && analyses.highTrend === "Uptrend")
-    analyses.highSignal = "Buy";
-  else if (
-    analyses.highCrossState === "CrossDown" &&
-    analyses.highTrend === "Downtrend"
-  )
-    analyses.highSignal = "Sell";
-  else analyses.highSignal = undefined;
+    const crossFastMaArray = sma({ values: prices, period: 1 });
+    const crossSlowMaArray = sma({ values: prices, period: 3 });
+
+    analyses.crossFastMa = getLastValue(crossFastMaArray);
+    analyses.crossSlowMa = getLastValue(crossSlowMaArray);
+  }
 
   pairAnalyses.set(pair, analyses);
 };
@@ -91,56 +138,68 @@ const calcLowTimeFrameAnalyses = (
   if (!timeFrameRepo) return;
 
   const analyses = pairAnalyses.get(pair);
-  //Wait fir high timeframe analyses
+
+  //Wait for high timeframe analyses
   if (
     analyses === undefined ||
-    analyses.highTrend === undefined ||
     analyses.highFastMa === undefined ||
-    analyses.highSlowMa === undefined
+    analyses.highSlowMa === undefined ||
+    analyses.midFastMa === undefined ||
+    analyses.midSlowMa === undefined ||
+    analyses.lowFastMa === undefined ||
+    analyses.lowSlowMa === undefined ||
+    analyses.crossFastMa === undefined ||
+    analyses.crossSlowMa === undefined
   )
     return;
 
-  const fastEma = calcEma(prices, 1);
-  const slowEma = calcEma(prices, 2);
+  if (analyses.highDirection === "Down" && analyses.midDirection === "Down")
+    analyses.trend = "Down";
+  else if (analyses.highDirection === "Up" && analyses.midDirection === "Up")
+    analyses.trend = "Up";
+  else analyses.trend = "None";
 
-  if (!fastEma || !slowEma) return;
+  ////
 
-  //Find low timeframe MA cross
-  if (fastEma > slowEma) analyses.lowCrossState = "CrossUp";
-  if (fastEma < slowEma) analyses.lowCrossState = "CrossDown";
+  //Cross direction change
+  let currentMaCross: "Over" | "Under" | undefined;
+  let priceDirectionChanged = false;
 
-  //Find price cross for MA to define overbought and oversold levels
-  if (
-    analyses.highTrend === "Uptrend" &&
-    analyses.highCrossState === "CrossUp" &&
-    (price <= analyses.highFastMa || price <= analyses.highSlowMa)
-  ) {
-    analyses.lowOversold = true;
-    analyses.lowOverbought = false;
-  } else if (
-    analyses.highTrend === "Downtrend" &&
-    analyses.highCrossState === "CrossDown" &&
-    (price >= analyses.highFastMa || price >= analyses.highSlowMa)
-  ) {
-    analyses.lowOverbought = true;
-    analyses.lowOversold = false;
-  } else {
-    //Clear signal. We might need to change this to be only after taking the trade
-    analyses.lowOverbought = false;
-    analyses.lowOversold = false;
+  if (analyses.crossFastMa && analyses.crossSlowMa) {
+    if (analyses.crossFastMa > analyses.crossSlowMa) currentMaCross = "Over";
+    else if (analyses.crossFastMa < analyses.crossSlowMa)
+      currentMaCross = "Under";
+
+    if (currentMaCross && currentMaCross !== analyses.currentMaCross) {
+      if (analyses.currentMaCross) priceDirectionChanged = true;
+      analyses.previousMaCross = analyses.currentMaCross;
+      analyses.currentMaCross = currentMaCross;
+    }
   }
 
-  //Low timeframe signals
-  //Might need to clear the signal once it's taken
-  if (analyses.lowOversold && analyses.lowCrossState === "CrossUp")
-    analyses.lowSignal = "Buy";
-  else if (analyses.lowOverbought && analyses.lowCrossState === "CrossDown")
-    analyses.lowSignal = "Sell";
-  else analyses.lowSignal = undefined;
+  //waitForRebounce
 
+  if (!waitForRebounce) {
+    if (
+      analyses.trend === "Up" &&
+      analyses.lowDirection === "Up" &&
+      analyses.currentMaCross === "Over"
+    ) {
+      analyses.isBuy = true;
+      analyses.isSell = false;
+    }
+
+    if (
+      analyses.trend === "Down" &&
+      analyses.lowDirection === "Down" &&
+      analyses.currentMaCross === "Under"
+    ) {
+      analyses.isBuy = false;
+      analyses.isSell = true;
+    }
+  }
+  ///
   pairAnalyses.set(pair, analyses);
-
-  //console.log(pair, analyses);
 };
 
 const checkTrades = async (
@@ -174,12 +233,7 @@ const checkTrades = async (
     clearBuyTrigger(pair);
   }
 
-  if (
-    analyses.highSignal === "Buy" &&
-    analyses.lowSignal === "Buy" &&
-    !hasBuyPositions &&
-    !isBuyTriggered(pair)
-  ) {
+  if (analyses.isBuy && !hasBuyPositions && !isBuyTriggered(pair)) {
     //Buy signal
     setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
@@ -189,12 +243,7 @@ const checkTrades = async (
     await buyPosition(price, takeProfit, stopLoss);
   }
 
-  if (
-    analyses.highSignal === "Sell" &&
-    analyses.lowSignal === "Sell" &&
-    !hasSellPositions &&
-    !isSellTriggered(pair)
-  ) {
+  if (analyses.isSell && !hasSellPositions && !isSellTriggered(pair)) {
     //Sell signal
     setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
@@ -202,35 +251,6 @@ const checkTrades = async (
     const stopLoss = price + atr * stopLossRatio;
     const takeProfit = price - atr * takeProfitRatio;
     await sellPosition(price, takeProfit, stopLoss);
-  }
-};
-
-const closeReversingTrades = async (
-  pair: string,
-  analyses: TimeFrameAnalysesType,
-  hasBuyPositions: boolean,
-  hasSellPositions: boolean,
-  closeBuyPosition: (price: number) => Promise<void>,
-  closeSellPosition: (price: number) => Promise<void>
-) => {
-  if (
-    analyses.highSignal === "Sell" &&
-    analyses.lowSignal === "Sell" &&
-    hasBuyPositions
-  ) {
-    console.log(`${pair}: High trend revered. Closing buy orders`);
-    await closeBuyPosition(0);
-    clearBuyTrigger(pair);
-  }
-
-  if (
-    analyses.highSignal === "Buy" &&
-    analyses.lowSignal === "Buy" &&
-    hasSellPositions
-  ) {
-    console.log(`${pair}:  High trend revered. Closing sell orders`);
-    await closeSellPosition(0);
-    clearSellTrigger(pair);
   }
 };
 
@@ -249,13 +269,10 @@ const strategy: OnStrategyType = async (
 ) => {
   if (price === 0) return;
 
-  const highTimeframe = "240"; //4 hour
+  //Three Guitar lines to identify the trend
+  const highTimeframe = "30"; //30 minute
+  const midTimeframe = "15"; //15 minute
   const lowTimeframe = "5"; //5 Minutes
-
-  const isSmallTimeframe = timeFrame === lowTimeframe;
-  const isLargeTimeframe = timeFrame === highTimeframe;
-
-  if (!isSmallTimeframe && !isLargeTimeframe) return;
 
   const timeFrameRepo = pairData.getTimeFrame(timeFrame);
   if (!timeFrameRepo) return;
@@ -263,27 +280,21 @@ const strategy: OnStrategyType = async (
   const prices = timeFrameRepo?.ohlc4 || [];
   if (prices.length < 100) return;
 
-  if (isLargeTimeframe) {
-    //High timeframe analysis
-    calcHighTimeFrameAnalyses(pair, prices);
-  } else if (isSmallTimeframe) {
+  if (timeFrame === highTimeframe) {
+    calcHighTimeFrameAnalyses(pair, "high", prices);
+  } else if (timeFrame === midTimeframe) {
+    calcHighTimeFrameAnalyses(pair, "mid", prices);
+  } else if (timeFrame === lowTimeframe) {
+    calcHighTimeFrameAnalyses(pair, "low", prices);
     //Low timeframe analysis
     calcLowTimeFrameAnalyses(price, pair, prices, pairData, lowTimeframe);
   }
 
   //Check for trade signals
-  if (isSmallTimeframe && !isPairUnderProcessing(pair)) {
+  if (timeFrame === lowTimeframe && !isPairUnderProcessing(pair)) {
     const analyses = pairAnalyses.get(pair);
     if (analyses) {
       setPairUnderProcessing(pair);
-      closeReversingTrades(
-        pair,
-        analyses,
-        hasBuyPositions,
-        hasSellPositions,
-        closeBuyPosition,
-        closeSellPostion
-      );
       checkTrades(
         pair,
         analyses,
