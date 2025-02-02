@@ -1,116 +1,221 @@
-import { CandleType, OnStrategyType } from "../service/types";
-import { SMA, RSI } from "technicalindicators";
+import { sma } from "technicalindicators";
+import { getAtr, getLastValue, getTrendDirection } from "../service/indicators";
+import { OnStrategyType } from "../service/types";
+import { notifyTelegram } from "../service/telgramClient";
+import {
+  clearBuyTrigger,
+  clearPairProcessing,
+  clearSellTrigger,
+  isBuyTriggered,
+  isPairUnderProcessing,
+  isSellTriggered,
+  setBuyTriggered,
+  setPairUnderProcessing,
+  setSellTriggered,
+} from "../repository/tradeProcessing";
+import PairRepo from "../repository/pairRepo";
 
-type AnalysesType =
-  | "NoSignal"
+const stopLossRatio: number = 3;
+const takeProfitRatio: number = stopLossRatio * 3;
+
+type WychoffPhaseType =
   | "Mark-up"
   | "Mark-down"
-  | "Hold-Long"
-  | "Hold-Short"
   | "Accumulation"
   | "Distribution"
   | "Consolidation";
 
-type SignalType = "Buy" | "Sell" | "None";
+interface WychoffAnalysesType {
+  highTrend: "Uptrend" | "Downtrend" | "Sideways" | undefined;
+  highFastSma: number | undefined;
+  highSlowSma: number | undefined;
+  lowFastSma: number | undefined;
+  lowSlowSma: number | undefined;
+  crossFastSma: number | undefined;
+  crossSlowSma: number | undefined;
+  wychoffPahse: WychoffPhaseType | undefined;
+  prevousWychoffPahse: WychoffPhaseType | undefined;
+  isSell: boolean;
+  isBuy: boolean;
+}
 
-type AnalysesWithSignalType = {
-  analyses: AnalysesType;
-  signal: SignalType;
+const pairAnalyses = new Map<string, WychoffAnalysesType>();
+
+const highTimeframeAnalysis = (pair: string, prices: number[]) => {
+  const analyses: WychoffAnalysesType = pairAnalyses.get(pair) || {
+    highTrend: undefined,
+    highFastSma: undefined,
+    highSlowSma: undefined,
+    lowFastSma: undefined,
+    lowSlowSma: undefined,
+    crossFastSma: undefined,
+    crossSlowSma: undefined,
+    wychoffPahse: undefined,
+    prevousWychoffPahse: undefined,
+    isSell: false,
+    isBuy: false,
+  };
+
+  const fastMaArray = sma({ values: prices, period: 15 });
+  const slowMaArray = sma({ values: prices, period: 20 });
+  analyses.highTrend = getTrendDirection(slowMaArray);
+  analyses.highFastSma = getLastValue(fastMaArray);
+  analyses.highSlowSma = getLastValue(slowMaArray);
+
+  pairAnalyses.set(pair, analyses);
 };
 
-type TrendlineType = "Uptrend" | "Downtrend" | "Sideways";
+const lowTimeframeAnalysis = (
+  pair: string,
+  price: number,
+  prices: number[]
+) => {
+  const analyses = pairAnalyses.get(pair);
+  if (analyses === undefined) return;
 
-const lastSignal = new Map<string, SignalType>();
-const rsiPeriod = 14; // RSI period
-const lastAnalyses = new Map<string, AnalysesType>();
+  const fastMaArray = sma({ values: prices, period: 15 });
+  const slowMaArray = sma({ values: prices, period: 20 });
 
-// Identify Support and Resistance Levels
-function identifyLevels(data: CandleType[]) {
-  const highs = data.map((d) => d.highPrice);
-  const lows = data.map((d) => d.lowPrice);
+  analyses.lowFastSma = getLastValue(fastMaArray);
+  analyses.lowSlowSma = getLastValue(slowMaArray);
 
-  const recentHighs = highs.slice(-10);
-  const recentLows = lows.slice(-10);
+  const crossFastMaArray = sma({ values: prices, period: 1 });
+  const crossSlowMaArray = sma({ values: prices, period: 3 });
 
-  return {
-    resistance: Math.max(...recentHighs),
-    support: Math.min(...recentLows),
-  };
-}
+  analyses.crossFastSma = getLastValue(crossFastMaArray);
+  analyses.crossSlowSma = getLastValue(crossSlowMaArray);
 
-// Detect Trendlines (Approximation using slope)
-function detectTrendlines(data: CandleType[]): TrendlineType {
-  const closes = data.map((d) => d.closePrice);
-  const recent = closes.slice(-10);
-  const slopes = recent.map((price, i, arr) =>
-    i > 0 ? price - arr[i - 1] : 0
-  );
+  if (
+    !analyses.highFastSma ||
+    !analyses.highSlowSma ||
+    !analyses.lowFastSma ||
+    !analyses.lowSlowSma
+  )
+    return;
 
-  const avgSlope = slopes.reduce((a, b) => a + b, 0) / slopes.length;
+  let wychoffPahse: WychoffPhaseType | undefined = undefined;
 
-  if (avgSlope > 0) return "Uptrend";
-  if (avgSlope < 0) return "Downtrend";
-  return "Sideways";
-}
-
-// Analyze Data with RSI Confirmation
-function analyzeData(data: CandleType[]): AnalysesWithSignalType {
-  const closes = data.map((d) => d.closePrice);
-  const sma20 = SMA.calculate({ period: 20, values: closes });
-  const sma50 = SMA.calculate({ period: 50, values: closes });
-  const rsi = RSI.calculate({ period: rsiPeriod, values: closes });
-
-  const lastPrice = closes[closes.length - 1];
-  const lastSma20 = sma20[sma20.length - 1];
-  const lastSma50 = sma50[sma50.length - 1];
-  const lastRsi = rsi[rsi.length - 1];
-  const { support, resistance } = identifyLevels(data);
-  const trendline = detectTrendlines(data);
-
-  let result: AnalysesWithSignalType = {
-    analyses: "NoSignal",
-    signal: "None",
-  };
-
-  // Wyckoff Signal Logic with RSI Confirmation
-  if (lastPrice > resistance && lastSma20 > lastSma50 && lastRsi < 70) {
-    //Bullish Breakout - Mark-up Phase (Buy Signal)
-    result.analyses = "Mark-up";
-    result.signal = "Buy";
-  } else if (lastPrice < support && lastSma20 < lastSma50 && lastRsi > 30) {
-    //Bearish Breakdown - Mark-down Phase (Sell Signal)
-    result.analyses = "Mark-down";
-    result.signal = "Sell";
-  } else if (trendline === "Uptrend" && lastRsi < 70) {
-    //Uptrend Continues (Hold Long)
-    result.analyses = "Hold-Long";
-  } else if (trendline === "Downtrend" && lastRsi > 30) {
-    //Downtrend Continues (Hold Short)
-    result.analyses = "Hold-Short";
-  } else if (lastPrice < resistance && lastPrice > support) {
-    // Accumulation or Distribution Phase
-    if (lastPrice < (support + resistance) / 2 && lastRsi < 50) {
-      //Accumulation Phase Detected (Potential Buy Setup)
-      result.analyses = "Accumulation";
-      if (lastSma20 > lastSma50) {
-        result.signal = "Buy";
-      }
-    } else if (lastPrice > (support + resistance) / 2 && lastRsi > 50) {
-      //Distribution Phase Detected (Potential Sell Setup)
-      result.analyses = "Distribution";
-      if (lastSma20 < lastSma50) {
-        result.signal = "Sell";
-      }
-    } else {
-      //Consolidation Detected (Unclear Phase)
-      result.analyses = "Consolidation";
-    }
-  } else {
-    //No Clear Signal (Wait)
+  if (
+    price >= Math.min(analyses.highFastSma, analyses.highSlowSma) &&
+    price <= Math.max(analyses.highFastSma, analyses.highSlowSma)
+  ) {
+    wychoffPahse = "Consolidation";
+  } else if (
+    analyses.lowFastSma > analyses.lowSlowSma &&
+    analyses.lowFastSma > analyses.highFastSma &&
+    price > analyses.lowFastSma
+  ) {
+    wychoffPahse = "Mark-up";
+  } else if (
+    analyses.lowFastSma < analyses.lowSlowSma &&
+    analyses.lowFastSma < analyses.highFastSma &&
+    price < analyses.lowFastSma
+  ) {
+    wychoffPahse = "Mark-down";
+  } else if (
+    analyses.lowFastSma < analyses.lowSlowSma &&
+    analyses.lowFastSma > analyses.highFastSma &&
+    price < analyses.lowFastSma
+  ) {
+    wychoffPahse = "Mark-down";
+  } else if (
+    analyses.lowFastSma > analyses.lowSlowSma &&
+    analyses.lowFastSma < analyses.highFastSma &&
+    price > analyses.lowFastSma
+  ) {
+    wychoffPahse = "Mark-up";
+  } else if (
+    price <= analyses.lowFastSma &&
+    analyses.lowFastSma > analyses.highFastSma
+  ) {
+    wychoffPahse = "Distribution";
+  } else if (
+    price >= analyses.lowFastSma &&
+    analyses.lowFastSma < analyses.highFastSma
+  ) {
+    wychoffPahse = "Accumulation";
   }
 
-  return result;
-}
+  if (wychoffPahse && wychoffPahse !== analyses.wychoffPahse) {
+    if (analyses.wychoffPahse)
+      analyses.prevousWychoffPahse = analyses.wychoffPahse;
+    analyses.wychoffPahse = wychoffPahse;
+
+    const msg = pair + ": " + analyses.wychoffPahse;
+    notifyTelegram(msg);
+    console.log(msg);
+
+    if (
+      (analyses.prevousWychoffPahse === "Consolidation" ||
+        analyses.prevousWychoffPahse === "Accumulation") &&
+      analyses.wychoffPahse === "Mark-down"
+    ) {
+      analyses.isSell = true;
+      analyses.isBuy = false;
+    } else if (
+      (analyses.prevousWychoffPahse === "Consolidation" ||
+        analyses.prevousWychoffPahse === "Distribution") &&
+      analyses.wychoffPahse === "Mark-up"
+    ) {
+      analyses.isSell = false;
+      analyses.isBuy = true;
+    }
+  }
+
+  pairAnalyses.set(pair, analyses);
+};
+
+const checkTrades = async (
+  pair: string,
+  analyses: WychoffAnalysesType,
+  pairData: PairRepo,
+  lowtimeFrame: string,
+  price: number,
+  hasBuyPositions: boolean,
+  hasSellPositions: boolean,
+  buyPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>,
+  sellPosition: (
+    price: number,
+    takeProfit: number,
+    stopLoss: number
+  ) => Promise<void>
+) => {
+  const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
+  if (!timeFrameRepo) return;
+
+  const atr = getAtr(timeFrameRepo.candle, 14);
+  if (!atr) return;
+
+  //Any previous open positions
+  if (hasBuyPositions || hasSellPositions) {
+    clearSellTrigger(pair);
+    clearBuyTrigger(pair);
+  }
+
+  if (analyses.isBuy && !hasBuyPositions && !isBuyTriggered(pair)) {
+    //Buy signal
+    setBuyTriggered(pair);
+    console.log(`Buy signal on ${pair} at price: ${price}`);
+
+    const stopLoss = price - atr * stopLossRatio;
+    const takeProfit = price + atr * takeProfitRatio;
+    await buyPosition(price, takeProfit, stopLoss);
+  }
+
+  if (analyses.isSell && !hasSellPositions && !isSellTriggered(pair)) {
+    //Sell signal
+    setSellTriggered(pair);
+    console.log(`Sell signal on ${pair} at price: ${price}`);
+
+    const stopLoss = price + atr * stopLossRatio;
+    const takeProfit = price - atr * takeProfitRatio;
+    await sellPosition(price, takeProfit, stopLoss);
+  }
+};
 
 const strategy: OnStrategyType = (
   pair,
@@ -125,58 +230,50 @@ const strategy: OnStrategyType = (
   hasSellPositions,
   hasBuyPositions
 ) => {
-  //"1h", "4h", "1d" : Timeframes to analyze
-  const analyses = new Map<string, AnalysesWithSignalType>();
-  for (const timeframe of pairData.timeFrames) {
-    const timeFrameRepo = pairData.getTimeFrame(timeframe);
-    const data = timeFrameRepo?.candle;
-    if (!data) continue;
+  const timeFrameRepo = pairData.getTimeFrame(timeFrame);
+  if (!timeFrameRepo) return;
 
-    const newAnalyses = analyzeData(data);
-    const prevAnalyses = lastAnalyses.get(pair + "." + timeFrame);
+  if (price === 0) return;
 
-    if (prevAnalyses != newAnalyses.analyses) {
-      lastAnalyses.set(pair + "." + timeFrame, newAnalyses.analyses);
+  const highTimeframe = "240"; //4 hour
+  const lowTimeframe = "5"; //5 Minutes
+
+  const isSmallTimeframe = timeFrame === lowTimeframe;
+  const isLargeTimeframe = timeFrame === highTimeframe;
+
+  if (!isSmallTimeframe && !isLargeTimeframe) return;
+
+  const prices = timeFrameRepo?.ohlc4 || [];
+  if (prices.length < 100) return;
+
+  if (isLargeTimeframe) {
+    //High timeframe analysis
+    highTimeframeAnalysis(pair, prices);
+  } else if (isSmallTimeframe) {
+    //Low timeframe analysis
+    lowTimeframeAnalysis(pair, price, prices);
+  }
+
+  //Check for trade signals
+  if (isSmallTimeframe && !isPairUnderProcessing(pair)) {
+    const analyses = pairAnalyses.get(pair);
+    if (analyses) {
+      setPairUnderProcessing(pair);
+
+      checkTrades(
+        pair,
+        analyses,
+        pairData,
+        timeFrame,
+        price,
+        hasBuyPositions,
+        hasSellPositions,
+        buyPosition,
+        sellPosition
+      );
+      clearPairProcessing(pair);
     }
-
-    if (timeFrameRepo?.candle.length > rsiPeriod) {
-      analyses.set(timeFrame, newAnalyses);
-    }
   }
-
-  const isBuy = Array.from(analyses.values())
-    .map((r) => r.signal)
-    .reduce(
-      (prev, current) => (prev === "Buy" && current === "Buy" ? "Buy" : "None"),
-      "Buy"
-    );
-
-  const isSell = Array.from(analyses.values())
-    .map((r) => r.signal)
-    .reduce(
-      (prev, current) =>
-        prev === "Sell" && current === "Sell" ? "Sell" : "None",
-      "Sell"
-    );
-
-  const signal: SignalType = isBuy ? "Buy" : isSell ? "Sell" : "None";
-
-  const lastSignalValue = lastSignal.get(pair) || "None";
-  const buySignal = signal !== lastSignalValue && signal === "Buy";
-  const sellSignal =
-    signal !== lastSignalValue && signal === "Sell"; /*&& crossDownValue*/
-
-  if (buySignal) {
-    //closeSellPostion(0);
-    //buyPosition(price, 0.1);
-  }
-
-  if (sellSignal) {
-    //closeBuyPosition(price);
-    //sellPosition(price, 0.1);
-  }
-
-  lastSignal.set(pair, signal);
 };
 
 export default strategy;

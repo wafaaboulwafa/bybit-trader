@@ -1,5 +1,5 @@
 import PairRepo from "../repository/pairRepo";
-import wychoff from "../strategies/wychoff2";
+import wychoff from "../strategies/wychoff";
 
 require("dotenv").config();
 
