@@ -1,3 +1,12 @@
+/*
+Wychoff market analysis based on 4 hour
+*/
+const stopLossRatio: number = 3;
+const takeProfitRatio: number = stopLossRatio * 3;
+
+const highTimeframe = "240"; //4 hour
+const lowTimeframe = "5"; //5 Minutes
+
 import { sma } from "technicalindicators";
 import { getAtr, getLastValue, getTrendDirection } from "../service/indicators";
 import { OnStrategyType } from "../service/types";
@@ -14,9 +23,6 @@ import {
   setSellTriggered,
 } from "../repository/tradeProcessing";
 import PairRepo from "../repository/pairRepo";
-
-const stopLossRatio: number = 3;
-const takeProfitRatio: number = stopLossRatio * 3;
 
 type WychoffPhaseType =
   | "Mark-up"
@@ -235,16 +241,13 @@ const strategy: OnStrategyType = (
 
   if (price === 0) return;
 
-  const highTimeframe = "240"; //4 hour
-  const lowTimeframe = "5"; //5 Minutes
-
   const isSmallTimeframe = timeFrame === lowTimeframe;
   const isLargeTimeframe = timeFrame === highTimeframe;
 
   if (!isSmallTimeframe && !isLargeTimeframe) return;
 
   const prices = timeFrameRepo?.ohlc4 || [];
-  if (prices.length < 100) return;
+  if (prices.length < 3) return;
 
   if (isLargeTimeframe) {
     //High timeframe analysis
