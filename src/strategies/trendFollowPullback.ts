@@ -28,6 +28,11 @@ const stopLossRatio: number = 4;
 const takeProfitRatio: number = stopLossRatio * 4;
 const waitForRebounce: boolean = true;
 
+//Three Guitar lines to identify the trend
+const highTimeframe = "30"; //30 minute
+const midTimeframe = "15"; //15 minute
+const lowTimeframe = "5"; //5 Minutes
+
 interface TimeFrameAnalysesType {
   highFastMa: number | undefined;
   highSlowMa: number | undefined;
@@ -41,7 +46,8 @@ interface TimeFrameAnalysesType {
   lowSlowMa: number | undefined;
   lowDirection: "Up" | "Down" | undefined;
 
-  trend: "Up" | "Down" | "None";
+  previousTrend: "Up" | "Down" | "None" | undefined;
+  trend: "Up" | "Down" | "None" | undefined;
 
   crossFastMa: number | undefined;
   crossSlowMa: number | undefined;
@@ -64,7 +70,8 @@ const calcHighTimeFrameAnalyses = (
   prices: number[]
 ) => {
   const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
-    trend: "None",
+    previousTrend: undefined,
+    trend: undefined,
     highFastMa: undefined,
     highSlowMa: undefined,
     highDirection: undefined,
@@ -146,26 +153,33 @@ const calcLowTimeFrameAnalyses = (
   )
     return;
 
+  //Trend direction change
+  let trend: "Down" | "Up" | "None" = "None";
+  let trendChanged = false;
+
   if (analyses.highDirection === "Down" && analyses.midDirection === "Down")
-    analyses.trend = "Down";
+    trend = "Down";
   else if (analyses.highDirection === "Up" && analyses.midDirection === "Up")
-    analyses.trend = "Up";
-  else analyses.trend = "None";
+    trend = "Up";
+
+  if (trend != analyses.trend) {
+    if (analyses.trend) trendChanged = true;
+    analyses.previousTrend = analyses.trend;
+    analyses.trend = trend;
+  }
 
   //Price direction change
   let currentMaCross: "Over" | "Under" | undefined;
   let priceDirectionChanged = false;
 
-  if (analyses.crossFastMa && analyses.crossSlowMa) {
-    if (analyses.crossFastMa > analyses.crossSlowMa) currentMaCross = "Over";
-    else if (analyses.crossFastMa < analyses.crossSlowMa)
-      currentMaCross = "Under";
+  if (analyses.crossFastMa > analyses.crossSlowMa) currentMaCross = "Over";
+  else if (analyses.crossFastMa < analyses.crossSlowMa)
+    currentMaCross = "Under";
 
-    if (currentMaCross && currentMaCross !== analyses.currentMaCross) {
-      if (analyses.currentMaCross) priceDirectionChanged = true;
-      analyses.previousMaCross = analyses.currentMaCross;
-      analyses.currentMaCross = currentMaCross;
-    }
+  if (currentMaCross && currentMaCross !== analyses.currentMaCross) {
+    if (analyses.currentMaCross) priceDirectionChanged = true;
+    analyses.previousMaCross = analyses.currentMaCross;
+    analyses.currentMaCross = currentMaCross;
   }
 
   //Candle crossing change
@@ -193,42 +207,21 @@ const calcLowTimeFrameAnalyses = (
     analyses.currentCandlCross = currentCandleCross;
   }
 
-  if (!waitForRebounce) {
-    if (
-      analyses.trend === "Up" &&
-      analyses.lowDirection === "Up" &&
-      analyses.currentMaCross === "Over"
-    ) {
-      analyses.isBuy = true;
-      analyses.isSell = false;
-    }
+  analyses.isBuy =
+    analyses.trend === "Up" &&
+    (waitForRebounce
+      ? candleCrossChanged && analyses.currentCandlCross === "Over"
+      : analyses.lowDirection === "Up" && analyses.currentMaCross === "Over");
 
-    if (
-      analyses.trend === "Down" &&
-      analyses.lowDirection === "Down" &&
-      analyses.currentMaCross === "Under"
-    ) {
-      analyses.isBuy = false;
-      analyses.isSell = true;
-    }
-  } else {
-    if (
-      candleCrossChanged &&
-      analyses.trend === "Up" &&
-      analyses.currentCandlCross === "Over"
-    ) {
-      analyses.isBuy = true;
-      analyses.isSell = false;
-    }
+  analyses.isSell =
+    analyses.trend === "Down" &&
+    (waitForRebounce
+      ? candleCrossChanged && analyses.currentCandlCross === "Under"
+      : analyses.lowDirection === "Down" &&
+        analyses.currentMaCross === "Under");
 
-    if (
-      candleCrossChanged &&
-      analyses.trend === "Down" &&
-      analyses.currentCandlCross === "Under"
-    ) {
-      analyses.isBuy = false;
-      analyses.isSell = true;
-    }
+  if (trendChanged || priceDirectionChanged || candleCrossChanged) {
+    console.log(analyses);
   }
 
   pairAnalyses.set(pair, analyses);
@@ -301,16 +294,11 @@ const strategy: OnStrategyType = async (
 ) => {
   if (price === 0) return;
 
-  //Three Guitar lines to identify the trend
-  const highTimeframe = "30"; //30 minute
-  const midTimeframe = "15"; //15 minute
-  const lowTimeframe = "5"; //5 Minutes
-
   const timeFrameRepo = pairData.getTimeFrame(timeFrame);
   if (!timeFrameRepo) return;
 
   const prices = timeFrameRepo?.ohlc4 || [];
-  if (prices.length < 100) return;
+  if (prices.length < 3) return;
 
   if (timeFrame === highTimeframe) {
     calcHighTimeFrameAnalyses(pair, "high", prices);
