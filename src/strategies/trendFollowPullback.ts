@@ -3,9 +3,9 @@ trend-following with or without pullback strategy
 Strategy allow to use strong trends.
 */
 
-const stopLossRatio: number = 4;
-const takeProfitRatio: number = stopLossRatio * 4;
-const waitForRebounce: boolean = true;
+const stopLossRatio: number = 2;
+const takeProfitRatio: number = stopLossRatio * 3;
+const waitForRebounce: boolean = false;
 
 //Three Guitar lines to identify the trend
 const highTimeframe = "30"; //30 minute
@@ -13,12 +13,7 @@ const midTimeframe = "15"; //15 minute
 const lowTimeframe = "5"; //5 Minutes
 
 import { OnStrategyType } from "../service/types";
-import {
-  calcEma,
-  getAtr,
-  getLastValue,
-  getTrendDirection,
-} from "../service/indicators";
+import { getAtr, getLastValue } from "../service/indicators";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
 import {

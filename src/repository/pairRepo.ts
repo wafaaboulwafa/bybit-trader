@@ -374,9 +374,9 @@ class PairRepo {
 
     if (stopLoss) {
       request.stopLoss = stopLoss.toFixed(this.#priceDigits);
-      request.slLimitPrice = request.stopLoss;
       //Option for SL using limit but not quarnateed to close al the position
       //request.slOrderType = "Limit";
+      //request.slLimitPrice = request.stopLoss;
       //request.tpslMode = "Partial"; // Required for limit type
     }
 

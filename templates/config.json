@@ -1,10 +1,10 @@
 [
   {
-    "pairName": "BTCUSDT",
-    "timeFrames": [5, 240],
+    "pairName": "ETHUSDT",
+    "timeFrames": [5, 15, 30],
     "quotationCoin": "USDT",
-    "baseCoin": "BTC",
-    "strategy": "wychoff",
+    "baseCoin": "ETH",
+    "strategy": "trendFollowPullback",
     "isFuture": true,
     "invert": false,
     "riskAmount": 0.01,
