@@ -3,8 +3,8 @@ trend-following with or without pullback strategy
 Strategy allow to use strong trends.
 */
 
-const stopLossRatio: number = 2;
-const takeProfitRatio: number = stopLossRatio * 1;
+const stopLossRatio: number = 1;
+const takeProfitRatio: number = stopLossRatio * 2;
 const waitForRebounce: boolean = false;
 
 //Three Guitar lines to identify the trend
