@@ -1,8 +1,8 @@
 /*
 Wychoff market analysis based on 4 hour
 */
-const stopLossRatio: number = 2;
-const takeProfitRatio: number = stopLossRatio * 1;
+const stopLossRatio: number = 1;
+const takeProfitRatio: number = stopLossRatio * 2;
 
 const highTimeframe = "240"; //4 hour
 const lowTimeframe = "5"; //5 Minutes
