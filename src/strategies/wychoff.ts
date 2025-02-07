@@ -147,9 +147,9 @@ const lowTimeframeAnalysis = (
       analyses.prevousWychoffPahse = analyses.wychoffPahse;
     analyses.wychoffPahse = wychoffPahse;
 
-    const msg = pair + ": " + analyses.wychoffPahse;
-    notifyTelegram(msg);
-    console.log(msg);
+    //const msg = pair + ": " + analyses.wychoffPahse;
+    //notifyTelegram(msg);
+    //console.log(msg);
 
     if (
       (analyses.prevousWychoffPahse === "Consolidation" ||

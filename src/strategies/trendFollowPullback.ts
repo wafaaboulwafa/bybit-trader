@@ -215,9 +215,11 @@ const calcLowTimeFrameAnalyses = (
       : analyses.lowDirection === "Down" &&
         analyses.currentMaCross === "Under");
 
+  /*
   if (trendChanged || priceDirectionChanged || candleCrossChanged) {
     console.log(analyses);
   }
+  */
 
   pairAnalyses.set(pair, analyses);
 };
