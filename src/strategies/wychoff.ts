@@ -212,7 +212,15 @@ const checkTrades = async (
 
     const stopLoss = price - atr * stopLossRatio;
     const takeProfit = price + atr * takeProfitRatio;
-    await buyPosition(price, takeProfit, stopLoss);
+
+    if (
+      price &&
+      stopLoss &&
+      takeProfit &&
+      takeProfit > price &&
+      price > stopLoss
+    )
+      await buyPosition(price, takeProfit, stopLoss);
   }
 
   if (analyses.isSell && !hasSellPositions && !isSellTriggered(pair)) {
@@ -223,7 +231,15 @@ const checkTrades = async (
 
     const stopLoss = price + atr * stopLossRatio;
     const takeProfit = price - atr * takeProfitRatio;
-    await sellPosition(price, takeProfit, stopLoss);
+
+    if (
+      price &&
+      stopLoss &&
+      takeProfit &&
+      stopLoss > price &&
+      price > takeProfit
+    )
+      await sellPosition(price, takeProfit, stopLoss);
   }
 };
 
