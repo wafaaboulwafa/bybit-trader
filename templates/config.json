@@ -1,9 +1,9 @@
 [
   {
-    "pairName": "ETHUSDT",
+    "pairName": "SHIB1000USDT",
     "timeFrames": [5, 15, 30],
     "quotationCoin": "USDT",
-    "baseCoin": "ETH",
+    "baseCoin": "SHIB1000",
     "strategy": "trendFollowPullback",
     "isFuture": true,
     "invert": false,
