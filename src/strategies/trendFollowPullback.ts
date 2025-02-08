@@ -5,7 +5,7 @@ Strategy allow to use strong trends.
 
 const stopLossRatio: number = 1;
 const takeProfitRatio: number = stopLossRatio * 2;
-const waitForRebounce: boolean = true;
+const waitForRebounce: boolean = false;
 
 //Three Guitar lines to identify the trend
 const highTimeframe = "30"; //30 minute
