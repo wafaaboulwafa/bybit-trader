@@ -241,7 +241,9 @@ const checkTrades = async (
     price: number,
     takeProfit: number,
     stopLoss: number
-  ) => Promise<void>
+  ) => Promise<void>,
+  closeBuyPosition: (price: number) => Promise<void>,
+  closeSellPosition: (price: number) => Promise<void>
 ) => {
   const timeFrameRepo = pairData.getTimeFrame(lowtimeFrame);
   if (!timeFrameRepo) return;
@@ -259,6 +261,7 @@ const checkTrades = async (
     //Buy signal
     setBuyTriggered(pair);
     console.log(`Buy signal on ${pair} at price: ${price}`);
+    await closeSellPosition(0);
 
     const stopLoss = price - atr * stopLossRatio;
     const takeProfit = price + atr * takeProfitRatio;
@@ -269,6 +272,7 @@ const checkTrades = async (
     //Sell signal
     setSellTriggered(pair);
     console.log(`Sell signal on ${pair} at price: ${price}`);
+    await closeBuyPosition(0);
 
     const stopLoss = price + atr * stopLossRatio;
     const takeProfit = price - atr * takeProfitRatio;
@@ -321,7 +325,9 @@ const strategy: OnStrategyType = async (
         hasBuyPositions,
         hasSellPositions,
         buyPosition,
-        sellPosition
+        sellPosition,
+        closeBuyPosition,
+        closeSellPostion
       );
       clearPairProcessing(pair);
     }
