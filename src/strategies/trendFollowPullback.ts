@@ -5,14 +5,13 @@ Strategy allow to use strong trends.
 
 const stopLossRatio: number = 1;
 const takeProfitRatio: number = stopLossRatio * 2;
-const waitForRebounce: boolean = false;
 
 //Three Guitar lines to identify the trend
 const highTimeframe = "30"; //30 minute
 const midTimeframe = "15"; //15 minute
 const lowTimeframe = "5"; //5 Minutes
 
-import { OnStrategyType } from "../service/types";
+import { CandleType, OnStrategyType } from "../service/types";
 import { getAtr, getLastValue } from "../service/indicators";
 import PairRepo from "../repository/pairRepo";
 import { sma } from "technicalindicators";
@@ -53,6 +52,9 @@ interface TimeFrameAnalysesType {
   previousCandleCross: "Over" | "Under" | undefined;
   currentCandlCross: "Over" | "Under" | undefined;
 
+  sellBounceCandle: boolean;
+  buyBounceCandle: boolean;
+
   isBuy: boolean;
   isSell: boolean;
 }
@@ -62,7 +64,10 @@ const pairAnalyses = new Map<string, TimeFrameAnalysesType>();
 const calcHighTimeFrameAnalyses = (
   pair: string,
   level: "high" | "mid" | "low",
-  prices: number[]
+  prices: number[],
+  price: number,
+  currentCandle: CandleType,
+  previousCandle: CandleType
 ) => {
   const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
     previousTrend: undefined,
@@ -82,6 +87,8 @@ const calcHighTimeFrameAnalyses = (
     currentMaCross: undefined,
     previousCandleCross: undefined,
     currentCandlCross: undefined,
+    sellBounceCandle: false,
+    buyBounceCandle: false,
     isBuy: false,
     isSell: false,
   };
@@ -111,6 +118,26 @@ const calcHighTimeFrameAnalyses = (
     analyses.lowFastMa = lastFast;
     analyses.lowSlowMa = lastSlow;
     analyses.lowDirection = direction;
+
+    if (
+      analyses.lowDirection === "Down" &&
+      previousCandle.openPrice > previousCandle.closePrice &&
+      previousCandle.closePrice > price &&
+      previousCandle.highPrice >= analyses.lowFastMa &&
+      previousCandle.closePrice < analyses.lowFastMa
+    ) {
+      analyses.sellBounceCandle = true;
+      analyses.buyBounceCandle = false;
+    } else if (
+      analyses.lowDirection === "Up" &&
+      previousCandle.closePrice > previousCandle.openPrice &&
+      previousCandle.closePrice < price &&
+      previousCandle.lowPrice <= analyses.lowFastMa &&
+      previousCandle.closePrice > analyses.lowFastMa
+    ) {
+      analyses.sellBounceCandle = false;
+      analyses.buyBounceCandle = true;
+    }
 
     const crossFastMaArray = sma({ values: prices, period: 1 });
     const crossSlowMaArray = sma({ values: prices, period: 3 });
@@ -177,44 +204,19 @@ const calcLowTimeFrameAnalyses = (
     analyses.currentMaCross = currentMaCross;
   }
 
-  //Candle crossing change
-  let currentCandleCross: "Over" | "Under" | undefined = undefined;
-  let candleCrossChanged = false;
-
-  const prevCandle = timeFrameRepo.candle[2];
-  const currentCandle = timeFrameRepo.candle[1];
-
-  if (
-    prevCandle.openPrice > analyses.lowFastMa &&
-    analyses.lowFastMa > currentCandle.closePrice
-  ) {
-    currentCandleCross = "Under";
-  } else if (
-    prevCandle.openPrice < analyses.lowFastMa &&
-    analyses.lowFastMa < currentCandle.closePrice
-  ) {
-    currentCandleCross = "Over";
-  }
-
-  if (currentCandleCross && currentCandleCross !== analyses.currentCandlCross) {
-    if (analyses.currentCandlCross) candleCrossChanged = true;
-    analyses.previousCandleCross = analyses.currentCandlCross;
-    analyses.currentCandlCross = currentCandleCross;
-  }
-
   analyses.isBuy =
     analyses.trend === "Up" &&
-    (waitForRebounce
-      ? candleCrossChanged && analyses.currentCandlCross === "Over"
-      : analyses.lowDirection === "Up" && analyses.currentMaCross === "Over");
+    analyses.lowDirection === "Up" &&
+    analyses.buyBounceCandle;
 
   analyses.isSell =
     analyses.trend === "Down" &&
-    (waitForRebounce
-      ? candleCrossChanged && analyses.currentCandlCross === "Under"
-      : analyses.lowDirection === "Down" &&
-        analyses.currentMaCross === "Under");
+    analyses.lowDirection === "Down" &&
+    analyses.sellBounceCandle;
 
+  if (analyses.isBuy) analyses.buyBounceCandle = false;
+
+  if (analyses.isSell) analyses.sellBounceCandle = false;
   /*
   if (trendChanged || priceDirectionChanged || candleCrossChanged) {
     console.log(analyses);
@@ -316,12 +318,36 @@ const strategy: OnStrategyType = async (
   const prices = timeFrameRepo?.ohlc4 || [];
   if (prices.length < 3) return;
 
+  const currentCandle = timeFrameRepo.candle[0];
+  const prevCandle = timeFrameRepo.candle[1];
+
   if (timeFrame === highTimeframe) {
-    calcHighTimeFrameAnalyses(pair, "high", prices);
+    calcHighTimeFrameAnalyses(
+      pair,
+      "high",
+      prices,
+      price,
+      prevCandle,
+      currentCandle
+    );
   } else if (timeFrame === midTimeframe) {
-    calcHighTimeFrameAnalyses(pair, "mid", prices);
+    calcHighTimeFrameAnalyses(
+      pair,
+      "mid",
+      prices,
+      price,
+      prevCandle,
+      currentCandle
+    );
   } else if (timeFrame === lowTimeframe) {
-    calcHighTimeFrameAnalyses(pair, "low", prices);
+    calcHighTimeFrameAnalyses(
+      pair,
+      "low",
+      prices,
+      price,
+      prevCandle,
+      currentCandle
+    );
     //Low timeframe analysis
     calcLowTimeFrameAnalyses(price, pair, prices, pairData, lowTimeframe);
   }
