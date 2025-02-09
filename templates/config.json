@@ -4,7 +4,7 @@
     "timeFrames": [5, 15, 30],
     "quotationCoin": "USDT",
     "baseCoin": "SHIB1000",
-    "strategy": "trendFollowPullback",
+    "strategy": "fiveMinInverted",
     "isFuture": true,
     "invert": false,
     "riskAmount": 0.01,
