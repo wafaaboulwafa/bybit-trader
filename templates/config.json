@@ -1,7 +1,7 @@
 [
   {
     "pairName": "SHIB1000USDT",
-    "timeFrames": [5, 15, 30],
+    "timeFrames": [5, 15],
     "quotationCoin": "USDT",
     "baseCoin": "SHIB1000",
     "strategy": "fiveMinInverted",
