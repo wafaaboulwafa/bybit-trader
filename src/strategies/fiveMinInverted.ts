@@ -152,12 +152,12 @@ const calcLowTimeFrameAnalyses = (
   analyses.isSell =
     analyses.trend === "Down" &&
     analyses.lowDirection === "Up" &&
-    analyses.currentMaCross === "Over";
+    analyses.currentMaCross === "Under";
 
   analyses.isBuy =
     analyses.trend === "Up" &&
     analyses.lowDirection === "Down" &&
-    analyses.currentMaCross === "Under";
+    analyses.currentMaCross === "Over";
 
   /*
   if (trendChanged || priceDirectionChanged || candleCrossChanged) {
