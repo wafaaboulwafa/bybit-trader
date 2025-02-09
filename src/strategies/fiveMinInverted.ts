@@ -46,7 +46,7 @@ const pairAnalyses = new Map<string, TimeFrameAnalysesType>();
 
 const calcHighTimeFrameAnalyses = (
   pair: string,
-  level: "high" | "mid" | "low",
+  level: "high" | "low",
   prices: number[]
 ) => {
   const analyses: TimeFrameAnalysesType = pairAnalyses.get(pair) || {
@@ -149,13 +149,13 @@ const calcLowTimeFrameAnalyses = (
     analyses.currentMaCross = currentMaCross;
   }
 
-  analyses.isBuy =
-    analyses.trend === "Up" &&
+  analyses.isSell =
+    analyses.trend === "Down" &&
     analyses.lowDirection === "Up" &&
     analyses.currentMaCross === "Over";
 
-  analyses.isSell =
-    analyses.trend === "Down" &&
+  analyses.isBuy =
+    analyses.trend === "Up" &&
     analyses.lowDirection === "Down" &&
     analyses.currentMaCross === "Under";
 
