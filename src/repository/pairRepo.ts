@@ -235,8 +235,9 @@ class PairRepo {
         let tpPoints = price - stopLoss;
 
         if (this.#riskAdjustment) {
-          slPoints = slPoints - slPoints * this.#riskAdjustment;
-          tpPoints = tpPoints + tpPoints * this.#riskAdjustment;
+          const adjustmentPoints = slPoints * this.#riskAdjustment;
+          slPoints = slPoints - adjustmentPoints;
+          tpPoints = tpPoints + adjustmentPoints;
         }
 
         const invertedStopLoss = price + slPoints;
@@ -253,8 +254,9 @@ class PairRepo {
         let tpPoints = stopLoss - price;
 
         if (this.#riskAdjustment) {
-          slPoints = slPoints - slPoints * this.#riskAdjustment;
-          tpPoints = tpPoints + tpPoints * this.#riskAdjustment;
+          const adjustmentPoints = slPoints * this.#riskAdjustment;
+          slPoints = slPoints - adjustmentPoints;
+          tpPoints = tpPoints + adjustmentPoints;
         }
 
         const invertedStopLoss = price - slPoints;
