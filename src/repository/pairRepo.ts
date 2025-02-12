@@ -16,6 +16,7 @@ class PairRepo {
   #invert: boolean = false;
   #riskAmount: number = 0.1;
   #riskMethod: RiskMethodType = "percentOfEquity";
+  #riskAdjustment: number = 0.1;
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -230,10 +231,15 @@ class PairRepo {
       if (takeProfit > price && price > stopLoss) {
         //Buy
 
-        const slPoints = takeProfit - price;
-        const invertedStopLoss = price + slPoints;
+        let slPoints = takeProfit - price;
+        let tpPoints = price - stopLoss;
 
-        const tpPoints = price - stopLoss;
+        if (this.#riskAdjustment) {
+          slPoints = slPoints - slPoints * this.#riskAdjustment;
+          tpPoints = tpPoints + tpPoints * this.#riskAdjustment;
+        }
+
+        const invertedStopLoss = price + slPoints;
         const invertedTakePorfit = price - tpPoints;
 
         return {
@@ -243,10 +249,15 @@ class PairRepo {
         };
       } else if (stopLoss > price && price > takeProfit) {
         //Sell
-        const slPoints = price - takeProfit;
-        const invertedStopLoss = price - slPoints;
+        let slPoints = price - takeProfit;
+        let tpPoints = stopLoss - price;
 
-        const tpPoints = stopLoss - price;
+        if (this.#riskAdjustment) {
+          slPoints = slPoints - slPoints * this.#riskAdjustment;
+          tpPoints = tpPoints + tpPoints * this.#riskAdjustment;
+        }
+
+        const invertedStopLoss = price - slPoints;
         const invertedTakePorfit = price + tpPoints;
         return {
           price,
