@@ -8,6 +8,7 @@
     "isFuture": true,
     "invert": false,
     "riskAmount": 0.01,
-    "riskMethod": "percentOfEquity"
+    "riskMethod": "percentOfEquity",
+    "riskAdjustment": 0.2
   }
 ]
