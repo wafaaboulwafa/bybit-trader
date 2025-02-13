@@ -35,7 +35,8 @@ class PairRepo {
     isFuture: boolean,
     invert: boolean,
     riskAmount: number,
-    riskMethod: RiskMethodType
+    riskMethod: RiskMethodType,
+    riskAdjustment: number
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
@@ -45,6 +46,7 @@ class PairRepo {
     this.#invert = invert;
     this.#riskAmount = riskAmount;
     this.#riskMethod = riskMethod;
+    this.#riskAdjustment = riskAdjustment;
 
     for (let timeframe of timeFrames) {
       this.#timeFrames.set(
@@ -90,6 +92,10 @@ class PairRepo {
 
   get riskMethod() {
     return this.#riskMethod;
+  }
+
+  get riskAdjustment() {
+    return this.#riskAdjustment;
   }
 
   getTimeFrame(timeFrame: string) {

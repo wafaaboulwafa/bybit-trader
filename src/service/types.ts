@@ -48,6 +48,7 @@ export type PairConfigType = {
   invert: boolean;
   riskAmount: number;
   riskMethod: RiskMethodType;
+  riskAdjustment: number;
 };
 
 export type BacktestTimeFrameType = {

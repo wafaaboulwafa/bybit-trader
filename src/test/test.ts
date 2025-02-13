@@ -22,7 +22,8 @@ setTimeout(async () => {
     true,
     false,
     1,
-    "percentOfEquity"
+    "percentOfEquity",
+    0
   );
 
   for (const timeFrmae of timeFrames) {
