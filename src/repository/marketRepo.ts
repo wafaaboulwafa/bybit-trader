@@ -34,7 +34,8 @@ class MarketRepo {
         pairInfo.isFuture,
         pairInfo.invert,
         pairInfo.riskAmount,
-        pairInfo.riskMethod
+        pairInfo.riskMethod,
+        pairInfo.riskAdjustment
       );
       this.#pairs.set(pairInfo.pairName, p);
       return p;

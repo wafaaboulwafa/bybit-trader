@@ -16,6 +16,7 @@ class PairRepo {
   #invert: boolean = false;
   #riskAmount: number = 0.1;
   #riskMethod: RiskMethodType = "percentOfEquity";
+  #riskAdjustment: number = 0.1;
 
   #takerRate: number = 0;
   #makerRate: number = 0;
@@ -34,7 +35,8 @@ class PairRepo {
     isFuture: boolean,
     invert: boolean,
     riskAmount: number,
-    riskMethod: RiskMethodType
+    riskMethod: RiskMethodType,
+    riskAdjustment: number
   ) {
     this.#pair = pair;
     this.#strategy = strategy;
@@ -44,6 +46,7 @@ class PairRepo {
     this.#invert = invert;
     this.#riskAmount = riskAmount;
     this.#riskMethod = riskMethod;
+    this.#riskAdjustment = riskAdjustment;
 
     for (let timeframe of timeFrames) {
       this.#timeFrames.set(
@@ -89,6 +92,10 @@ class PairRepo {
 
   get riskMethod() {
     return this.#riskMethod;
+  }
+
+  get riskAdjustment() {
+    return this.#riskAdjustment;
   }
 
   getTimeFrame(timeFrame: string) {
@@ -230,10 +237,16 @@ class PairRepo {
       if (takeProfit > price && price > stopLoss) {
         //Buy
 
-        const slPoints = takeProfit - price;
-        const invertedStopLoss = price + slPoints;
+        let slPoints = takeProfit - price;
+        let tpPoints = price - stopLoss;
 
-        const tpPoints = price - stopLoss;
+        if (this.#riskAdjustment) {
+          const adjustmentPoints = slPoints * this.#riskAdjustment;
+          slPoints = slPoints - adjustmentPoints;
+          tpPoints = tpPoints + adjustmentPoints;
+        }
+
+        const invertedStopLoss = price + slPoints;
         const invertedTakePorfit = price - tpPoints;
 
         return {
@@ -243,10 +256,16 @@ class PairRepo {
         };
       } else if (stopLoss > price && price > takeProfit) {
         //Sell
-        const slPoints = price - takeProfit;
-        const invertedStopLoss = price - slPoints;
+        let slPoints = price - takeProfit;
+        let tpPoints = stopLoss - price;
 
-        const tpPoints = stopLoss - price;
+        if (this.#riskAdjustment) {
+          const adjustmentPoints = slPoints * this.#riskAdjustment;
+          slPoints = slPoints - adjustmentPoints;
+          tpPoints = tpPoints + adjustmentPoints;
+        }
+
+        const invertedStopLoss = price - slPoints;
         const invertedTakePorfit = price + tpPoints;
         return {
           price,
